@@ -1,0 +1,17 @@
+{
+    "name": "platypustechnology/magratheaphp2",
+    "description": "Magrathea PHP 2",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Platypustechnology\\Magratheaphp2\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Platypus Technology"
+        }
+    ],
+    "require": {}
+}

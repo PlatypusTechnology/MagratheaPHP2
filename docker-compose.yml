@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+
+  magrathea2:
+    container_name: "magrathea-php"
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
+    volumes:
+      - ./:/var/www/html/
