@@ -182,7 +182,7 @@ class MagratheaConfig {
 			throw new MagratheaException("There was an error trying to load the config file.<br/>");
 		}
 		if(empty($configSection[$section_name])) {
-			throw new Exception("Conig [".$section_name."] not available in magrathea.conf", 1);
+			throw new \Exception("Conig [".$section_name."] not available in magrathea.conf", 1);
 		}
 		return $configSection[$section_name];
 	}
