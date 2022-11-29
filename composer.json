@@ -5,13 +5,20 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Platypustechnology\\Magratheaphp2\\": "src/"
-        }
+            "Magrathea2\\": "src/"
+        },
+        "files": [
+            "src/_Functions.php",
+            "src/_FunctionsDebug.php"
+        ]
     },
     "authors": [
         {
             "name": "Platypus Technology"
         }
     ],
-    "require": {}
+    "require": {
+        "twbs/bootstrap": "5.2.3",
+        "components/jquery": "^3.6"
+    }
 }

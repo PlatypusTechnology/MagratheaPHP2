@@ -1,6 +1,6 @@
 <?php
 
-namespace Magrathea;
+namespace Magrathea2;
 
 #######################################################################################
 ####
@@ -15,31 +15,6 @@ namespace Magrathea;
 ####    Magrathea2 created: 2022-11 by Paulo Martins
 ####
 #######################################################################################
-
-/**
- * Debugs what is sent, according with debug configurations
- * @param 	object 		$bug 		object to debug
- */
-function Debug($bug){
-	MagratheaDebugger::Instance()->Add($bug);
-}
-
-/**
- * Debugs error, according with debug configurations
- * @param 	object 		$bug 		object to debug
- */
-function DebugError($error){
-	MagratheaDebugger::Instance()->AddError($error);
-}
-
-
-/**
- * Adds to info debug, according with configurations
- * @param 	object 		$bug 		object to debug
- */
-function Info($bug){
-	MagratheaDebugger::Instance()->Info($bug);
-}
 
 /**
  * Magrathea Debugger can manage anything for debugging and error-searching through Magrathea Codes.

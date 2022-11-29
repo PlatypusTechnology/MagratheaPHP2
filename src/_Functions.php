@@ -1,6 +1,6 @@
 <?php
 
-namespace Magrathea;
+namespace Magrathea2;
 
 #######################################################################################
 ####
@@ -140,4 +140,5 @@ function shutdown(){
 	}
 }
 register_shutdown_function('shutdown');
+
 ?>
