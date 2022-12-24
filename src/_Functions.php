@@ -1,5 +1,4 @@
 <?php
-
 namespace Magrathea2;
 
 #######################################################################################
@@ -13,18 +12,39 @@ namespace Magrathea2;
 ####
 #######################################################################################
 
+
+//.$trace[0]["file"].":".$trace[0]["line"]."\n"
+/**
+ * Prints easily and beautifully
+ * @param 	object 		$debugme	Object to be printed
+ * @param  	boolean  	$beautyme	How beautifull do you want your object printed?
+ */
+function p_r($debugme, $beautyme=true){
+	//	$trace = debug_backtrace();
+		if( $beautyme ){
+			echo nice_p_r($debugme); 
+		} else { 
+			echo "<pre>"; print_r($debugme); echo "</pre>";
+		}
+	}
+	
+	
+
+
+
+
 /**
  * Loads database configuration for the selected environment.
  * 	If no environment is sent, it will use the information from the default environment
  * @param 	string 		$env	Environment to load
  * @return 	MagratheaDatabase Instance
  */
-function loadMagratheaEnv($env = null): MagratheaDatabase|bool{
+function loadMagratheaEnv($env = null): Database\MagratheaDatabase|bool{
 	global $magdb;
 	if( empty($env) ){
 		try {
 			$env = MagratheaConfig::Instance()->GetEnvironment();
-		} catch(Exception $ex) { return false; }
+		} catch(\Exception $ex) { return false; }
 		if(empty($env)) return false;
 	} else {
 		MagratheaConfig::Instance()->SetDefaultEnvironment($env);
@@ -33,27 +53,12 @@ function loadMagratheaEnv($env = null): MagratheaDatabase|bool{
 		$configSection = MagratheaConfig::Instance()->GetConfigSection($env);
 		date_default_timezone_set( MagratheaConfig::Instance()->GetConfig("general/time_zone") );
 
-		$magdb = MagratheaDatabase::Instance();
+		$magdb = Database\MagratheaDatabase::Instance();
 		$conn = $magdb->SetConnection($configSection["db_host"], $configSection["db_name"], $configSection["db_user"], $configSection["db_pass"]);
-	} catch(Exception $ex) {
+	} catch(\Exception $ex) {
 		throw $ex;
 	}
 	return $conn;
-}
-
-//.$trace[0]["file"].":".$trace[0]["line"]."\n"
-/**
- * Prints easily and beautifully
- * @param 	object 		$debugme	Object to be printed
- * @param  	boolean  	$beautyme	How beautifull do you want your object printed?
- */
-function p_r($debugme, $beautyme=false){
-//	$trace = debug_backtrace();
-	if( $beautyme ){
-		echo nice_p_r($debugme); 
-	} else { 
-		echo "<pre>"; print_r($debugme); echo "</pre>";
-	}
 }
 
 /**
@@ -134,11 +139,11 @@ function magrathea_getTypesArr() : array{
  * in Magrathea, will print debug, if available...
  * 	@todo  print debug in a beautifull way in the end of the page...
  */
-function shutdown(){
-	if(MagratheaDebugger::Instance()->GetType() == MagratheaDebugger::DEBUG){
-		MagratheaDebugger::Instance()->Show();
-	}
-}
-register_shutdown_function('shutdown');
+// function shutdownFn(){
+// 	if(MagratheaDebugger::Instance()->GetType() == MagratheaDebugger::DEBUG){
+// 		MagratheaDebugger::Instance()->Show();
+// 	}
+// }
+// register_shutdown_function('Magrathea2\shutdownFn');
 
 ?>

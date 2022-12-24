@@ -1,0 +1,50 @@
+body {
+	padding-bottom: 50px;
+}
+
+.error {
+	color: var(--error);
+	font-weight: bold;
+}
+.success {
+	color: var(--success);
+	font-weight: bold;
+}
+.right {
+  text-align: right;
+}
+.left {
+	float: left;
+}
+.label {
+  font-weight: bold;
+}
+
+.text-lg {
+	font-size: 1.2rem;
+}
+
+
+pre.code {
+	border: 1px solid black;
+	border-radius: 10px;
+	background-color: #DDD;
+	padding: 5px;
+	padding-left: 30px;
+	font-family: monospace;
+}
+
+.card {
+	padding: 20px;
+}
+.actions {
+	margin-top: 20px;
+	text-align: right;
+}
+#ajax-response, .response {
+	border: 1px solid var(--primary);
+	border-radius: 10px;
+	padding: 10px;
+	margin: 10px 0;
+}
+

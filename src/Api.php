@@ -28,7 +28,7 @@ if (!function_exists('getallheaders')){
 * 
 * Creates a server using Magrathea Tools to respond Json files
 **/
-class MagratheaApi {
+class Api {
 
 	public $control = "Home";
 	public $action = "Index";

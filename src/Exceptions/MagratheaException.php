@@ -1,6 +1,7 @@
 <?php
 
-namespace Magrathea2;
+namespace Magrathea2\Exceptions;
+use Magrathea2\Debugger;
 
 #######################################################################################
 ####
@@ -26,7 +27,7 @@ class MagratheaException extends \Exception {
             $this->msg = $message ? $message : "Magrathea has failed... =(";
         }
         $this->message = $message;
-        MagratheaDebugger::Instance()->Add($this);
+        Debugger::Instance()->Add($this);
         parent::__construct($message, $code, $previous);
     }
 
@@ -37,7 +38,7 @@ class MagratheaException extends \Exception {
         return get_class($this).": {".$this->message."}\n@ ".$this->getFile().":".$this->getLine();
     }
 
-    public function getMsg() { return $this->msg; }
+    public function getMsg() { return $this->getMessage(); }
 
     public function display(){
         echo "MAGRATHEA ERROR! <br/>";
@@ -51,7 +52,6 @@ class MagratheaApiException extends MagratheaException {
         parent::__construct($message, $code, $previous);
     }
 
-
     public function SetData($data) {
         $this->_data = $data;
     }
@@ -63,19 +63,6 @@ class MagratheaApiException extends MagratheaException {
 
 class MagratheaAdminException extends MagratheaException {
     public function __construct($message = "Magrathea Admin Error", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }    
-}
-
-class MagratheaConfigException extends MagratheaException {
-    public function __construct($message = "Magrathea Config has failed... =(", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }    
-}
-
-class MagratheaDBException extends MagratheaException {
-    public $query = "no_query_logged";
-    public function __construct($message = "Magrathea Database has failed... =(", $code = 0, \Exception $previous = null) {
         parent::__construct($message, $code, $previous);
     }    
 }

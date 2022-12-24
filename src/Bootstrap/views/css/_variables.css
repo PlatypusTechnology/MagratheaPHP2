@@ -1,0 +1,9 @@
+:root {
+    --white: #FFF;
+    --vlack: #000;
+    --gray: #CCC;
+    --error: #C32;
+    --success: green;
+    --primary: rgb(203, 128, 8);
+    /* --primary: green; */
+}

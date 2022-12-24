@@ -16,11 +16,12 @@ namespace Magrathea2;
 ####
 #######################################################################################
 
+
 /**
  * Magrathea Debugger can manage anything for debugging and error-searching through Magrathea Codes.
  * It can trace errors, save log files, print queries and do a bunch of functions that would help the developer on error searching
  */
-class MagratheaDebugger {
+class Debugger extends Singleton {
 
 	const NONE = 0;
 	const LOG = 2;
@@ -32,43 +33,35 @@ class MagratheaDebugger {
 	private $debugType = self::LOG;
 	private $queries = false;
 	private $oldDebugType = self::NONE;
-	protected static $inst = null;
-
-	// this is a singleton!
-	private function __construct(){ }
-
-	/**
-	* Static singleton way to get the debugger instance
-	*/
-	public static function Instance(){
-		if (self::$inst === null) {
-			self::$inst = new MagratheaDebugger();
-		}
-		return self::$inst;
-	}
-	public function MagratheaDebugger(){ }
 
 	/**
 	* Sets the debugger method
 	* It can be: *DEV*, *DEBUG*, *LOG*, *NONE* =>
-	* **MagratheaDebugger::DEV** = Will print the debugs as it appears in the code
-	* **MagratheaDebugger::DEBUG** = Will store all the debugs and print it later
-	* **MagratheaDebugger::LOG** = Will log queries and other debugs in the code
-	* **MagratheaDebugger::NONE** = Well... nothing to do, heh?
+	* **Debugger::DEV** = Will print the debugs as it appears in the code
+	* **Debugger::DEBUG** = Will store all the debugs and print it later
+	* **Debugger::LOG** = Will log queries and other debugs in the code
+	* **Debugger::NONE** = Well... nothing to do, heh?
 	* Default: **LOG**
 	*
-	* @param 	$dType 	string 	type to be set
-	* @return  	itself
+	* @param 	$type 		integer 	type to be set
+	* @return  	Debugger
 	*/
-	public function SetType($dType){
-		$this->debugType = $dType;
+	public function SetType($type){
+		$this->debugType = $type;
 		return $this;
 	}
 
 	/**
+	 * Sets debug mode as dev
+	 * @return void
+	 */
+	public function SetDev() {
+		$this->SetType(Debugger::DEV);
+	}
+	/**
 	 * Should debugger log queries?
 	 * @param 	boolean 	$q 		true for logging queries, false for not
-	 * @return  itself
+	 * @return  Debugger
 	 */
 	public function LogQueries($q){
 		$this->queries =  $q;
@@ -79,7 +72,7 @@ class MagratheaDebugger {
 	 * Set the name of log file that will be used
 	 * 	(it will be created inside "*logs*" folder)
 	 * @param 	string 		$file 		log file name
-	 * @return  itself
+	 * @return  Debugger
 	 */
 	public function SetLogFile($file){
 		$this->logFile = $file;
@@ -98,7 +91,7 @@ class MagratheaDebugger {
 	* (usefull when need to check a specific operation, for example)
 	*
 	* @param 	string 	$dType 	type to be temporarily set
-	* @return  	itself
+	* @return  	Debugger
 	*/
 	public function SetTemp($dType){
 		$this->oldDebugType = $this->debugType;
@@ -109,7 +102,7 @@ class MagratheaDebugger {
 	/**
 	* After temporarily setting a debugging type, gets it back to what it was
 	*
-	* @return  	itself
+	* @return  	Debugger
 	*/
 	public function BackTemp(){
 		$this->debugType = $this->oldDebugType;
@@ -132,15 +125,13 @@ class MagratheaDebugger {
 		switch ($this->debugType) {
 			case self::NONE:
 				return;
-				break;
 			case self::LOG:
-				if($debug instanceof Exception) {
-					MagratheaLogger::LogError(dump($debug), $this->logFile);
+				if($debug instanceof \Exception) {
+					Logger::LogError(dump($debug), $this->logFile);
 				} else {
-					MagratheaLogger::Log(dump($debug), $this->logFile);
+					Logger::Log(dump($debug), $this->logFile);
 				}
 				return;
-				break;
 			case self::DEV:
 				echo "<pre>".$debug."</pre>";
 			case self::DEBUG:
@@ -157,9 +148,8 @@ class MagratheaDebugger {
 		switch ($this->debugType) {
 			case self::NONE:
 			case self::LOG:
-				MagratheaLogger::Log(dump($debug), $this->logFile);
+				Logger::Log(dump($debug), $this->logFile);
 				return;
-				break;
 			case self::DEV:
 				echo "<pre>INFO: ".$debug."</pre>";
 			case self::DEBUG:
@@ -170,7 +160,7 @@ class MagratheaDebugger {
 
 	/**
 	 * Adds an error to the debugger
-	 * @param Exception		$err 	Exception
+	 * @param \Exception		$err 	Exception
 	 */
 	public function AddError($err){
 		$this->Add($err);
@@ -194,7 +184,7 @@ class MagratheaDebugger {
 
 	/**
 	 * Adds an error to the debugger
-	 * @param Exception		$err 	Exception
+	 * @param \Exception		$err 	Exception
 	 */
 	public function Error($err){
 		$this->Add($err->getMessage());

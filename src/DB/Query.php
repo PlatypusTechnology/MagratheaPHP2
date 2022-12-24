@@ -15,7 +15,7 @@ namespace Magrathea2\Database;
 /**
  * Creates queries making use of objects and tables
  */
-class MagratheaQuery{
+class Query{
 
 	protected $select;
 	protected $selectDefaultArr;
