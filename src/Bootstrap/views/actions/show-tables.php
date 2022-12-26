@@ -19,6 +19,12 @@ function getColumnsOf($table) {
 	return $rs;
 }
 
+if(!$rs) {
+	?>
+	<br/>
+	<span class="error"> - no tables - </span>
+	<?
+}
 echo "<br/><br/>";
 
 foreach($rs as $table) { 

@@ -3,6 +3,7 @@
 namespace Magrathea2\Bootstrap;
 use Exception;
 use Magrathea2\Debugger;
+use Magrathea2\MagratheaPHP;
 
 #######################################################################################
 ####
@@ -28,6 +29,9 @@ class Start extends \Magrathea2\Singleton {
 	*/
 	public function Load() {
 		Debugger::Instance()->SetDev();
+		if (!$this->appPath) {
+			$this->appPath = MagratheaPHP::Instance()->appRoot;
+		}
 		include("views/index.php");
 	}
 
@@ -157,4 +161,3 @@ class Start extends \Magrathea2\Singleton {
 
 }
 
-?>

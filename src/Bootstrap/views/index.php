@@ -47,6 +47,12 @@
 								case 4:
 									include("steps/db-connect.php");
 									break;
+								case 5:
+									include("steps/db-run.php");
+									break;
+								case 6:
+									include("steps/code-generate.php");
+									break;
 								}
 							?>
 						</div>
@@ -64,6 +70,7 @@
 	</body>
 	<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 	<script type="text/javascript">
+		<?php include("javascript/scripts.js"); ?>
 		<?php include("javascript/config.js"); ?>
 		<?php include("javascript/database.js"); ?>
 	</script>

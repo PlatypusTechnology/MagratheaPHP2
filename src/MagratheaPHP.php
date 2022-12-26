@@ -37,11 +37,19 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	* Get Config Root
+	* @return string		config root
+	*/
+	public function getConfigRoot() {
+		return realpath($this->magRoot."/configs");
+	}
+
+	/**
 	* Starts Magrathea
 	* @return MagratheaPHP
 	*/
 	public function Load() {
-		$configPath = realpath($this->magRoot."/configs");
+		$configPath = $this->getConfigRoot();
 		Config::Instance()->SetPath($configPath);
 		return $this;
 	}

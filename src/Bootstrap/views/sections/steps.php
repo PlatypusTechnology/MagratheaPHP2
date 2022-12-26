@@ -49,7 +49,11 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Model / Objects Creation</a>
+			<a href="<?=linkTo($s)?>">Database management</a>
+			<ul>
+				<li>Run queries</li>
+				<li>Create tabls from models</li>
+			</ul>
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
