@@ -28,6 +28,7 @@
 				<div class="row">
 					<div class="col-4">
 					<?php include("sections/steps.php"); ?>
+					<?php include("sections/loading.php"); ?>
 					</div>
 					<div class="col-8">
 						<div class="card">
@@ -52,6 +53,9 @@
 									break;
 								case 6:
 									include("steps/code-generate.php");
+									break;
+								case 7:
+									include("steps/install-admin.php");
 									break;
 								}
 							?>

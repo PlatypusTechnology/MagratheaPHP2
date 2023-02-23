@@ -1,16 +1,23 @@
 <?php
 
-namespace Magrathea2\Database;
+namespace Magrathea2\DB;
+
+use Magrathea2\DB\Database;
+use Magrathea2\Exceptions\MagratheaModelException;
+use Magrathea2\MagratheaModel;
 
 #######################################################################################
 ####
-####    MAGRATHEA PHP2
-####    v. 2.0
-####    Magrathea by Paulo Henrique Martins
-####    Platypus technology
-####    Magrathea2 created: 2022-12 by Paulo Martins
+####	MAGRATHEA Query
+####	v. 2.0
+####
+####	Magrathea by Paulo Henrique Martins
+####	Platypus technology
+####
+####	updated: 2023-02 by Paulo Martins
 ####
 #######################################################################################
+
 
 /**
  * Creates queries making use of objects and tables
@@ -18,13 +25,15 @@ namespace Magrathea2\Database;
 class Query{
 
 	protected $select;
-	protected $selectDefaultArr;
-	protected $selectArr;
+	protected array $selectDefaultArr;
+	protected array $selectArr;
+	protected array $selectExtra;
 	protected $obj_base;
 	protected $obj_array;
 	protected $tables;
 	protected $join;
-	protected $joinArr;
+	protected array $joinArr;
+	protected $joinType;
 	protected $where;
 	protected $whereArr;
 	protected $order;
@@ -38,8 +47,8 @@ class Query{
 	 * private function
 	 * 	basically, you give me anything and I shall send back to you a correct object of that thing
 	 * 	(at least, in theory, I should work like that =P)
-	 * @param  		type 				$object 	the object that I need is kind of this
-	 * @return  	the correct object
+	 * @param  		object 		$object 	the object that I need is kind of this
+	 * @return  	object		correct object
 	 * @throws 		MagratheaModelException 		If Model does not exists...
 	 */
 	private function GiveMeThisObjectCorrect($object){
@@ -71,7 +80,6 @@ class Query{
 		$this->page = 0;
 		$this->limit = null;
 		$this->group = null;
-		return $this;
 	}
 
 	/**
@@ -79,16 +87,16 @@ class Query{
 	 * @param 	string 		$query 		string to be cleared
 	 * @return  string 		clean data
 	 */
-	static public function Clean($query){
+	static public function Clean($query): string{
 		$query = str_replace("'", "\'", $query);
 		$query = str_replace('"', '\"', $query);
 		return $query;
-	}	
+	}
 
 	/**
 	 * Creates. Just that. Just like God did.
 	 */
-	static public function Create(){
+	static public function Create(): Query{
 		return new self();
 	}
 	/**
@@ -96,7 +104,7 @@ class Query{
 	 * @param 	string 				$sel 	string to be selected
 	 *                          			in a query SELECT [blablabla] FROM ...
 	 *                          			the [blablabla] should be send to this function. Got it?
-	 * @return  MagratheaQuery 		
+	 * @return  Query 		
 	 */
 	static public function Select($sel=""){
 		$new_me = new self();
@@ -105,32 +113,32 @@ class Query{
 	}
 	/**
 	 * Generates a DELETE query
-	 * @return 		MagratheaQueryDelete
+	 * @return 		QueryDelete
 	 */
 	static public function Delete(){
-		return new MagratheaQueryDelete();
+		return new QueryDelete();
 	}
 
 	/**
 	 * Generates a UPDATE query
-	 * @return 		MagratheaQueryUpdate
+	 * @return 		QueryUpdate
 	 */
 	static public function Update(){
-		return new MagratheaQueryUpdate();
+		return new QueryUpdate();
 	}
 
 	/**
 	 * Generates a INSERT query
-	 * @return 		MagratheaQueryInsert
+	 * @return 		QueryInsert
 	 */
 	static public function Insert(){
-		return new MagratheaQueryInsert();
+		return new QueryInsert();
 	}
 
 	/**
 	 * Set table
 	 * @param 	string 		$t 		Table to be selected from
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Table($t){
 		$this->tables = $t;
@@ -140,15 +148,15 @@ class Query{
 	/**
 	 * Alias for Obj
 	 * @param 	string or object 	$obj 	Object to query
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Object($obj){
 		return $this->Obj($obj);
 	}
 	/**
 	 * Set object for getting information in query
-	 * @param 	object or string 	$obj 	object or string to be selected
-	 * @return  itself
+	 * @param 	object|string 	$obj 		object or string to be selected
+	 * @return  Query
 	 */
 	public function Obj($obj){
 		$obj = $this->GiveMeThisObjectCorrect($obj);
@@ -161,7 +169,7 @@ class Query{
 	/**
 	 * Fields to be included on the query
 	 * @param 	string or array 	$fields 	string or array that will be added to the fields in the *SELECT* built
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Fields($fields){
 		if(is_array($fields)){
@@ -174,7 +182,7 @@ class Query{
 	/**
 	 * String to be selected
 	 * @param 	string  	$sel 		string that will be used in the *SELECT* built
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function SelectStr($sel) {
 		if(!empty($sel)){
@@ -185,7 +193,7 @@ class Query{
 	/**
 	 * Includes a field to select query to be added in the end of the clause
 	 * @param 	string  	$sel 		string that will be added in the *SELECT* built
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function SelectExtra($sel){
 		array_push($this->selectExtra, $sel);
@@ -194,7 +202,7 @@ class Query{
 	/**
 	 * Selects all the fields for an object
 	 * @param 	object 		$obj 		object which its fields are going to be added in the *SELECT* built
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function SelectObj($obj){
 		$fields = $obj->GetFieldsForSelect();
@@ -203,8 +211,8 @@ class Query{
 	}
 	/**
 	 * Select multiple objects
-	 * @param 	array<objects> 		$arrObj 		an array of objects that are going to be selected
-	 * @return  itself
+	 * @param 	array<object> 		$arrObj 		an array of objects that are going to be selected
+	 * @return  Query
 	 */
 	public function SelectArrObj($arrObj){
 		foreach ($arrObj as $key => $value) {
@@ -217,7 +225,7 @@ class Query{
 	/**
 	 * A Join to be included in the query
 	 * @param 	string 			$joinGlue 			join to be included in the query
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Join($joinGlue){
 		array_push($this->joinArr, $joinGlue);
@@ -227,7 +235,7 @@ class Query{
 	 * Gets automatically related object
 	 * @param 	object or string 		$object 		object or string that will be returned in the query
 	 * @param 	string 					$field  		field that is responsible for the relation (from the main object)
-	 * @return  itself
+	 * @return  Query
 	 */	
 	public function HasOne($object, $field){
 		try{
@@ -235,7 +243,7 @@ class Query{
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
 			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$this->obj_base->GetDbTable().".".$field." = ".$object->GetDbTable().".".$object->GetPkName();
-		} catch(Exception $ex){
+		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'HasOne' must be used with MagratheaModels => ".$ex->getMessage());
 		}
 		array_push($this->joinArr, $joinGlue);
@@ -247,7 +255,7 @@ class Query{
 	 * Gets automatically related object
 	 * @param 	object or string 		$object 		object or string that will be returned in the query
 	 * @param 	string 					$field  		field that is responsible for the relation (from the main object)
-	 * @return  itself
+	 * @return  Query
 	 */	
 	public function HasMany($object, $field){
 		try{
@@ -255,7 +263,7 @@ class Query{
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
 			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
-		} catch(Exception $ex){
+		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'HasMany' must be used with MagratheaModels => ".$ex->getMessage());
 		}
 		array_push($this->joinArr, $joinGlue);
@@ -268,7 +276,7 @@ class Query{
 	 * Gets automatically related object
 	 * @param 	object or string 		$object 		object or string that will be returned in the query
 	 * @param 	string 					$field  		field that is responsible for the relation (from the other object)
-	 * @return  itself
+	 * @return  Query
 	 */	
 	public function BelongsTo($object, $field){
 		try{
@@ -276,7 +284,7 @@ class Query{
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
 			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
-		} catch(Exception $ex){
+		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'BelongsTo' must be used with MagratheaModels => ".$ex->getMessage());
 		}
 		array_push($this->joinArr, $joinGlue);
@@ -288,12 +296,12 @@ class Query{
 	 * Includes inner join
 	 * @param 	string 		$table 		Table for inner join
 	 * @param 	string 		$clause		Clause for where in the join
-	 * @return  itself
+	 * @return  Query
 	 */	
 	public function Inner($table, $clause){
 		try{
 			$joinGlue = " INNER JOIN ".$table." ON ".$clause;
-		} catch(Exception $ex){
+		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery Exception => ".$ex->getMessage());
 		}
 		array_push($this->joinArr, $joinGlue);
@@ -302,14 +310,14 @@ class Query{
 	/**
 	 * Includes inner join with Object
 	 * @param 	MagratheaModel 		$object 	object for inner join
-	 * @return  itself
+	 * @return  Query
 	 */	
 	public function InnerObject($object, $clause){
 		try{
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
 			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$clause;
-		} catch(Exception $ex){
+		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery Exception => ".$ex->getMessage());
 		}
 		array_push($this->joinArr, $joinGlue);
@@ -346,7 +354,7 @@ class Query{
 	 * 	Is possible to send a string or an array, where the keys of the array will be the name of the fields which the query will be done
 	 * @param 	string or array 	$whereSql  		String or array for building the query with
 	 * @param 	string 				$condition 		glue condition ("AND" or "OR")
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Where($whereSql, $condition="AND"){
 		if(is_array($whereSql)){
@@ -360,7 +368,7 @@ class Query{
 	 * 	Same as *Where*, but accepting only array
 	 * @param 	array 		$arr       	Array for building the query
 	 * @param 	string 		$condition 	glue condition ("AND" or "OR")
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function WhereArray($arr, $condition = "AND"){
 		$newWhere = $this->BuildWhere($arr, $condition);
@@ -382,13 +390,13 @@ class Query{
 	/**
 	 * alias for *Order*
 	 * @param string $o Order by used in query
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function OrderBy($o){ return $this->Order($o); }
 	/**
 	 * Order by...
 	 * @param string $o Order by used in query
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Order($o){
 		$this->order = $o;
@@ -398,7 +406,7 @@ class Query{
 	/**
 	 * Let's put a limit on it to help our database? Yes!
 	 * @param 	int 	$l 		limit
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Limit($l){
 		$this->limit = $l;
@@ -408,7 +416,7 @@ class Query{
 	 * Which page?
 	 * 	working altogether with *Limit*, to bring a specific page, with a specific amount of results
 	 * @param int 	$p 		page to be retrieved
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Page($p){ // there is a page zero.
 		$this->page = $p;
@@ -418,13 +426,13 @@ class Query{
 	/**
 	 * Alias for *Group*
 	 * @param 	string 		$g 		String to build the group
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function GroupBy($g){ return $this->Group($g); }
 	/**
 	 * Groupping the results...
 	 * @param 	string 		$g 		String to build the group
-	 * @return  itself
+	 * @return  Query
 	 */
 	public function Group($g){
 		$this->group = $g;
@@ -481,7 +489,7 @@ class Query{
 	 * 		We get all the information that you sent to the function
 	 * 			and, instead of returning the results,
 	 * 			we count how many rows you will have back
-	 * @return  int 	amount of rows
+	 * @return  string	 	amount of rows
 	 */
 	public function Count(){
 		$sqlCount = "SELECT COUNT(1) AS ok ";
@@ -565,175 +573,3 @@ class Query{
 	}
 
 }
-
-/**
- * Extension of Magrathea Query for creating Insert queries
- */
-class MagratheaQueryInsert extends MagratheaQuery {
-
-	private $fieldNames;
-	private $arrValues;
-
-	public function __construct(){
-		parent::__construct();
-		$this->obj_array = array();
-		$this->fieldNames = array();
-		$this->arrValues = array();
-		return $this;
-	}
-
-	/**
-	 * Array with values
-	 * 	send an array which each key represents a field and the value
-	 * 		is the correspondent and we're gonna
-	 * 		build it nicely to you! =)
-	 * @param 	array 	$vals 		array with values
-	 * @return  itself
-	 */	
-	public function Values($vals){
-		foreach ($vals as $key => $value) {
-			array_push($this->fieldNames, $key);
-			array_push($this->arrValues, $value);
-		}
-		return $this;
-	}
-
-	/**
-	 * ...and we're gonna build the query for you.
-	 * 	After gathering all the information, this function returns to you
-	 * 		a wonderful SQL query for be executed
-	 * 		or to be hang in the wall of a gallery art exhibition,
-	 * 		depending how good you are in building queries
-	 * @return  	string 		Query!!!
-	 */
-	public function SQL(){
-		$this->sql = "INSERT INTO ".$this->tables;
-		$this->sql .= " (".implode(', ', $this->fieldNames).") ";
-		$this->sql .= " VALUES ";
-		$this->sql .= " ('".implode('\', \'', $this->arrValues)."') ";
-		return $this->sql;
-	}
-
-}
-
-/**
- * Extension of Magrathea Query for creating Update queries
- */
-class MagratheaQueryUpdate extends MagratheaQuery {
-
-	private $fields;
-	private $rawFields;
-
-	public function __construct(){
-		parent::__construct();
-		$this->obj_array = array();
-		$this->fields = array();
-		$this->rawFields = array();
-		$this->where = "";
-		$this->whereArr = array();
-		return $this;
-	}
-
-	/**
-	 * Set field for value
-	 * @param 	string 		$field 		field
-	 * @param 	string 		$value 		value for field sent
-	 */
-	public function Set($field, $value){
-		$this->fields[$field] = $value;
-		return $this;
-	}
-
-	/**
-	 * Set raw condition for update
-	 * @version 1.1 +
-	 * @param 	string 		$field 		field
-	 * @param 	string 		$value 		value for field sent
-	 */
-	public function SetRaw($condition){
-		array_push($this->rawFields, $condition);
-		return $this;
-	}
-
-	/**
-	 * Set array of fields
-	 * @param 	array 		$arr 		array fields
-	 * @todo  merge array instead of replacing it
-	 */
-	public function SetArray($arr){
-		$this->field = $arr;
-		return $this;
-	}
-
-	/**
-	 * ...and we're gonna build the query for you.
-	 * 	After gathering all the information, this function returns to you
-	 * 		a wonderful SQL query for be executed
-	 * 		or to be hang in the wall of a gallery art exhibition,
-	 * 		depending how good you are in building queries
-	 * @return  	string 		Query!!!
-	 */
-	public function SQL(){
-		$this->sql = "UPDATE ".$this->tables." SET ";
-		$setsArray = array();
-		foreach ($this->rawFields as $field) {
-			array_push($setsArray, $field);
-		}
-		foreach ($this->fields as $field => $value) {
-			array_push($setsArray, $field." = '".$value."'");
-		}
-		$this->sql .= implode(", ", $setsArray);
-		$sqlWhere = $this->where;
-		if(count($this->whereArr) > 0){
-			$sqlWhere .= $this->where.implode(" AND ", $this->whereArr);
-		}
-		if(trim($sqlWhere)!=""){
-			$this->sql .= " WHERE ".$sqlWhere;
-		}
-		return $this->sql;
-	}
-
-}
-
-/**
- * Extension of Magrathea Query for creating Delete queries
- */
-class MagratheaQueryDelete extends MagratheaQuery {
-
-	public function __construct(){
-		parent::__construct();
-		$this->obj_array = array();
-		$this->join = "";
-		$this->joinArr = array();
-		$this->where = "";
-		$this->whereArr = array();
-		$this->order = "";
-		return $this;
-	}
-
-	/**
-	 * ...and we're gonna build the query for you.
-	 * 	After gathering all the information, this function returns to you
-	 * 		a wonderful SQL query for be executed
-	 * 		or to be hang in the wall of a gallery art exhibition,
-	 * 		depending how good you are in building queries
-	 * @return  	string 		Query!!!
-	 */
-	public function SQL(){
-		$this->sql = "DELETE FROM ".$this->tables;
-		if(count($this->joinArr) > 0){
-			$this->sql .= " ".implode(' ', $this->joinArr)." ";
-		}
-		$sqlWhere = $this->where;
-		if(count($this->whereArr) > 0){
-			$sqlWhere .= $this->where.implode(" AND ", $this->whereArr);
-		}
-		if(trim($sqlWhere)!=""){
-			$this->sql .= " WHERE ".$sqlWhere;
-		}
-		return $this->sql;
-	}
-
-}
-
-?>

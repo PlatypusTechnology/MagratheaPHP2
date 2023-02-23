@@ -61,6 +61,10 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
+			<a href="<?=linkTo($s)?>">Install Magrathea Admin</a>
+		</li>
+		<?php $s++; ?>
+		<li class="StepProgress-item <?=getClass($s)?>">
 			<a href="<?=linkTo($s)?>">Start Develop!</a>
 		</li>
 	</ul>

@@ -2,6 +2,23 @@ body {
 	padding-bottom: 50px;
 }
 
+#loading {
+	position: fixed;
+	z-index: 9999;
+	top: 0px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding-top: 20px;
+	font-variant: small-caps;
+	font-size: 20px;
+	border: 2px solid var(--primary);
+	border-top: 0;
+	background-color: var(--white);
+	width: 200px;
+	height: 80px;
+	text-align: center;
+}
+
 .error {
 	color: var(--error);
 	font-weight: bold;
@@ -11,19 +28,24 @@ body {
 	font-weight: bold;
 }
 .right {
-  text-align: right;
+	text-align: right;
 }
 .left {
 	float: left;
 }
 .label {
-  font-weight: bold;
+	font-weight: bold;
 }
 
 .text-lg {
 	font-size: 1.2rem;
 }
 
+.pre {
+	background-color: #DDD;
+	padding: 2px 5px;
+	border-radius: 2px;
+}
 
 pre.code, pre.query-response, pre.log-response {
 	border: 1px solid var(--black);
@@ -46,6 +68,26 @@ pre.log-response {
 	color: var(--success);
 	width: 100%;
 	padding: 20px 5px;
+}
+pre.rs-success {
+	border: 1px solid var(--success);
+}
+pre.rs-error {
+	border: 1px solid var(--error);
+}
+
+.close-bt {
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
+	border: 1px solid var(--black);
+	background-color: var(--white);
+	float: right;
+	display: block;
+	position: absolute;
+	right: 15px;
+	text-align: center;
+	cursor: pointer;
 }
 
 .card {

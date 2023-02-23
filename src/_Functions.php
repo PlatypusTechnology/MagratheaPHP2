@@ -16,8 +16,8 @@ namespace Magrathea2;
 //.$trace[0]["file"].":".$trace[0]["line"]."\n"
 /**
  * Prints easily and beautifully
- * @param 	object 		$debugme	Object to be printed
- * @param  	boolean  	$beautyme	How beautifull do you want your object printed?
+ * @param 	object|array|string|int		 		$debugme	Object to be printed
+ * @param  	boolean  											$beautyme	How beautifull do you want your object printed?
  */
 function p_r($debugme, $beautyme=true){
 	//	$trace = debug_backtrace();

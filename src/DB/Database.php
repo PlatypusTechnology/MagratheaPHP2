@@ -2,6 +2,7 @@
 
 namespace Magrathea2\DB;
 
+use Exception;
 use Magrathea2\DB\Database as DBDatabase;
 use Magrathea2\Debugger;
 use Magrathea2\Exceptions\MagratheaDBException;
@@ -67,7 +68,7 @@ class Database extends Singleton {
 	* Setups connection
 	* @param 	string 	$host 			host address for connection
 	* @param 	string 	$database		database name
-	* @param 	string 	$username 		username for connection
+	* @param 	string 	$username 	username for connection
 	* @param 	string 	$password		password for connection
 	* @return  	Database
 	*/	
@@ -82,6 +83,14 @@ class Database extends Singleton {
 			$this->connDetails["port"] = $port;
 		}
 		return $this;
+	}
+
+	/**
+	 * Gets database name
+	 * @return 	string		Database name
+	 */
+	public function getDatabaseName(): string | null {
+		return @$this->connDetails["database"];
 	}
 
 	/**
@@ -114,6 +123,9 @@ class Database extends Singleton {
 	* @throws	MagratheaDbException
 	*/
 	public function OpenConnectionPlease() : bool {
+		if(!$this->connDetails) {
+			throw new MagratheaDBException("DB not initialized");
+		}
 		try{
 			if($this->connDetails["port"])
 				$this->mysqli = @new \mysqli(
@@ -262,8 +274,8 @@ class Database extends Singleton {
 	
 	/**
 	* executes the query and returns only the first row of the result
-	* @param 	  array|object 		$sql 		Query to be executed
-	* @return 	object 		      $result 	First line of the query
+	* @param 	  array|object|string 		$sql 		Query to be executed
+	* @return 	array 		      				$result 	First line of the query
 	*/
 	public function QueryRow($sql) : array | object {
 		$arrRetorno = array();
@@ -333,9 +345,80 @@ class Database extends Singleton {
 			$this->mysqli->commit();
 
 		} catch(\Exception $ex) {
+			throw $ex;
 		}
 		$this->mysqli->autocommit(true);
 		$this->CloseConnectionThanks();
+	}
+
+
+	/**
+	* receives a string with multiple queries and executes them all
+	*	@todo confirms if this is working properly
+	* @param 	array|string 		$multipleQueries  	String of queries to be executed
+	* @param 	bool						$killable						Should all queries be killed in case of error?
+	* @throws 	MagratheaDBException
+	*/
+	public function QueryMulti($queries, $killable=true) {
+		if (is_string($queries)) {
+			$queries = explode(";\n", $queries);
+		}
+		$this->OpenConnectionPlease();
+		$results = array();
+		$q = 0;
+		foreach ($queries as $query) {
+			$query = trim($query);
+			if(!$query) continue;
+			try {
+				if ($this->mysqli->query($query)) {
+					$rows = array();
+					if (substr(trim($query), 0, 6) == "CREATE") {
+						$rows = array("success" => true);
+					}
+					$result = $this->mysqli->store_result();
+					if ($result) {
+						while ($row = $result->fetch_assoc()) {
+							$rows[] = $row;
+						}
+						$result->free();
+					}
+					$results[$q] = [
+						"query" => $query,
+						"success" => true,
+						"result" => $rows,
+					];
+				} else {
+					if ($killable) {
+						throw new MagratheaDBException($this->mysqli->error);
+					}
+					$results[$q] = [
+						"query" => $query,
+						"success" => false,
+						"result" => $this->mysqli->error,
+					];
+				}
+			} catch(\Exception $ex) {
+				throw $ex;
+			}
+			$q++;
+		}
+		$this->CloseConnectionThanks();
+		return $results;
+	}
+
+	/**
+	 * imports a .sql file to the database
+	 * @param		string 	$file_path		Path of the file to import
+	 * @param 	bool		$killable			Should all queries be killed in case of error?
+	 * @throws 	MagratheaDBException
+	 */
+	public function ImportFile($file_path, $killable=true) {
+		if(!$file_path) {
+			throw new MagratheaDBException("SQL file path is empty: [".$file_path."]");
+		}
+		$queries = file_get_contents($file_path);
+		$rs = $this->QueryMulti($queries, $killable);
+		return $rs;
 	}
 	
 	/**

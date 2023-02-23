@@ -55,6 +55,14 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	* Connect to Database (other name for Connect)
+	* @return MagratheaPHP
+	*/
+	public function StartDB() {
+		return $this->Connect();
+	}
+
+	/**
 	* Connect to Database
 	* @return MagratheaPHP
 	*/
@@ -70,7 +78,13 @@ class MagratheaPHP extends Singleton {
 		return $this;
 	}
 
-
+	/**
+	 * Gets Database object
+	 * @return Database
+	 */
+	public function GetDB(): Database {
+		return Database::Instance();
+	}
 
 	/**
 	* Gets Magrathea Version

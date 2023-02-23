@@ -1,9 +1,18 @@
 :root {
-    --white: #FFF;
-    --black: #000;
-    --gray: #CCC;
-    --error: #C32;
-    --success: green;
-    --primary: rgb(203, 128, 8);
-    /* --primary: green; */
+	--white: #FFF;
+	--black: #000;
+	--gray: #CCC;
+	--error: #C32;
+	--success: green;
+	--primary: rgb(203, 128, 8);
+	/* --primary: green; */
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:visited,
+.btn-primary:focus {
+    background-color: var(--primary);
+    border-color: var(--primary);
 }

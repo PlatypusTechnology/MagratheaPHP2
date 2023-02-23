@@ -1,17 +1,17 @@
 function testConnection() {
 	let url = "/?action=database-test";
-	$.get(url, rs => showOn("#ajax-response", rs));
+	ajax("GET", url).then(rs => showOn("#ajax-response", rs));
 }
 
 function getTables() {
 	let url = "/?action=show-tables";
-	$.get(url, rs => showOn("#ajax-response2", rs));
+	ajax("GET", url).then(rs => showOn("#ajax-response2", rs));
 }
 
 function runQuery() {
 	let query = $("#query").val();
 	let url = "/?action=run-query";
-	$.post(url, { q: query }, rs => showOn("#query-response", rs));
+	ajax("POST", url, { q: query }).then(rs => showOn("#ajax-response", rs));
 }
 
 function sendCreateToExecute(table) {
