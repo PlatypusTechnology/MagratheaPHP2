@@ -64,10 +64,10 @@ class ConfigFile {
 	*	Gets configuration
 	*	@param 	string 	$config_name 	Configuration to be got. If empty, returns all the configuration into the file
 	*									If an acceptable config name, returns its value
-	*	@return 	string/int/array	If `$config_name` is empty, returns all the configuration. Otherwise, 
+	*	@return 	string|int|array	If `$config_name` is empty, returns all the configuration. Otherwise, 
 	*   @todo 	exception 704 on key does not exists
 	*/
-	public function GetConfig($config_name=""){
+	public function GetConfig($config_name="") {
 		if( is_null($this->configs) ){
 			$this->loadFile();
 			$this->configs = @parse_ini_file($this->path."/".$this->configFileName, true);

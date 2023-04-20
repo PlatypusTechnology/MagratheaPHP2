@@ -1,0 +1,26 @@
+.card {
+	margin-top: 10px;
+}
+
+.card-close {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 41px;
+	height: 41px;
+	font-size: 23px;
+	padding-left: 13px;
+	cursor: pointer;
+	border-left: var(--bs-card-border-width) solid var(--bs-card-border-color);
+}
+
+.card.error-card {
+	margin: 50px 20px;
+	position: fixed;
+	border: 1px solid var(--error);
+}
+.card.error-card .card-header {
+	background: var(--error);
+	color: var(--white);
+	font-weight: bold;
+}

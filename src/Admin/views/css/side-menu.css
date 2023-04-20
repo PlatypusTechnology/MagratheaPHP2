@@ -1,0 +1,71 @@
+
+.side-menu {
+	min-height: 100vh;
+	transition: margin 0.25s ease-out;
+	width: 20%;
+}
+
+.side-menu .env-container {
+	position: absolute;
+	margin-left: -30px;
+	top: 50px;
+	width: 20%;
+}
+.side-menu .env-container .env-title {
+	color: var(--white);
+	background-color: var(--primary);
+	border-radius: 10px;
+	padding: 2px 5px;
+	font-size: 12px;
+	float: right;
+}
+
+.side-menu .sidebar-heading {
+	min-height: 60px;
+	padding: 5px 3px 0 5px;
+}
+.side-menu .sidebar-heading h1 {
+	font-size: 14px;
+	font-variant: small-caps;
+	display: inline-block;
+	max-width: 150px;
+}
+
+.side-menu ul {
+	margin-top: 30px;
+}
+.side-menu li.list-group-item {
+	cursor: pointer;
+	padding: 0;
+	border-left: 0;
+	border-right: 0;
+}
+.side-menu li.list-group-item.active {
+	font-weight: bold;
+	background-color: var(--primary-light);
+}
+.side-menu span.title {
+	font-weight: bold;
+	display: block;
+	margin-top: 20px;
+	padding-left: 10px;
+	color: var(--primary);
+}
+.side-menu a {
+	color: var(--bs-list-group-action-color);
+	text-decoration: none;
+	display: block;
+	width: 100%;
+	padding: 5px 0px 5px 20px;
+}
+
+.side-menu a.menu-logout {
+	margin-top: 30px;
+}
+.side-menu a.menu-logout::before {
+  content: "\00d7"; /* This is the HTML entity for the close symbol */
+  margin-right: 5px; /* Optional - add some space between the close symbol and the link */
+	border: 1px solid #636464;
+	padding: 0 4px;
+}
+

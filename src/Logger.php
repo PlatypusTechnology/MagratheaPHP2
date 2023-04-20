@@ -1,8 +1,10 @@
 <?php
 
 namespace Magrathea2;
-use Magrathea2\Exceptions\MagratheaDBException;
+use Magrathea2\Singleton;
 use Magrathea2\Exceptions\MagratheaException;
+use Magrathea2\Exceptions\MagratheaConfigException;
+use Magrathea2\Exceptions\MagratheaDBException;
 
 #######################################################################################
 ####
@@ -17,72 +19,133 @@ use Magrathea2\Exceptions\MagratheaException;
 
 /**
  * Magrathea class for logging anything
- * The log will be created in *logs* folder in the root of the project (same dir level as *app*)
  * By default, the message is written with a timestamp before it.
  * 		- For *Log* function, the default file is saved with a timestamp in the name
  * 		- For *LogError* function, by default, all the data is saved in a same file called *log_error.txt*
  */
-class Logger {
+class Logger extends Singleton {
+
+	private $logPath;
+	private $activeLogFile;
+
+	public function Initialize(): void {
+	}
+
+	/**
+	 * Gets active log file
+	 * @return string	log path
+	 */
+	public function GetFullLogFile(): string {
+		$this->CheckLogFileIsNull();
+		return $this->logPath."/".$this->activeLogFile;
+	}
+
+	/**
+	 * Sets the active log file
+	 * @param string $name
+	 * @return Logger		itself
+	 */
+	public function SetLogFile($name): Logger {
+		$this->activeLogFile = $name;
+		return $this;
+	}
+	/**
+	 * returns active log file name
+	 * @return string		file name
+	 */
+	public function GetLogFile(): string {
+		$this->CheckLogFileIsNull();
+		return $this->activeLogFile;
+	}
+	
+	private function StartLogName(): Logger {
+		$this->activeLogFile = "log_".@date("Ym").".txt";
+		return $this;
+	}
+
+	/**
+	 * loads the path for saving log
+	 * @return Logger
+	 */
+	public function LoadLogsPath(): Logger {
+		try {
+			$logsPath = Config::Instance()->Get("logs_path");
+		} catch(MagratheaConfigException $ex) {
+			$magRoot = MagratheaPHP::Instance()->magRoot;
+			if(!$magRoot) throw new MagratheaConfigException("logs_path is invalid and mag root is null");
+			$logsPath = $magRoot."/logs";
+		} catch(\Exception $ex) {
+			throw $ex;
+		}
+		$this->logPath = $logsPath;
+		return $this;
+	}
+
+	/**
+	 * Returns log path
+	 * @return 	string 	$logPath
+	 */
+	public function GetLogPath(): string|null {
+		$this->CheckLogFileIsNull();
+		return $this->logPath;
+	}
+	/**
+	 * Sets log path
+	 * @param string $p		path for the logs folder
+	 * @return Logger
+	 */
+	public function SetLogPath($p): Logger {
+		$this->logPath = $p;
+		return $this;
+	}
+
+	private function CheckLogFileIsNull() {
+		if(!$this->logPath) {
+			$this->LoadLogsPath();
+		}
+		if(!$this->activeLogFile) {
+			$this->StartLogName();
+		}
+	}
 
 	/**
 	 * Logs a message - any message
 	 * @param 	string 		$logThis 	message to be logged
-	 * @param 	string 		$logFile 	file name that should be written
 	 * @throws  \Exception 				If path is not writablle
 	 */
-	public static function Log($logThis, $logFile=null) {
-		if(Config::Instance()->GetEnvironment() == "test") return;
-		if( is_a($logThis, "MagratheaConfigException") ) {
+	public function Log($logThis) {
+		if( Config::Instance()->GetEnvironment() == "test" ) return;
+		if( is_a($logThis, \Magrathea2\Exceptions\MagratheaConfigException::class) ) {
 			p_r($logThis);
 			echo "==[config not properly set!]==";
-			return;			
+			return;
 		}
-		$path = Config::Instance()->GetConfigFromDefault("logs_path");
-		if(empty($path)) {
-			$path = realpath(Config::Instance()->GetConfigFromDefault("site_path")."/../logs");
-		}
-		if(empty($logFile)) $logFile = "log_".@date("Ym").".txt";
 		$date = @date("Y-m-d h:i:s");
 		$line = "[".$date."] = ".$logThis."\n";
-		$file = $path."/".$logFile;
-		if(!is_writable($path)){
+		$path = $this->GetFullLogFile();
+		if(!is_writable($this->logPath)){
 			$message = "error trying to save file at [".$path."] - confirm permission for writing";
 			$message .= " - - error message: [".$logThis."]";
 			throw new \Magrathea2\Exceptions\MagratheaException($message);
 		}
-		file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+		file_put_contents($path, $line, FILE_APPEND);
 	}
+
 	/**
 	 * Logs an error
-	 * @param 	string	 	$logThis 	error to be logged
-	 * @param 	string 		$logFile 	file name that should be written
-	 * @throws  \Exception 				If path is not writablle
+	 * @param 	\Exception	 	$logThis 	error to be logged
 	 */
-	public static function LogError($error, $filename=null){
-		$path = Config::Instance()->GetConfigFromDefault("logs_path");
-		if(empty($path)) {
-			$path = realpath(Config::Instance()->GetConfigFromDefault("site_path")."/../logs");
-		}
-		if(empty($filename)) $filename = "log_error";
+	public function LogError($error){
 		$date = @date("Y-m-d_his");
-		$filename .= $date.".txt";
-		$line = "";
 		if ($error instanceof MagratheaException) {
-			$line = "MagratheaError Catch: [".$date."] = ".$error->getMsg()."\n";
+			$line = get_class($error)." Catch: [".$date."] = ".$error->getMsg();
 			if ($error instanceof MagratheaDBException) {
-				$line .= " ==> SQL: [".$error->query."]";
+				$line .= "\n\t ==> SQL: [".$error->query."]";
 			}
-			} else if ($error instanceof \Exception) {
-			$line = "MagratheaError Catch: [".$date."] = ".$error->getMessage()()."\n";
+		} else if ($error instanceof \Exception) {
+			$line = "MagratheaError Catch: [".$date."] = ".$error->getMessage();
 		}
-		$file = $path.$filename;
-		if(!is_writable($path)){
-			if(empty($path)) {
-				throw new \Exception("log folder not specified");
-			}
-			throw new \Exception("error trying to save log file at [".$path."] - confirm permission for writing");
-		}
-		file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+		return $this->Log($line);
 	}
 }
 

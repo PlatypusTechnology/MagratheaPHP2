@@ -7,7 +7,7 @@
 	db_user = "db_user"
 	db_pass = "password123"
 	logs_path = ""
-	time_zone = "America/Sao_Paulo"
+	timezone = "America/Sao_Paulo"
 	app_url = "http://localhost.com"
 	jwt_key = ""
 
@@ -17,6 +17,6 @@
 	db_user = "db_user"
 	db_pass = "password123"
 	logs_path = ""
-	time_zone = "America/Sao_Paulo"
+	timezone = "America/Sao_Paulo"
 	app_url = "https://platypusweb.com"
 	jwt_key = ""

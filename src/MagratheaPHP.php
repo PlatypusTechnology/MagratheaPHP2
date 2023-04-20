@@ -2,7 +2,9 @@
 
 namespace Magrathea2;
 
+use Exception;
 use Magrathea2\DB\Database;
+use Magrathea2\Exceptions\MagratheaConfigException;
 
 #######################################################################################
 ####
@@ -27,7 +29,7 @@ class MagratheaPHP extends Singleton {
 
 	/**
 	* Sets App Root Path
-		* @param    string  $path   Root path of project
+	* @param    string  $path   Root path of project
 	* @return MagratheaPHP
 	*/
 	public function AppPath($path) {
@@ -37,11 +39,20 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Set debug development
+	 * @return MagratheaPHP
+	 */
+	public function Debug(): MagratheaPHP {
+		Debugger::Instance()->SetDebug();
+		return $this;
+	}
+
+	/**
 	* Get Config Root
 	* @return string		config root
 	*/
 	public function getConfigRoot() {
-		return realpath($this->magRoot."/configs");
+		return $this->magRoot."/configs";
 	}
 
 	/**
@@ -50,7 +61,10 @@ class MagratheaPHP extends Singleton {
 	*/
 	public function Load() {
 		$configPath = $this->getConfigRoot();
+		if(!$configPath) throw new MagratheaConfigException("magrathea path is empty");
 		Config::Instance()->SetPath($configPath);
+		$timezone = Config::Instance()->Get("timezone");
+		if($timezone) date_default_timezone_set($timezone);
 		return $this;
 	}
 
@@ -67,15 +81,19 @@ class MagratheaPHP extends Singleton {
 	* @return MagratheaPHP
 	*/
 	public function Connect() {
-		$config = Config::Instance();
-		$host = $config->Get("db_host");
-		$name = $config->Get("db_name");
-		$user = $config->Get("db_user");
-		$pass = $config->Get("db_pass");
-
-		$db = Database::Instance();
-		$db->SetConnection($host, $name, $user, $pass);
-		return $this;
+		try {
+			$config = Config::Instance();
+			$host = $config->Get("db_host");
+			$name = $config->Get("db_name");
+			$user = $config->Get("db_user");
+			$pass = $config->Get("db_pass");
+	
+			$db = Database::Instance();
+			$db->SetConnection($host, $name, $user, $pass);
+			return $this;
+		} catch(Exception $ex) {
+			throw $ex;
+		}
 	}
 
 	/**
@@ -86,21 +104,35 @@ class MagratheaPHP extends Singleton {
 		return Database::Instance();
 	}
 
+	/** 
+	 * starts session if needed
+	 */
+	public function StartSession(): MagratheaPHP {
+		if (session_status() == PHP_SESSION_NONE) {
+			session_start();
+		}
+		return $this;
+	}
+
+	public static function LoadVendor(): void {
+		$vendorLoad = __DIR__."/../vendor/autoload.php";
+		require($vendorLoad);
+	}
+
 	/**
 	* Gets Magrathea Version
 	* @return   string    version
 	*/
 	public static function Version(): string { 
-				return "0.1";
-		}
+		return "0.1";
+	}
 
 	/**
 	* Test Magrathea
 	* @return   void
 	*/
 	public static function Test(): void { 
-				echo "MagratheaPHP2 is working!";
-		}
+		echo "MagratheaPHP2 is working!";
+	}
 
 }
-?>

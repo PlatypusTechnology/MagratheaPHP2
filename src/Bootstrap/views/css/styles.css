@@ -19,6 +19,10 @@ body {
 	text-align: center;
 }
 
+header .logo {
+	margin-right: 20px;
+}
+
 .error {
 	color: var(--error);
 	font-weight: bold;

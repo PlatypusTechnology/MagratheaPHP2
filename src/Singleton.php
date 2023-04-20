@@ -24,7 +24,7 @@ abstract class Singleton {
 	final protected function __clone(){}
 	final public function __wakeup(){}
 
-	public static function Instance(): static {
+	public static function Instance(): static | Singleton {
 		$classname = get_called_class();
 		if(!array_key_exists($classname, static::$instance) || static::$instance[$classname] === null) {
 				static::$instance[$classname] = new static;
@@ -33,6 +33,12 @@ abstract class Singleton {
 				}
 		}
 		return static::$instance[$classname];
+	}
+
+	public static function MockClass($mocker): static | Singleton {
+		$classname = get_called_class();
+		static::$instance[$classname] = $mocker;
+		return $mocker;
 	}
 }
 

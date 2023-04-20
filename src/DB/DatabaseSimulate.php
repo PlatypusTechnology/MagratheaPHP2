@@ -1,6 +1,9 @@
 <?php
 
-namespace Magrathea2\Database;
+namespace Magrathea2\DB;
+use Magrathea2\Debugger;
+use Magrathea2\Exceptions\MagratheaDBException;
+use Magrathea2\Singleton;
 
 #######################################################################################
 ####
@@ -17,7 +20,7 @@ namespace Magrathea2\Database;
 * This class will provide a simulation of MagratheaDatabase
 * 	queries will be saved on a file.
 */
-class MagratheaDatabase{
+class DatabaseSimulate extends Singleton {
 
 	const FETCH_ASSOC = 1;
 	const FETCH_OBJECT = 2;
@@ -29,47 +32,19 @@ class MagratheaDatabase{
 
 	private $count = 0;
 
-	protected static $inst = null;
-
 	/**
-	* This is a singleton!
-	* Constructor is private
+	* Just fake it!
+	* @return string  simulation
 	*/
-	private function __construct(){
-	}
-
-	/**
-	* This is a singleton!
-	* Instance loader
-	* @return 	result of MagratheaDebugger
-	*/
-	private function Simulate($fn, $sql, $values=null){
+	private function Simulate($fn, $sql, $values=null): string {
 		$simulation =  "SIMULATING QUERY: (".$fn.")[".$sql."]";
 		if(!is_null($values)){
 			$simulation .= " - values: [".implode(',', $values)."]";
 		}
-		return MagratheaDebugger::Instance()->Add($simulation);
-	}
-
-	/**
-	* This is a singleton!
-	* Instance loader
-	* @return 	MagratheaDatabase 	Instance of the object
-	*/
-	public static function Instance(){
-		if (self::$inst === null) {
-			self::$inst = new MagratheaDatabase();
-		}
-		return self::$inst;
+		Debugger::Instance()->AddQuery($sql, $values);
+		return $simulation;
 	}
 	
-	/**
-	* This is a singleton!
-	* Should be called by private method Instance.
-	* Don't implement new ones
-	*/
-	public function MagratheaDatabase(){
-	}
 	/**
 	* Sets the connection array object
 	* @param 	array 	$dsn_arr	array with connection data, as the sample:
@@ -79,7 +54,7 @@ class MagratheaDatabase{
 	*						            'username' => $username,
 	*						            'password' => $password,
 	*								);
-	* @return  	itself
+	* @return  	DatabaseSimulate
 	*/
 	public function SetConnectionArray($dsn_arr){
 		$this->connDetails = $dsn_arr;
@@ -91,7 +66,7 @@ class MagratheaDatabase{
 	* @param 	string 	$database		database name
 	* @param 	string 	$username 		username for connection
 	* @param 	string 	$password		password for connection
-	* @return  	itself
+	* @return  	DatabaseSimulate
 	*/	
 	public function SetConnection($host, $database, $username, $password, $port=null){
 		$this->connDetails = array(
@@ -115,7 +90,7 @@ class MagratheaDatabase{
 	*									object:
 	*										object with columns as properties
 	*									if anything different from those values is sent, "assoc" is used
-	* @return  	itself
+	* @return  	DatabaseSimulate
 	*/	
 	public function SetFetchMode($fetch){
 		switch($fetch){
@@ -133,13 +108,14 @@ class MagratheaDatabase{
 	/**
 	* Open connection, please. Please! 0=)
 	* @return 	boolean		true or false, if connection succedded
-	* @throws	MagratheaDbException
+	* @throws	MagratheaDBException
 	*/
 	public function OpenConnectionPlease(){
-		return $this->Simulate("OpenConnection", "mysqli_connect()", $this->connDetails);
+		$conn = $this->Simulate("OpenConnection", "mysqli_connect()", $this->connDetails);
+		return true;
 	}
 	/**
-	* Already uses you.. Bye.
+	* Already used you.. Bye.
 	*/
 	public function CloseConnectionThanks(){
 		return $this->Simulate("closeConnection", "mysqli_close()", $this->connDetails);
@@ -162,22 +138,22 @@ class MagratheaDatabase{
 		if($values != null)
 			$debug .= " values: [ ".implode(',', $values)." ] \n";
 		$debug .= " error: [ ".$error." ] \n";
-		MagratheaDebugger::Instance()->Add($debug);
+		Debugger::Instance()->Add($debug);
 	}
 
 	/**
 	* Control Log
 	* @param 	string 		$sql 		Query to be logged
-	* @param 	object 		$values 	Values to be logged
+	* @param 	array 		$values 	Values to be logged
 	*/
 	private function LogControl($sql, $values=null){
-		MagratheaDebugger::Instance()->AddQuery($sql, $values);
+		Debugger::Instance()->AddQuery($sql, $values);
 	}
 
 
 	/**
 	 * Gets a mysqli result and returns an array with the rows, according to the selected fetch mode
-	 * @param result  $result        result to be fetched
+	 * @param object  $result        result to be fetched
 	 * @param boolean $firstLineOnly should we fetch all the result or do we need only the first line?
 	 */
 	private function FetchResult($result, $firstLineOnly=false){
@@ -220,7 +196,7 @@ class MagratheaDatabase{
 	/**
 	* executes the query and returns the full data
 	* @param 	string 		$sql 		Query to be executed
-	* @return 	object 		$result 	Result of the query
+	* @return 	object|null 		$result 	Result of the query
 	*/
 	public function Query($sql){
 		$this->OpenConnectionPlease();
@@ -231,7 +207,7 @@ class MagratheaDatabase{
 	
 	/**
 	* executes the query and returns the full data in an array
-	* @param 	string 		$sql 		Query to be executed
+	* @param 		string 		$sql 			Query to be executed
 	* @return 	array 		$result 	Result of the query (one row for line result)
 	*/
 	public function QueryAll($sql){
@@ -244,8 +220,8 @@ class MagratheaDatabase{
 	
 	/**
 	* executes the query and returns only the first row of the result
-	* @param 	string 		$sql 		Query to be executed
-	* @return 	object 		$result 	First line of the query
+	* @param 		string 					$sql 			Query to be executed
+	* @return 	object|array 		$result 	First line of the query
 	*/
 	public function QueryRow($sql){
 		$arrRetorno = array();
@@ -257,8 +233,8 @@ class MagratheaDatabase{
 	
 	/**
 	* executes the query and returns only the first value of the first row of the result
-	* @param 	string 		$sql 		Query to be executed
-	* @return 	object 		$result 	First value of the first line
+	* @param 		string 				$sql 			Query to be executed
+	* @return 	object|null 	$result 	First value of the first line
 	*/
 	public function QueryOne($sql){
 		$this->OpenConnectionPlease();

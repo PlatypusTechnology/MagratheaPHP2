@@ -1,6 +1,8 @@
 <?php
 namespace Magrathea2;
 
+use Magrathea2\DB\Database;
+
 #######################################################################################
 ####
 ####    MAGRATHEA PHP2
@@ -12,6 +14,13 @@ namespace Magrathea2;
 ####
 #######################################################################################
 
+/**
+ * Date of now - mySQL format
+ * @return 	string 		Y-m-d H:i:s format of date
+ */
+function now(): string {
+	return date("Y-m-d H:i:s");
+}
 
 //.$trace[0]["file"].":".$trace[0]["line"]."\n"
 /**
@@ -19,17 +28,16 @@ namespace Magrathea2;
  * @param 	object|array|string|int		 		$debugme	Object to be printed
  * @param  	boolean  											$beautyme	How beautifull do you want your object printed?
  */
-function p_r($debugme, $beautyme=true){
-	//	$trace = debug_backtrace();
-		if( $beautyme ){
-			echo nice_p_r($debugme); 
-		} else { 
-			echo "<pre>"; print_r($debugme); echo "</pre>";
-		}
-	}
-	
-	
+function p_r($debugme){
+	print_r($debugme);
+}
 
+/**
+ * Gets an object and returns if it is a Magrathea Model
+ */
+function isMagratheaModel($object): bool {
+	return is_a($object, "\Magrathea2\MagratheaModel");
+}
 
 
 
@@ -39,21 +47,21 @@ function p_r($debugme, $beautyme=true){
  * @param 	string 		$env	Environment to load
  * @return 	MagratheaDatabase Instance
  */
-function loadMagratheaEnv($env = null): Database\MagratheaDatabase|bool{
+function loadMagratheaEnv($env = null): Database|bool{
 	global $magdb;
 	if( empty($env) ){
 		try {
-			$env = MagratheaConfig::Instance()->GetEnvironment();
+			$env = Config::Instance()->GetEnvironment();
 		} catch(\Exception $ex) { return false; }
 		if(empty($env)) return false;
 	} else {
-		MagratheaConfig::Instance()->SetDefaultEnvironment($env);
+		Config::Instance()->SetEnvironment($env);
 	}
 	try {
-		$configSection = MagratheaConfig::Instance()->GetConfigSection($env);
-		date_default_timezone_set( MagratheaConfig::Instance()->GetConfig("general/time_zone") );
+		$configSection = Config::Instance()->GetConfigSection($env);
+		date_default_timezone_set( Config::Instance()->GetConfig("general/time_zone") );
 
-		$magdb = Database\MagratheaDatabase::Instance();
+		$magdb = Database::Instance();
 		$conn = $magdb->SetConnection($configSection["db_host"], $configSection["db_name"], $configSection["db_user"], $configSection["db_pass"]);
 	} catch(\Exception $ex) {
 		throw $ex;
@@ -62,47 +70,17 @@ function loadMagratheaEnv($env = null): Database\MagratheaDatabase|bool{
 }
 
 /**
- * Prints wonderfull debugs!
- * @param 	object 		$debugme 	Object to be printed
- * @param  	string  	$prev_char 	separator
- * @return  string  	nicely printed var
- */	
-function nice_p_r($debugme, $prev_char = ""){
-	$html = "";
-	$html .= (empty($prev_char) ? "<div>" : "");
-	if( is_array( $debugme ) ){
-		$html .= $prev_char."<span class='p_r_title'> Array: [</span><br/><div style='margin-right: 20px;'>";
-		foreach( $debugme as $key => $item ){
-			$html .= "<div style='padding-right: 20px;'><span class='p_r_title'>[".$key."] =></span><br/>";
-			$html .= nice_p_r($item, $prev_char."&nbsp;");
-			$html .= "</div>";
-		}
-		$html .= $prev_char."</div><hr/>";
-	} else {
-		$html .= $prev_char.$debugme;
-	}
-	$html .= (empty($prev_char) ? "</div>" : "");
-	return $html;
-}
-
-/**
  * dumps vars
  * @param 	object 		$debugme 	Object to be printed
  * @return  string  	nicely printed var
  */	
-function dump($debugme): string {
+/*
+ function dump($debugme): string {
 	ob_start();
 	var_dump($debugme);
 	return ob_get_clean();
 }
-
-/**
- * Date of now - mySQL format
- * @return 	string 		Y-m-d H:i:s format of date
- */
-function now(): string {
-	return date("Y-m-d H:i:s");
-}
+*/
 
 /**
  * gets an array and prints a select
@@ -139,11 +117,10 @@ function magrathea_getTypesArr() : array{
  * in Magrathea, will print debug, if available...
  * 	@todo  print debug in a beautifull way in the end of the page...
  */
-// function shutdownFn(){
-// 	if(MagratheaDebugger::Instance()->GetType() == MagratheaDebugger::DEBUG){
-// 		MagratheaDebugger::Instance()->Show();
-// 	}
-// }
-// register_shutdown_function('Magrathea2\shutdownFn');
+register_shutdown_function(function(){
+	if(Debugger::Instance()->GetType() == Debugger::DEBUG){
+		Debugger::Instance()->Show();
+	}
+});
 
 ?>

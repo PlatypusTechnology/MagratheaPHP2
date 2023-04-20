@@ -23,17 +23,33 @@ class Config extends Singleton {
 	private $environment = null;
 
 	/**
+	 * Getst file path
+	 * @return 	string 	file path
+	 */
+	public function GetFilePath(): string {
+		$filePath = $this->path."/".$this->configFile;
+		if(!file_exists($filePath)){
+			if(!$this->path) {
+				throw new MagratheaConfigException("Invalid path", $this->path."/".$this->configFile);
+			}
+			throw new MagratheaConfigException("File could not be found: ".$this->path."/".$this->configFile, $this->path."/".$this->configFile);
+		}
+		return $filePath;
+	}
+
+	/**
 	* Function for openning the file specified in `$this->config_file_name`
 	* actually, it works checking if file exists and throwing an error if don't.
 	* @throws MagratheaConfigException for file not found
 	* @return Config
 	*/
 	private function LoadFile(){
-		if(!file_exists($this->path."/".$this->configFile)){
-			if(!$this->path) {
-				throw new MagratheaConfigException("Invalid path", $this->path."/".$this->configFile);
-			}
-			throw new MagratheaConfigException("File could not be found", $this->path."/".$this->configFile);
+		if($this->configs) {
+			return $this;
+		}
+		$this->configs = @parse_ini_file($this->GetFilePath(), true);
+		if( !$this->configs ){
+			throw new MagratheaConfigException("There was an error trying to load the config file. File: [".$this->path."/".$this->configFile."]");
 		}
 		return $this;
 	}
@@ -43,9 +59,35 @@ class Config extends Singleton {
 	* @param string $p Path to the file
 	* @return Config
 	*/
-	public function SetPath($p){
-		$this->path = rtrim($p, '/').'/';
+	public function SetPath($p) {
+		$this->path = rtrim($p, '/');
 		return $this;
+	}
+	/**
+	* set name of config file
+	* @param string $f 	name of file
+	* @return Config
+	*/
+	public function SetConfigFile($f) {
+		$this->configFile = $f;
+		return $this;
+	}
+	/**
+	 * sets config
+	 * @param 	array 	$c	configuration
+	 * @return 	Config
+	 */
+	public function SetConfig($c) {
+		$this->configs = $c;
+		return $this;
+	}
+
+	/** 
+	 * Gets file path
+	 * @return string	path of the config file
+	 */
+	public function GetPath(): string {
+		return $this->path;
 	}
 
 	/**
@@ -71,6 +113,17 @@ class Config extends Singleton {
 	}
 
 	/**
+	 * returns an array with available environments
+	 * @return 		array		environments list
+	 */
+	public function GetAvailableEnvironments(): array {
+		$data = $this->GetConfig();
+		$envs = array_keys($data);
+		$envs = array_combine(array_values($envs), $envs);
+		return array_diff($envs, array("general")); // as described by ChatGPT
+	}
+
+	/**
 	* `$config_name` can be called to get a parameter from inside a section of the config file. To achieve this, you should use a slash (/) to separate the section from the property.
 	* If the slash is not used, the function will return the property only if it's on the root.
 	* If `$config_name` is a section name, the function will return the full section as an Array.
@@ -82,10 +135,6 @@ class Config extends Singleton {
 	public function GetConfig($config_name="") : array|string{
 		if( $this->configs == null ){
 			$this->LoadFile();
-			$this->configs = @parse_ini_file($this->path."/".$this->configFile, true, INI_SCANNER_TYPED);
-			if( !$this->configs ){
-				throw new MagratheaConfigException("There was an error trying to load the config file. [".$this->path."/".$this->configFile."]<br/>");
-			}
 		}
 		if( empty($config_name) ){
 			return $this->configs;
@@ -113,10 +162,6 @@ class Config extends Singleton {
 	public function GetConfigFromDefault($config_name, $throwable=false){
 		if( $this->configs == null ){
 			$this->LoadFile();
-			$this->configs = @parse_ini_file($this->path."/".$this->configFile, true);
-			if( !$this->configs ){
-				throw new MagratheaConfigException("There was an error trying to load the config file.<br/>");
-			}
 		}
 		if(!$this->environment)
 			$this->environment = $this->configs["general"]["use_environment"];
@@ -138,18 +183,12 @@ class Config extends Singleton {
 	* @todo 	exception 704 on key does not exists
 	*/
 	public function GetConfigSection($section_name){
-		$this->LoadFile();
-		$configSection = @parse_ini_file($this->path."/".$this->configFile, true);
-		if( !$configSection ){
-			throw new MagratheaConfigException("There was an error trying to load the config file.<br/>");
-		}
-		if(empty($configSection[$section_name])) {
+		$allConfig = $this->GetConfig();
+		if(empty($allConfig[$section_name])) {
 			throw new MagratheaConfigException("Conig [".$section_name."] not available in magrathea.conf", 1);
 		}
-		return $configSection[$section_name];
+		return $allConfig[$section_name];
 	}
 }
 
 
-
-?>

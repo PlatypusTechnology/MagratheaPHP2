@@ -1,6 +1,7 @@
 <?php
 
 namespace Magrathea2;
+use Magrathea2\Exceptions\MagratheaApiException;
 
 #######################################################################################
 ####
@@ -12,23 +13,11 @@ namespace Magrathea2;
 ####
 #######################################################################################
 
-if (!function_exists('getallheaders')){
-	function getallheaders(){
-		$headers = [];
-		foreach ($_SERVER as $name => $value){
-			if (substr($name, 0, 5) == 'HTTP_') {
-				$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-			}
-		}
-		return $headers;
-	}
-}
-
 /**
 * 
 * Creates a server using Magrathea Tools to respond Json files
 **/
-class Api {
+class MagratheaApi {
 
 	public $control = "Home";
 	public $action = "Index";
@@ -46,21 +35,11 @@ class Api {
 	/**
 	 * Constructor...
 	 */
-	private function __construct(){
+	public function __construct(){
 		$endpoints["GET"] = array();
 		$endpoints["POST"] = array();
 		$endpoints["PUT"] = array();
 		$endpoints["DELETE"] = array();
-	}
-
-	/**
-	 * Singleton...
-	 */
-	public static function Instance() {
-		if(!isset(self::$inst)){
-			self::$inst = new MagratheaApi();
-		}
-		return self::$inst;
 	}
 
 	/**
@@ -78,7 +57,7 @@ class Api {
 
 	/**
 	 * includes header to allow all
-	 * @return 		itself
+	 * @return 		MagratheaApi
 	 */
 	public function AllowAll(){
 		header('Access-Control-Allow-Headers: Access-Control-Allow-Origin, Content-Type, Authorization');
@@ -93,7 +72,7 @@ class Api {
 	/**
 	 * includes header to allow all
 	 * @param 	array 	$condition 	condition for header
-	 * @return  itself
+	 * @return  MagratheaApi
 	 */
 	public function Allow($allowedOrigins){
 		if (in_array($_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
@@ -104,7 +83,7 @@ class Api {
 
 	/**
 	 * Api will return the result instead of printing it
-	 * @return 		itself
+	 * @return 		MagratheaApi
 	 */
 	public function SetRaw() {
 		$this->returnRaw = true;
@@ -115,7 +94,7 @@ class Api {
 	 * defines basic authorization function
 	 * @param 	object 		$authClass 	class with authorization functions
 	 * @param 	string 		$function 	basic authorization function name
-	 * @return  itself
+	 * @return  MagratheaApi
 	 */
 	public function BaseAuthorization($authClass, $function) {
 		$this->authClass = $authClass;
@@ -136,9 +115,9 @@ class Api {
 	/**
 	 * includes header to allow all
 	 * @param 	string 	 $url 				url for Crud
-	 * @param 	class 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	object 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
 	 * @param 	object 	 $auth 				function that returns authorization for execution. "false" for public API
-	 * @return  itself
+	 * @return  MagratheaApi
 	 */
 	public function Crud($url, $control, $auth=true) {
 
@@ -163,10 +142,10 @@ class Api {
 	 * includes header to allow all
 	 * @param 	string 	 $method			method for custom URL
 	 * @param 	string 	 $url 				custom URL
-	 * @param 	class 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	object 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
 	 * @param 	string 	 $function		function to be called from control
 	 * @param 	object 	 $auth 				function that returns authorization for execution. "false" for public API
-	 * @return  itself
+	 * @return  MagratheaApi
 	 */
 	public function Add($method, $url, $control, $function, $auth=true) {
 		$method = strtoupper($method);
@@ -176,7 +155,7 @@ class Api {
 
 	/**
 	 * print all urls
-	 * @return 		itself
+	 * @return 		MagratheaApi
 	 */
 	public function Debug() {
 //		p_r($this->endpoints);
@@ -264,7 +243,7 @@ class Api {
 		$this->acceptControlAllowHeaders = $accept;
 	}
 	public function AcceptHeaders() {
-		header('Access-Control-Allow-Headers: '.implode($this->acceptControlAllowHeaders, ","));
+		header('Access-Control-Allow-Headers: '.implode(",", $this->acceptControlAllowHeaders));
 	}
 
 	private function getMethod() {
@@ -282,7 +261,7 @@ class Api {
 
 	/**
 	 * Start the server, getting base calls
-	 * @return 		response or nothing
+	 * @return 		string|null
 	 */
 	public function Run($returnRaw = false) {
 		$urlCtrl = $_GET["magrathea_control"];
@@ -297,7 +276,7 @@ class Api {
 
 	/**
 	 * Execute URL
-	 * @return 		response or nothing
+	 * @return 		string|null
 	 */
 	public function ExecuteUrl($fullUrl, $method="GET") {
 		$url = explode("/", $fullUrl);
@@ -316,7 +295,7 @@ class Api {
 		$fn = $ctrl["action"];
 		$auth = $ctrl["auth"];
 		try {
-			if($auth) {
+			if($auth && $this->authClass) {
 				if(!$this->authClass->$auth()) {
 					$this->ReturnError(401, "Authorization Failed (".$auth." = false)", null, 401);
 				}
@@ -341,7 +320,6 @@ class Api {
 		} catch(MagratheaApiException $ex) {
 			return $this->ReturnApiException($ex);
 		} catch (\Exception $ex) {
-//			p_r($ex);
 			if($ex->getCode() == 0) {
 				return $this->ReturnFail($ex);
 			} else {
@@ -352,7 +330,8 @@ class Api {
 
 	/**
 	 * returns the sent parameters in JSON format - and ends the execution with "die";
-	 * @param 	object 		$response 		parameter to be printed in json
+	 * @param 	array|object 		$response 		parameter to be printed in json
+	 * @param 	number			 		$code 				code response (default: 200)
 	 */
 	public function Json($response, $code=200){
 		if($this->returnRaw) return $response;
@@ -386,9 +365,9 @@ class Api {
 
 	/**
 	 * returns a json error message
-	 * @param 	string 		$code 			error code
-	 * @param 	string 		$message 		error message
-	 * @param 	any 			$data 			error data
+	 * @param 	string 			$code 			error code
+	 * @param 	string 			$message 		error message
+	 * @param 	array|null 	$data 			error data
 	 */
 	public function ReturnApiException($exception) {
 		return $this->Json(array(
@@ -401,22 +380,24 @@ class Api {
 
 	/**
 	 * returns a json error message
-	 * @param 	string 		$code 			error code
-	 * @param 	string 		$message 		error message
-	 * @param 	any 			$data 			error data
+	 * @param 	string 							$code 			error code
+	 * @param 	string 							$message 		error message
+	 * @param 	array|object|null 	$data 			error data
 	 */
 	public function ReturnError($code=500, $message="", $data=null, $status=200) {
 		return $this->Json(array(
 			"success" => false,
-			"error" => $data,
-			"code" => $code,
-			"message" => $message
+			"data" => [
+				"error" => $data,
+				"code" => $code,
+				"message" => $message,	
+			]
 		), $status);
 	}
 
 	/**
 	 * returns a successful json response
-	 * @param 	any 			$data 			response data
+	 * @param 	object 			$data 			response data
 	 */
 	public function ReturnSuccess($data) {
 		return $this->Json(array(
@@ -425,120 +406,22 @@ class Api {
 		));
 	}
 	public function ReturnFail($data) {
+		if(is_a($data, MagratheaApiException::class)) {
+			$rs = [
+				"message" => $data->getMessage()
+			];
+			if($data->getCode() != 0) {
+				$data["code"] = $data->getCode();
+			}
+			if(!empty($data->GetData())) {
+				$data["code"] = $data->GetData();
+			}
+		} else {
+			$rs = $data;
+		}
 		return $this->Json(array(
 			"success" => false,
-			"data" => $data
+			"data" => $rs
 		));
 	}
 }
-
-/**
-* 
-* Control for Create, Read, List, Update, Delete
-**/
-class MagratheaApiControl {
-	
-	protected $model = null;
-	protected $service = null;
-
-	public function GetAuthorizationBearer() {
-		$token = getallheaders()["Authorization"];
-		if (substr($token, 0, 7) !== 'Bearer ') {
-			throw new MagratheaApiException("Invalid Bearer Token: [".$token."]", 401);
-		}
-		$token = trim(substr($token, 7));
-		return $token;
-	}
-
-	public function GetPhpInput() {
-		$json = file_get_contents('php://input');
-		$jsonData = json_decode($json);
-		$data = [];
-		if(!$jsonData) return;
-		foreach ($jsonData as $key => $value) {
-			$data[str_replace('amp;', '', $key)] = $value;
-		}
-		return $data;
-	}
-
-	public function GetPut() {
-		if(@$_PUT) return $_PUT;
-		if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-			return $this->GetPhpInput();
-		}
-		return null;
-	}
-	public function GetPost() {
-		if(@$_POST) return $_POST;
-		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-			return $this->GetPhpInput();
-		}
-		return null;
-	}
-
-	public function List() {
-		try {
-			return $this->service->GetAll();
-		} catch(\Exception $ex) {
-			throw $ex;
-		}
-	}
-	public function Read($params=false) {
-		try {
-			if(!$params) return $this->List();
-			$id = $params["id"];
-			return new $this->model($id);
-		} catch(\Exception $ex) {
-			throw $ex;
-		}
-	}
-
-	public function Create() {
-		$m = new $this->model();
-		$data = $this->GetPost();
-		if(@$data["id"]) unset($data["id"]);
-		foreach ($data as $key => $value) {
-			if(property_exists($m, $key)) {
-				$m->$key = $value;
-			}
-		}
-		try {
-			if($m->Insert()) {
-				return $m;
-			}
-		} catch(\Exception $ex) {
-			throw $ex;
-		}
-	}
-
-	public function Update($params=false) {
-		$id = $params["id"];
-		$m = new $this->model($id);
-		$data = $this->GetPut();
-
-		if(!$data) throw new \Exception("Empty Data Sent", 500);
-		foreach ($data as $key => $value) {
-			if(property_exists($m, $key)) {
-				$m->$key = $value;
-			}
-		}
-		try {
-			if($m->Update()) return $m;
-		} catch(\Exception $ex) {
-			throw $ex;
-		}
-	}
-
-	public function Delete($params=false) {
-		if(!$params) throw new MagratheaException("Empty Data Sent", 500);
-		$id = $params["id"];
-		$m = new $this->model($id);
-		try {
-			return $m->Delete();
-		} catch(\Exception $ex) {
-			throw $ex;
-		}
-	}
-}
-
-?>

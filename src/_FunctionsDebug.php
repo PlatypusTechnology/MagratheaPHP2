@@ -8,7 +8,7 @@ namespace Magrathea2;
  * @param 	object 		$bug 		object to debug
  */
 function Debug($bug){
-	MagratheaDebugger::Instance()->Add($bug);
+	Debugger::Instance()->Add($bug);
 }
 
 /**
@@ -16,7 +16,7 @@ function Debug($bug){
  * @param 	object 		$bug 		object to debug
  */
 function DebugError($error){
-	MagratheaDebugger::Instance()->AddError($error);
+	Debugger::Instance()->AddError($error);
 }
 
 
@@ -25,7 +25,7 @@ function DebugError($error){
  * @param 	object 		$bug 		object to debug
  */
 function Info($bug){
-	MagratheaDebugger::Instance()->Info($bug);
+	Debugger::Instance()->Info($bug);
 }
 
 

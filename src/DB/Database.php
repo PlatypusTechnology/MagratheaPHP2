@@ -3,7 +3,6 @@
 namespace Magrathea2\DB;
 
 use Exception;
-use Magrathea2\DB\Database as DBDatabase;
 use Magrathea2\Debugger;
 use Magrathea2\Exceptions\MagratheaDBException;
 use Magrathea2\Singleton;
@@ -40,13 +39,8 @@ class Database extends Singleton {
 
 	private $count = 0;
 
-	/**
-	*	Mocker
-	*	For Unit Testing
-	*/
-	public static function Mock($mocker) {
-		self::$instance = $mocker;
-		return self::$instance;
+	public function Mock(): void {
+		self::MockClass(\Magrathea2\DB\DatabaseSimulate::Instance());
 	}
 	
 	/**
@@ -153,7 +147,7 @@ class Database extends Singleton {
 		return true;
 	}
 	/**
-	* Already uses you.. Bye.
+	* Already used you.. Bye.
 	*/
 	public function CloseConnectionThanks(){
 		$this->mysqli->close();
@@ -163,21 +157,18 @@ class Database extends Singleton {
 	* Handle connection errors @todo
 	* @throws	MagratheaDbException
 	*/
-	private function ConnectionErrorHandle($msg="", $data=null){ 
-		throw new MagratheaDBException($msg);
+	private function ConnectionErrorHandle($msg="", $data=null): MagratheaDBException { 
+		return new MagratheaDBException($msg);
 	}
 	/**
 	* Handle errors @todo
 	* @throws	MagratheaDbException
 	*/
-	private function ErrorHandle($error, $sql, $values=null){ 
-
-		$debug = "MagratheaDatabase ERROR => \n";
-		$debug .= " query: [ ".$sql." ] \n";
-		if($values != null)
-			$debug .= " values: [ ".implode(',', $values)." ] \n";
-		$debug .= " error: [ ".$error." ] \n";
-		Debugger::Instance()->Add($debug);
+	private function ErrorHandle($error, $sql, $values=null): MagratheaDBException{ 
+		$ex = new MagratheaDBException($error);
+		$ex->SetData($sql, $values);
+		Debugger::Instance()->Add($ex);
+		return $ex;
 	}
 
 	/**
@@ -258,9 +249,7 @@ class Database extends Singleton {
 		$this->OpenConnectionPlease();
 		$result = $this->mysqli->query($sql);
 		if(!$result){
-			$this->ErrorHandle($this->mysqli->error, $sql);
-			$ex = new MagratheaDBException($this->mysqli->error);
-			$ex->query = $sql;
+			$ex = $this->ErrorHandle($this->mysqli->error, $sql);
 			throw $ex;
 		}
 		if(is_object($result) ){
@@ -281,11 +270,13 @@ class Database extends Singleton {
 		$arrRetorno = array();
 		$this->LogControl($sql);
 		$this->OpenConnectionPlease();
-		$result = $this->mysqli->query($sql);
+		try {
+			$result = $this->mysqli->query($sql);
+		} catch(Exception $ex) {
+			throw $this->ErrorHandle($ex, $sql);
+		}
 		if(!$result){
-			$this->ErrorHandle($this->mysqli->error, $sql);
-			$ex = new MagratheaDBException($this->mysqli->error);
-			$ex->query = $sql;
+			$ex = $this->ErrorHandle($this->mysqli->error, $sql);
 			throw $ex;
 		}
 		if(is_object($result) ){
@@ -309,9 +300,7 @@ class Database extends Singleton {
 		$result = $this->mysqli->query($sql);
 		$this->count = $result->num_rows;
 		if(!$result){
-			$this->ErrorHandle($this->mysqli->error, $sql);
-			$ex = new MagratheaDBException($this->mysqli->error);
-			$ex->query = $sql;
+			$ex = $this->ErrorHandle($this->mysqli->error, $sql);
 			throw $ex;
 		}
 		if(is_object($result) ){
@@ -435,9 +424,7 @@ class Database extends Singleton {
 
 		$stm = $this->mysqli->prepare($query);
 		if(!$stm || $this->mysqli->error ){
-			$this->errorHandle($this->mysqli->error, $query, $arrValues);
-			$ex = new MagratheaDBException($this->mysqli->error);
-			$ex->query = $query;
+			$ex = $this->ErrorHandle($this->mysqli->error, $query, $arrValues);
 			throw $ex;
 		}
 		$params = "";
@@ -471,11 +458,15 @@ class Database extends Singleton {
 				call_user_func_array(array($stm, "bind_param"), $valArgs);
 			}
 			$stm->execute();
-			if($stm->error) $this->ConnectionErrorHandle($stm->error);
+			if($stm->error) {
+				throw $this->ConnectionErrorHandle($stm->error);
+			}
 			$lastId = $stm->insert_id;
 			$stm->close();
-		} catch(\Exception $err){
-			$this->ConnectionErrorHandle($err, $err);
+		} catch(MagratheaDBException $ex) {
+			return null;
+		} catch(Exception $err){
+			throw $this->ConnectionErrorHandle($err, $err);
 		}
 		$this->CloseConnectionThanks();
 		if($lastId)

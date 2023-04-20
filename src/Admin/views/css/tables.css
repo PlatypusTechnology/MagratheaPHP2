@@ -1,0 +1,11 @@
+table.hide-header th {
+	display: none;
+}
+
+.table-scroll {
+	overflow: scroll;
+	max-width: 100%;
+	max-height: 750px;
+	scroll-behavior: auto;
+}
+

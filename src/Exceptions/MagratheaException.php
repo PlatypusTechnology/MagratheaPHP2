@@ -22,7 +22,7 @@ use Magrathea2\Debugger;
 class MagratheaException extends \Exception {
     public function __construct($message, $code = 0, \Exception $previous = null) {
         if(is_a($message, "MagratheaException")) {
-            $this->msg = $message->GetMessage();
+            $this->msg = ((object)$message)->GetMessage();
         } else {
             $this->msg = $message ? $message : "Magrathea has failed... =(";
         }
@@ -31,7 +31,7 @@ class MagratheaException extends \Exception {
         parent::__construct($message, $code, $previous);
     }
 
-    public $killerError = true;
+    public $killerError = false;
     public $msg = "";
     
     public function stackTrace() {
@@ -43,45 +43,5 @@ class MagratheaException extends \Exception {
     public function display(){
         echo "MAGRATHEA ERROR! <br/>";
         echo $this->message;
-    }
-}
-
-class MagratheaApiException extends MagratheaException {
-    protected $_data;
-    public function __construct($message = "Magrathea Admin Error", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }
-
-    public function SetData($data) {
-        $this->_data = $data;
-    }
-    public function GetData() {
-        return $this->_data;
-    }
-
-}
-
-class MagratheaAdminException extends MagratheaException {
-    public function __construct($message = "Magrathea Admin Error", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }    
-}
-
-class MagratheaModelException extends MagratheaException {
-    public function __construct($message = "Error in Magrathea Model", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }
-}
-
-class MagratheaViewException extends MagratheaException {
-    public function __construct($message = "Error in Magrathea Model", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
-    }
-}
-
-
-class MagratheaControllerException extends MagratheaException {
-    public function __construct($message = "Error in Magrathea Control", $code = 0, \Exception $previous = null) {
-        parent::__construct($message, $code, $previous);
     }
 }

@@ -1,0 +1,11 @@
+:root {
+	--bs-link-hover-color: var(--primary);
+}
+
+.btn-primary {
+	--bs-btn-bg: var(--primary);
+  --bs-btn-border-color: var(--primary);
+	--bs-btn-hover-bg: var(--primary-light);
+	--bs-btn-hover-border-color: var(--primary-light);
+}
+

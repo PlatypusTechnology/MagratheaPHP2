@@ -1,4 +1,7 @@
 <?php
+
+use Magrathea2\Admin\AdminManager;
+
 	$magrathea_action = @$_GET["magrathea_action"];
 	if(!empty($magrathea_action)) {
 		include("actions/".$magrathea_action.".php");
@@ -8,23 +11,25 @@
 
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Magrathea Admin</title>
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-		<style>
-			<?php include("css/_variables.css"); ?>
-			<?php include("css/styles.css"); ?>
-		</style>
-	</head>
+<?
+		$pageTitle = \Magrathea2\Admin\Start::Instance()->title;
+		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast"];
+		include("sections/meta.php");
+	?>
+		<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+		<script type="text/javascript">
+			<?php include("javascript/pre-load-scripts.js"); ?>
+		</script>
 	<body>
 
 		<div class="d-flex" id="wrapper">
+			<?php include("sections/toast.php"); ?>
 			<?php include("sections/menu.php"); ?>
+			<?php include("sections/loading.php"); ?>
 			<!-- Page content wrapper-->
 			<div id="page-content-wrapper">
 				<?php
-					$page = @$_GET["page"];
+					$page = @$_GET["magrathea_page"];
 					if($page) {
 						include("pages/".$page.".php");
 					}
@@ -32,7 +37,6 @@
 			</div>
 		</div>
 	</body>
-	<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 	<script type="text/javascript">
 		<?php include("javascript/scripts.js"); ?>
 	</script>

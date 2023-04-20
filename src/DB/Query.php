@@ -6,6 +6,14 @@ use Magrathea2\DB\Database;
 use Magrathea2\Exceptions\MagratheaModelException;
 use Magrathea2\MagratheaModel;
 
+enum QueryType {
+	case Unknown;
+	case Select;
+	case Insert;
+	case Update;
+	case Delete;
+}
+
 #######################################################################################
 ####
 ####	MAGRATHEA Query
@@ -18,11 +26,12 @@ use Magrathea2\MagratheaModel;
 ####
 #######################################################################################
 
-
 /**
  * Creates queries making use of objects and tables
  */
 class Query{
+
+	protected $type = QueryType::Unknown;
 
 	protected $select;
 	protected array $selectDefaultArr;
@@ -109,6 +118,7 @@ class Query{
 	static public function Select($sel=""){
 		$new_me = new self();
 		$new_me->SelectStr($sel);
+		$new_me->type = QueryType::Select;
 		return $new_me;
 	}
 	/**
@@ -133,6 +143,14 @@ class Query{
 	 */
 	static public function Insert(){
 		return new QueryInsert();
+	}
+
+	/**
+	 * Return Query Type
+	 * @return 	QueryType
+	 */
+	public function GetType() {
+		return $this->type;
 	}
 
 	/**
@@ -468,16 +486,16 @@ class Query{
 		if(count($this->whereArr) > 0){
 			$sqlWhere .= $this->where.implode(" AND ", $this->whereArr);
 		}
-		if(trim($sqlWhere)!=""){
+		if(trim((string)$sqlWhere)!=""){
 			$this->sql .= " WHERE ".$sqlWhere;
 		}
-		if(trim($this->group)!=""){
+		if(trim((string)$this->group)!=""){
 			$this->sql .= " GROUP BY ".$this->group;
 		}
-		if(trim($this->order)!=""){
+		if(trim((string)$this->order)!=""){
 			$this->sql .= " ORDER BY ".$this->order;
 		}
-		if(trim($this->limit)!=""){
+		if(trim((string)$this->limit)!=""){
 			$this->sql .= " LIMIT ".($this->page*$this->limit).", ".$this->limit;
 		}
 
@@ -524,9 +542,9 @@ class Query{
 		foreach($arr as $field => $value){
 			if( !$first ){ $whereSql .= " ".$condition; $first = false; }
 			if($value === null)
-				$whereSql .= " ".$field." is null ";
+				$whereSql .= " `".$field."` is null ";
 			else 
-				$whereSql .= " ".$field." = '".$value."' ";
+				$whereSql .= " `".$field."` = '".$value."' ";
 			$first = false;
 		}
 		return $whereSql;

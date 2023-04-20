@@ -53,11 +53,22 @@ class Debugger extends Singleton {
 
 	/**
 	 * Sets debug mode as dev
-	 * @return void
+	 * @return Debugger
 	 */
 	public function SetDev() {
 		$this->SetType(Debugger::DEV);
+		return $this;
 	}
+
+	/**
+	 * Sets debug mode as debug
+	 * @return Debugger
+	 */
+	public function SetDebug() {
+		$this->SetType(Debugger::DEBUG);
+		return $this;
+	}
+
 	/**
 	 * Should debugger log queries?
 	 * @param 	boolean 	$q 		true for logging queries, false for not
@@ -116,6 +127,19 @@ class Debugger extends Singleton {
 	public function GetType(){
 		return $this->debugType;
 	}
+	/**
+	* Returns the debug type in a descritive format
+	* @return string Debug type (*Dev*, *Debug*, *Log*, *None*)
+	*/
+	public function GetTypeDesc(): string {
+		switch($this->debugType) {
+			case self::NONE: 	return "NONE";
+			case self::LOG: 	return "LOG";
+			case self::DEBUG:	return "DEBUG";
+			case self::DEV:		return "DEV";
+			default: 					return "unknown";
+		}
+	}
 
 	/**
 	* Add an item to the debug array object
@@ -126,10 +150,14 @@ class Debugger extends Singleton {
 			case self::NONE:
 				return;
 			case self::LOG:
-				if($debug instanceof \Exception) {
-					Logger::LogError(dump($debug), $this->logFile);
+				if($debug instanceof \Magrathea2\Exceptions\MagratheaConfigException) {
+					if($debug->killerError) {
+						die("Fatal Error: ".$debug);
+					}
+				} else if($debug instanceof \Exception) {
+					Logger::Instance()->LogError($debug);
 				} else {
-					Logger::Log(dump($debug), $this->logFile);
+					Logger::Instance()->Log($debug);
 				}
 				return;
 			case self::DEV:
@@ -148,7 +176,7 @@ class Debugger extends Singleton {
 		switch ($this->debugType) {
 			case self::NONE:
 			case self::LOG:
-				Logger::Log(dump($debug), $this->logFile);
+				Logger::Instance()->Log(dump($debug));
 				return;
 			case self::DEV:
 				echo "<pre>INFO: ".$debug."</pre>";
@@ -209,10 +237,10 @@ class Debugger extends Singleton {
 	 */	
 	private function printsDebug($deb){
 		$html = "";
-		if(is_a($deb, "MagratheaException")){
+		if(is_a($deb, "Magrathea2\Exceptions\MagratheaException")){
 			$html .= "<div style='padding: 10px; border: 1px dotted black; margin-bottom: 5px; line-height: 120%;'>";
-			$html .= "<span style='color: red; font-weight: bold;'>".get_class($deb)."</span><br/>";
-			$html .= "<span>".$deb->getMessage()."</span><br/>";
+			$html .= "<span style='color: red; font-weight: bold;'>".get_class($deb)."</span><br/><br/>";
+			$html .= "<span><pre style='width: 100%; overflow-x: scroll;'>".$deb."\n\n</pre></span><br/>";
 			$html .= "<span style='padding-left: 20px;'><b>at: </b> ==> ";
 			$html .= "<b>File: </b>".$deb->getFile()." / <b>line: </b>[".$deb->getLine()."]</span><br/>";
 			$html .= "<div style='padding-left: 20px;'><b>trace: </b> ==> <br/>";
@@ -224,7 +252,7 @@ class Debugger extends Singleton {
 			$html .= "</div>";
 		} else {
 			$html .= "<div style='padding: 10px; border: 1px dotted black; margin-bottom: 5px; line-height: 120%;'>";
-			$html .= "<span>".p_r($deb)."</span><br/>";
+			$html .= "<pre>".nice_p_r($deb)."</pre><br/>";
 			$html .= "</div>";
 		}
 		return $html;

@@ -10,6 +10,7 @@ class MagratheaConfigException extends MagratheaException {
 	private $configFile;
 	public function __construct($message = "Magrathea Config has failed... =(", $file=null, $code=0, \Exception $previous = null) {
 		$this->configFile = $file;
+		$this->killerError = true;
 		parent::__construct($message, $code, $previous);
 	}
 

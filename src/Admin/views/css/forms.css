@@ -1,0 +1,32 @@
+.btn {
+	margin-top: 21px;
+}
+.btn-action {
+	margin: 0;
+	padding: 0px 3px;
+	width: 20px;
+	height: 20px;
+	font-size: 14px;
+	line-height: 8px;
+	font-weight: bold;
+}
+
+.card-form {
+	margin-top: 20px;
+}
+
+.hidden {
+	display: none;
+}
+
+.inline-form {
+	padding: 5px;
+	padding-left: 200px;
+}
+.inline-form label {
+	margin-left: -200px;
+	margin-top: 7px;
+	width: 190px;
+	text-align: right;
+	position: absolute;
+}
