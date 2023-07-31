@@ -2,15 +2,13 @@
 
 namespace Magrathea2\Admin;
 
-use Admin;
 use Exception;
 use Magrathea2\Admin\Models\AdminConfigControl;
-use Magrathea2\Admin\Models\AdminLog;
-use Magrathea2\Admin\Models\AdminLogControl;
-use Magrathea2\Admin\Models\AdminUser;
+use Magrathea2\Admin\Features\UserLogs\AdminLog;
+use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
+use Magrathea2\Admin\Features\User\AdminUser;
 use Magrathea2\DB\Database;
 use Magrathea2\MagratheaPHP;
-use Magrathea2\Singleton;
 
 #######################################################################################
 ####

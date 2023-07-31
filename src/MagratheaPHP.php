@@ -115,7 +115,8 @@ class MagratheaPHP extends Singleton {
 	}
 
 	public static function LoadVendor(): void {
-		$vendorLoad = __DIR__."/../vendor/autoload.php";
+		$vendorPath = realpath(__DIR__."/../../..");
+		$vendorLoad = $vendorPath."/autoload.php";
 		require($vendorLoad);
 	}
 

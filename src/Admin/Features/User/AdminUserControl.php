@@ -1,15 +1,20 @@
 <?php
 
-namespace Magrathea2\Admin\Models;
+namespace Magrathea2\Admin\Features\User;
 
 use Exception;
-use Magrathea2\Exceptions\MagratheaException;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\MagratheaModelControl;
 use Magrathea2\DB\Query;
 use Magrathea2\DB\Select;
+use Magrathea2\Debugger;
+
+use function Magrathea2\p_r;
 
 class AdminUserControl extends MagratheaModelControl { 
-	protected static $modelName = "Magrathea2\Admin\Models\AdminUser";
+
+	protected static $modelNamespace = "Magrathea2\Admin\Features\User";
+	protected static $modelName = "AdminUser";
 	protected static $dbTable = "_magrathea_users";
 
 	/**
@@ -60,6 +65,17 @@ class AdminUserControl extends MagratheaModelControl {
 		} catch(Exception $ex) {
 			throw $ex;
 		}
+	}
+
+	public function SetNewPassword($user, $pwd) {
+		Debugger::Instance()->SetDev();
+		if(strlen($pwd) < 8) {
+			return ["success" => false, "error" => "Password must be at least 8 chars long"];
+		}
+		$user->SetPassword($pwd);
+		$saved = $user->Save();
+		AdminManager::Instance()->Log("change-password", $user);
+		return [ "success" => ($saved === true) ];
 	}
 
 }

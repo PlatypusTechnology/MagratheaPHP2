@@ -2,8 +2,11 @@
 
 namespace Magrathea2\Admin\Api;
 
+use Exception;
+use Magrathea2\Admin\Models\AdminConfigControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\Admin\ObjectManager;
+use Magrathea2\Bootstrap\CodeManager;
 
 #######################################################################################
 ####
@@ -72,6 +75,37 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 			throw new MagratheaApiException("invalid data", false, 400, $params);
 		}
 		return ObjectManager::Instance()->UpdateRelation($relName, $params);
+	}
+
+	public function CreateFolder($params) {
+		$object = @$params["object"];
+		if(!$object) {
+			throw new MagratheaApiException("invalid object [".$object."]", false, 400, $params);
+		}
+		return CodeManager::Instance()->PrepareFolders($object);
+	}
+
+	public function CreateCode($params) {
+		$object = @$params["object"];
+		$type = @$params["type"];
+		$adminConfig = new AdminConfigControl();
+		if(!$object) {
+			throw new MagratheaApiException("invalid object [".$object."]", false, 400, $params);
+		}
+		$rs = [];
+		try {
+			if($type == "all") {
+				$allFiles = CodeManager::Instance()->GetFileList($object);
+				foreach ($allFiles as $t => $f) {
+					array_push($rs, CodeManager::Instance()->WriteCodeFile($t, $object));
+				}
+			} else {
+				array_push($rs, CodeManager::Instance()->WriteCodeFile($type, $object));
+			}
+		} catch(Exception $ex) {
+			throw $ex;
+		}
+		return $rs;
 	}
 
 }

@@ -80,11 +80,11 @@ if($closeFn) {
 			?>
 			<div class="col-12 mt-2">
 				<?
-				$adminElements->Button("&darr;", "toggleCol(this, '.public-methods')", ["btn-action", "btn-primary"]);
+				$adminElements->Button("&darr;", "toggleCol(this, '.public-relations')", ["btn-action", "btn-primary"]);
 				?>
 				<b>Relations</b>
 			</div>
-			<div class="col-12 public-methods">
+			<div class="col-12 public-relations">
 				<?
 					$adminElements->Table(
 						$relations,

@@ -2,7 +2,7 @@
 
 namespace Magrathea2\Admin;
 
-use Magrathea2\Admin\Models\AdminUserControl;
+use Magrathea2\Admin\Features\User\AdminUserControl;
 use Magrathea2\Singleton;
 use Magrathea2\DB\Database;
 
@@ -25,12 +25,18 @@ class AdminUsers extends Singleton {
 		$loginData = $control->Login($user, $password);
 		if(!$loginData["success"]) return $loginData;
 		$user = $loginData["user"];
-		$_SESSION[$this->sessionName] = $user;
+		$_SESSION[$this->sessionName] = serialize($user);
+		AdminManager::Instance()->Log("login", $user, $user->id);
 		return $loginData;
 	}
 
 	public function GetLoggedUser() {
-		return @$_SESSION[$this->sessionName];
+		$u = @$_SESSION[$this->sessionName];
+		if($u) {
+			return unserialize($u);
+		} else {
+			return null;
+		}
 	}
 
 	public function Logout() {

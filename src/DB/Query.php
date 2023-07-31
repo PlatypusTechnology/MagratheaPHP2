@@ -112,7 +112,7 @@ class Query{
 	 * Generates a SELECT query
 	 * @param 	string 				$sel 	string to be selected
 	 *                          			in a query SELECT [blablabla] FROM ...
-	 *                          			the [blablabla] should be send to this function. Got it?
+	 *                          			the [blablabla] should be sent to this function. Got it?
 	 * @return  Query 		
 	 */
 	static public function Select($sel=""){
@@ -186,7 +186,7 @@ class Query{
 
 	/**
 	 * Fields to be included on the query
-	 * @param 	string or array 	$fields 	string or array that will be added to the fields in the *SELECT* built
+	 * @param 	string|array 	$fields 	string or array that will be added to the fields in the *SELECT* built
 	 * @return  Query
 	 */
 	public function Fields($fields){
@@ -251,8 +251,8 @@ class Query{
 	}
 	/**
 	 * Gets automatically related object
-	 * @param 	object or string 		$object 		object or string that will be returned in the query
-	 * @param 	string 					$field  		field that is responsible for the relation (from the main object)
+	 * @param 	object|string 		$object 		object or string that will be returned in the query
+	 * @param 	string 						$field  		field that is responsible for the relation (from the main object)
 	 * @return  Query
 	 */	
 	public function HasOne($object, $field){
@@ -271,8 +271,8 @@ class Query{
 	}
 	/**
 	 * Gets automatically related object
-	 * @param 	object or string 		$object 		object or string that will be returned in the query
-	 * @param 	string 					$field  		field that is responsible for the relation (from the main object)
+	 * @param 	object|string 		$object 		object or string that will be returned in the query
+	 * @param 	string 						$field  		field that is responsible for the relation (from the main object)
 	 * @return  Query
 	 */	
 	public function HasMany($object, $field){
@@ -292,8 +292,8 @@ class Query{
 
 	/**
 	 * Gets automatically related object
-	 * @param 	object or string 		$object 		object or string that will be returned in the query
-	 * @param 	string 					$field  		field that is responsible for the relation (from the other object)
+	 * @param 	object|string 		$object 		object or string that will be returned in the query
+	 * @param 	string 						$field  		field that is responsible for the relation (from the other object)
 	 * @return  Query
 	 */	
 	public function BelongsTo($object, $field){
@@ -467,6 +467,7 @@ class Query{
 	 */
 	public function SQL(){
 		$this->sql = "";
+//		\Magrathea2\p_r($this);
 		$sqlSelect = $this->select;
 		if(count($this->selectArr) > 0){
 			$sqlSelect .= implode(', ', $this->selectArr);

@@ -8,6 +8,9 @@ use Magrathea2\Admin\Models\AdminConfigControl;
 $pageTitle = "App Configuration";
 include(__DIR__."/../sections/header.php");
 
+?>
+<div class="container">
+<?
 $adminForm = new AdminForm();
 $adminForm->SetName("data-form");
 $crud = $adminForm->CRUDObject(new AdminConfig(), true);
@@ -17,10 +20,8 @@ $newDataUrl = \Magrathea2\Admin\AdminUrls::Instance()
 
 $control = new AdminConfigControl();
 $data = $control->GetAll();
-	
-?>
 
-<div class="container">
+?>
 
 	<div class="card">
 		<div class="card-header">

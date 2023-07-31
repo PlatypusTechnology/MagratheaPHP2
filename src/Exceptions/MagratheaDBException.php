@@ -32,6 +32,7 @@ class MagratheaDBException extends MagratheaException {
 		if($this->values != null)
 			$debug .= " values: [ ".implode(',', $this->values)." ] \n";
 		$debug .= " error: [ ".$this->getMessage()." ] (code: ".$this->getCode().") \n";
+		$debug .= " trace: ".$this->stackTrace();
 		return $debug;
 	}
 }

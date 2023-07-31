@@ -78,6 +78,9 @@ class Logger extends Singleton {
 			throw $ex;
 		}
 		$this->logPath = $logsPath;
+		if(!$this->logPath) {
+			$this->logPath = MagratheaPHP::Instance()->magRoot."/logs";
+		}
 		return $this;
 	}
 

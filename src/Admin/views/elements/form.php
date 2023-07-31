@@ -1,6 +1,7 @@
 <?php
 
 use Magrathea2\Admin\AdminElements;
+
 $elements = AdminElements::Instance();
 
 ?>
@@ -16,7 +17,9 @@ $elements = AdminElements::Instance();
 					if(is_array($values)) {
 						$value = @$values[$key];
 					} else {
-						$value = $values->$key;
+						if(property_exists($values, $key)) {
+							$value = $values->$key;
+						}
 					}
 					if(is_callable($value)) {
 						$value = $value($el);
@@ -38,7 +41,7 @@ $elements = AdminElements::Instance();
 					case "email":
 					case "number":
 					case "disabled":
-						$elements->Input($type, $key, $name, $value, @$el['class'], @$el['placeholder'], @$el['attributes']);
+						$elements->Input($type, $key, $name, $value, @$el['class'], @$el['outerClass'], @$el['placeholder'], @$el['attributes']);
 						break;
 					case "hidden":
 						echo '<input type="hidden" name="'.$key.'" id="'.$key.'" value="'.$value.'" />';
@@ -52,23 +55,29 @@ $elements = AdminElements::Instance();
 					case "delete-button":
 						$name = $name ? $name : "Delete";
 						$class = @$el['class'] ? $el['class'] : "btn-danger w-100";
-						$elements->Button($name, "delete", $class, true, @$el['attributes']);
+						$outerClass = @$el['outerClass'] ? $el['outerClass'] : "";
+						$elements->Button($name, "delete", $class, $outerClass, true, @$el['attributes']);
 						break;
 					case "save-button":
 						$name = $name ? $name : "Save";
 						$class = @$el['class'] ? $el['class'] : "btn-success w-100";
-						$elements->Button($name, "save", $class, true, @$el['attributes']);
+						$outerClass = @$el['outerClass'] ? $el['outerClass'] : "";
+						$elements->Button($name, "save", $class, $outerClass, true, @$el['attributes']);
 						break;
 					case "submit":
-						$elements->Button($name, $key, @$el['class'], true, @$el['attributes']);
+						$elements->Button($name, $key, @$el['class'], @$el['outerClass'], true, @$el['attributes']);
 						break;
 					case "button":
 						if(is_callable($key)) {
 							$click = $key($values);
 						} else {
-							$click = $key;
+							if(@$el["action"]) {
+								$click = $el["action"];
+							} else {
+								$click = $key;
+							}
 						}
-						$elements->Button($name, $click, @$el['class'], false, @$el['attributes']);
+						$elements->Button($name, $click, @$el['class'], @$el['outerClass'], false, @$el['attributes']);
 						break;
 				}	
 			}

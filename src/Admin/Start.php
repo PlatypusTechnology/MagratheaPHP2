@@ -25,7 +25,6 @@ use Magrathea2\MagratheaPHP;
 class Start extends Singleton { 
 
 	protected $appPath;
-	public $title = "Magrathea Admin";
 
 	protected function Initialize() {
 		MagratheaPHP::Instance()->StartSession();
@@ -44,16 +43,6 @@ class Start extends Singleton {
 	}
 
 	/**
-	 * Sets title
-	 * @param 	string 		$title		title
-	 * @return 	Start
-	 */
-	public function SetTitle($t): Start {
-		$this->title = $t;
-		return $this;
-	}
-
-	/**
 	 * Check Admin API calls
 	 */
 	public function CheckApi(): void {
@@ -65,12 +54,33 @@ class Start extends Singleton {
 	}
 
 	/**
+	 * Checks if a feature is being loaded
+	 */
+	public function CheckFeature(): void {
+		$featureName = @$_GET["magrathea_feature"];
+		if(!$featureName) return;
+		$action = @$_GET["magrathea_feature_action"];
+		if(!$action) return;
+		try { 
+			$feature = AdminManager::Instance()->GetFeature($featureName);
+			if (!$feature) {
+				AdminElements::Instance()->ErrorCard("Feature not available!");
+			}
+			$feature->$action();
+			die;
+		} catch(Exception $ex) {
+			AdminElements::Instance()->ErrorCard($ex->getMessage());
+		}
+	}
+
+	/**
 	 * Loads Magrathea Admin
 	 */
 	public function Load(): void {
 		if ($this->IsStarted()) {
 			if($this->IsLoggedIn()) {
 				$this->CheckApi();
+				$this->CheckFeature();
 				include ("views/index.php");
 			} else {
 				include ("views/login.php");
@@ -109,7 +119,7 @@ class Start extends Singleton {
 	}
 
 	public function HasUsers(): bool {
-		$control = new \Magrathea2\Admin\Models\AdminUserControl();
+		$control = new \Magrathea2\Admin\Features\User\AdminUserControl();
 		return ($control->CountUsers() > 0);
 	}
 

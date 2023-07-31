@@ -1,10 +1,13 @@
 <?php
 
+use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminManager;
 
-	$magrathea_action = @$_GET["magrathea_action"];
-	if(!empty($magrathea_action)) {
-		include("actions/".$magrathea_action.".php");
+use function Magrathea2\p_r;
+
+	$magrathea_subpage = @$_GET["magrathea_subpage"];
+	if(!empty($magrathea_subpage)) {
+		include("actions/".$magrathea_subpage.".php");
 		die;
 	}
 ?>
@@ -12,7 +15,7 @@ use Magrathea2\Admin\AdminManager;
 <!DOCTYPE html>
 <html lang="en">
 <?
-		$pageTitle = \Magrathea2\Admin\Start::Instance()->title;
+		$pageTitle = AdminManager::Instance()->title;
 		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast"];
 		include("sections/meta.php");
 	?>
@@ -32,6 +35,20 @@ use Magrathea2\Admin\AdminManager;
 					$page = @$_GET["magrathea_page"];
 					if($page) {
 						include("pages/".$page.".php");
+					} else {
+						$feature = @$_GET["magrathea_feature"];
+						if($feature) {
+							$f = AdminManager::Instance()->GetFeature($feature);
+							if(!$f) {
+								AdminElements::Instance()->Alert(
+									"Feature not available [".$feature."]",
+									"danger",
+									true
+								);
+							} else {
+								$f->GetPage();
+							}
+						}
 					}
 				?>
 			</div>

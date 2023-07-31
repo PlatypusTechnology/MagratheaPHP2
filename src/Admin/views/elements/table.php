@@ -1,3 +1,4 @@
+<? use function Magrathea2\p_r; ?>
 <table class="table table-striped <?=$extraClass?>">
 	<thead class="thead-dark">
 		<tr>
@@ -18,7 +19,11 @@
 				$value = $key($row);
 			} else if (is_array($row)) {
 				if(isset($row[$key])) $value = $row[$key];
-				else $value = @$row[$i];	
+				else $value = @$row[$i];
+
+				if(is_callable($value)) {
+					$value = $value($row);
+				}
 			} else if (is_a($row, "\Magrathea2\MagratheaModel")) {
 				$value = $row->$key;
 			}

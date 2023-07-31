@@ -30,10 +30,7 @@ class AdminConfigControl extends MagratheaModelControl {
 	 * @param 	string 	$key		key to get
 	 */
 	public function GetValue($key) {
-		$query = Query::Select()
-				->Obj(new AdminConfig())
-				->Where([ "name" => $key ]);
-		return self::RunRow($query);
+		return $this->GetValueByKey($key);
 	}
 
 	public function SetValue($key, $value) {
@@ -69,6 +66,12 @@ class AdminConfigControl extends MagratheaModelControl {
 			->Where(["name" => $key]);
 		$a = self::RunRow($query);
 		return $a;
+	}
+
+	public function GetValueByKey($key) {
+		$c = $this->GetByKey($key);
+		if(!$c) return null;
+		return $c->GetValue();
 	}
 
 }

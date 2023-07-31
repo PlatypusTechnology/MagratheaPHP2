@@ -1,8 +1,8 @@
 <?php
 
-namespace Magrathea2\Admin\Models;
+namespace Magrathea2\Admin\Features\User;
 
-use Admin;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\iMagratheaModel;
 use Magrathea2\MagratheaModel;
 
@@ -47,6 +47,22 @@ class AdminUser extends MagratheaModel implements iMagratheaModel {
 		];
 	}
 
+	public function Insert() {
+		$id = parent::Insert();
+		AdminManager::Instance()->Log("user-created", $this);
+		return $id;
+	}
+	public function Update() {
+		$up = parent::Update();
+		AdminManager::Instance()->Log("user-updated", $this);
+		return $up;
+	}
+	public function Delete() {
+		$del = parent::Delete();
+		AdminManager::Instance()->Log("user-deleted", $this);
+		return $del;
+	}
+
 	public function SetPassword($pwd): AdminUser {
 		$this->password = password_hash($pwd, PASSWORD_BCRYPT);
 		return $this;
@@ -59,6 +75,17 @@ class AdminUser extends MagratheaModel implements iMagratheaModel {
 	public function __toString() {
 		$this->password = "-hidden-";
 		return parent::__toString();
+	}
+	public function ToArray() {
+		$this->password = "-hidden-";
+		return parent::ToArray();
+	}
+
+	/**
+	 * checks if the user can edit another user
+	 */
+	public function PermissionCanEdit(): bool {
+		return ($this->role_id == 2 || $this->role_id == 1);
 	}
 
 	public function GetRoles() {

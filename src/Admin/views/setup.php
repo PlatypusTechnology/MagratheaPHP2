@@ -50,9 +50,11 @@ $admin = Start::Instance();
 							?>
 							<div>
 								User <?=$user?> created!<br/>
-								Reload for Login Page
+								Reload for Login Page<br/>
+								<a href='javascript:location.reload()'>Click here to reload</a><br/>
 							</div>
 							<?
+							$showForm = false;
 						}
 					}
 					if ($showForm) {

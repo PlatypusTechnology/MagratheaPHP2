@@ -52,7 +52,7 @@ function linkTo($step) {
 			<a href="<?=linkTo($s)?>">Database management</a>
 			<ul>
 				<li>Run queries</li>
-				<li>Create tabls from models</li>
+				<li>Create tables from models</li>
 			</ul>
 		</li>
 		<?php $s++; ?>

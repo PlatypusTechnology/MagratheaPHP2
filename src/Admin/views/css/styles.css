@@ -95,8 +95,9 @@ pre.code {
 	border-radius: 0 10px 10px 10px;
 }
 pre.code-light {
-	background-color: rgba(0, 0, 0, 0.3);
+	background-color: rgba(0, 0, 0, 0.2);
 	color: var(--black);
+	padding: 10px;
 }
 pre.inline {
 	display: inline-block;
@@ -105,5 +106,12 @@ pre.inline {
 	border-radius: 5px;
 	border: 1px solid var(--primary);
 	overflow: inherit;
+}
+pre.light {
+
+}
+
+.inline {
+	display: inline-block;
 }
 

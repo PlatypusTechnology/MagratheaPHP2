@@ -72,11 +72,10 @@ class AdminElements extends Singleton {
 
 	/**
 	 * Displays an alert
-	 * available types: primary, secondary, success, danger, warning, info, light, dark
 	 * @param string $alertMessage 		HTML text
-	 * @param string $type						style type
+	 * @param string $type						style - available types: primary, secondary, success, danger, warning, info, light, dark
 	 */
-	public function Alert($alertMessage, $type="primary") {
+	public function Alert($alertMessage, $type="primary", $showClose=true) {
 		$alertClass = "alert-".$type;
 		$view = __DIR__."/views/elements/alert.php";
 		include($view);
@@ -91,6 +90,20 @@ class AdminElements extends Singleton {
 		$errorCardTitle = $title;
 		$errorCardText = $message;
 		$view = __DIR__."/views/elements/error-card.php";
+		include($view);
+	}
+
+	/**
+	 * Prints page header
+	 * @param string $title			title
+	 * @param string $error 		error message (default: null)
+	 */
+	public function Header($title, $error = null) {
+		$pageTitle = $title;
+		if($error) {
+			$errorMsgHeader = $error;
+		}
+		$view = __DIR__."/views/elements/header.php";
 		include($view);
 	}
 
@@ -110,6 +123,7 @@ class AdminElements extends Singleton {
 	 * @param array 	$options	array with options (as ["value" => "option caption"])
 	 * @param string 	$value 		selected value
 	 * @param string|array $class		class for the select
+	 * @param string 	$placeholder 	placeholder
 	 * @param	array		$attributes		any extra attributes (as ["onchange" => "alert();"])
 	 */
 	public function Select($id, $name="", $options=null, $value="", $class="", $placeholder="", $attributes=[]) {
@@ -126,11 +140,13 @@ class AdminElements extends Singleton {
 	 * @param string 	$id	 			id
 	 * @param string 	$name 		title of the input (default: $id)
 	 * @param string	$value		value for input (default: "")
-	 * @param string|array $class		class for the input
+	 * @param string|array $class				class for the input
+	 * @param string|array $outerClass	class for the container of input
 	 * @param string	$placeholder	placeholder
 	 * @param	array	$attributes		any extra attributes (as ["onkeyup" => "alert();"])
 	 */
-	public function Input($type, $id, $name="", $value="", $class="", $placeholder="", $attributes=[]) {
+	public function Input($type, $id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]) {
+		$hideLabel = $name === false;
 		if(empty($name)) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		if($type === "disabled") {
@@ -160,16 +176,36 @@ class AdminElements extends Singleton {
 		$view = __DIR__."/views/elements/form-checkbox.php";
 		include($view);
 	}
-	
+
+	/**
+	 * Print a Input
+	 * @param string 	$id	 			id
+	 * @param string 	$name 		title of the input (default: $id)
+	 * @param string	$value		value for input (default: "")
+	 * @param string|array $class				class for the input
+	 * @param string|array $outerClass	class for the container of input
+	 * @param string	$placeholder	placeholder
+	 * @param	array	$attributes		any extra attributes (as ["onkeyup" => "alert();"])
+	 */
+	public function Textarea($id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]) {
+		$hideLabel = $name === false;
+		if(empty($name)) $name = $id;
+		if(is_array($class)) $class = implode(' ', $class);
+		$atts = $this->GetAttributesStr($attributes);
+		$view = __DIR__."/views/elements/form-textarea.php";
+		include($view);
+	}
+
 	/**
 	 * Print a button
 	 * @param string $name 		caption of the button
 	 * @param string $click		action of the button
-	 * @param string|array $class		class for the button
+	 * @param string|array $class				class for the button
+	 * @param string|array $outerClass	class for the button
 	 * @param boolean $submit	is it a type=submit button? (default:false)
 	 * @param	array	$extraArgs		extra data: [ "id", "styles" ]
 	 */
-	public function Button($name, $click, $class="", $submit=false, $extraArgs=[]): void {
+	public function Button($name, $click, $class="btn-primary", $outerClass="", $submit=false, $extraArgs=[]): void {
 		if(is_array($class)) $class = implode(' ', $class);
 		if(empty($click)) $click = "";
 		$click = str_replace('"', "'", $click);

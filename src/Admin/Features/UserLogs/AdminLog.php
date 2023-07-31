@@ -1,6 +1,6 @@
 <?php
 
-namespace Magrathea2\Admin\Models;
+namespace Magrathea2\Admin\Features\UserLogs;
 
 use Admin;
 use Magrathea2\iMagratheaModel;
@@ -22,7 +22,7 @@ use Magrathea2\MagratheaModel;
 class AdminLog extends MagratheaModel implements iMagratheaModel { 
 
 	public $id;
-	public $user_id, $action, $data;
+	public $user_id, $action, $info;
 	public $created_at, $updated_at;
 	protected $autoload = null;
 
@@ -42,8 +42,9 @@ class AdminLog extends MagratheaModel implements iMagratheaModel {
 			"id" => "int",
 			"user_id" => "int",
 			"action" => "string",
-			"data" => "text",
+			"info" => "text",
 		];
+		$this->dbAlias["data"] = "info";
 	}
 
 }

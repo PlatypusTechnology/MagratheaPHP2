@@ -30,3 +30,7 @@
 	text-align: right;
 	position: absolute;
 }
+
+.col-form-padding {
+	padding-top: 25px;
+}

@@ -358,7 +358,29 @@ abstract class MagratheaModel{
 		}
 		return $arr;
 	}
+
+	/**
+	 * Gets a Json
+	 * @return	array		json
+	 */
+	public function ToJson() {
+		$pk = $this->dbPk;
+		return [
+			"object" => get_class($this),
+			"id" => $this->$pk,
+			"created_at" => $this->created_at,
+			"updated_at" => $this->updated_at,
+			"fields" => $this->ToArray(),
+		];
+	}
 	
+	/**
+	 * To String! =)
+	 * @return 	string 		Object.toString()
+	 */
+	public function ToString() {
+		return $this->__toString();
+	}
 	/**
 	 * To String! =)
 	 * @return 	string 		Object.toString()

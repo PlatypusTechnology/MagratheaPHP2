@@ -2,7 +2,9 @@
 
 namespace Magrathea2\Bootstrap;
 use Exception;
+use Magrathea2\Admin\AdminDatabase;
 use Magrathea2\Debugger;
+use Magrathea2\Logger;
 use Magrathea2\MagratheaPHP;
 
 #######################################################################################
@@ -60,18 +62,26 @@ class Start extends \Magrathea2\Singleton {
 	* Check folders (printing in the way)
 	* @return	boolean 	Folder OK or not
 	*/
-	private function CheckFolder($path) {
+	private function CheckFolder($path, $retry=false) {
 		$realPath = realpath($path);
 		if(!$realPath) {
 			echo "folder does not exist!<br/>";
 			echo "creating folder [".$path."]<br/>";
 			try {
-				mkdir($path);
+				$success = @mkdir($path);
 			} catch(Exception $ex) {
 				echo "<span class='error'>ERROR: Could not create [".$path."]".$ex->getMessage()."</span>";
 			}
-			echo "... DONE!<br/>";
-			return $this->CheckFolder($path);
+			if(!$success) {
+				echo "... ERROR!<br/>";
+				if($retry) {
+					echo " Could not create folder.<br/>";
+					return false;
+				}
+			} else {
+				echo "... DONE!<br/>";
+			}
+			return $this->CheckFolder($path, true);
 		} else {
 			echo "&gt;&gt; directory path: [".$realPath."]<br/>";
 			return true;
@@ -88,10 +98,11 @@ class Start extends \Magrathea2\Singleton {
 			throw new Exception("invalid path: ".$path);
 		}
 		$this->structure = array(
-			'Config' => $this->appPath."/../configs",
-			'Logs' => $this->appPath."/../logs",
+			'Config' => $this->GetConfigPath(),
+			'Logs' => Logger::Instance()->GetLogPath(),
 			'Models' => $this->appPath."/../Models",
 			'Models-Base' => $this->appPath."/../Models/Base",
+			'Backups' => AdminDatabase::Instance()->GetBackupFolder(),
 		);
 	}
 
@@ -116,12 +127,23 @@ class Start extends \Magrathea2\Singleton {
 	* Get config file path
 	* @return 	string		path for config file
 	*/
-	public function getConfigFilePath() {
+	public function GetConfigPath() {
+		$configPath = realpath($this->appPath."/../configs");
+		if(empty($configPath)) {
+			throw new Exception("invalid config path: ".$configPath);
+		}
+		return $configPath;
+	}
+	/**
+	* Get config file path
+	* @return 	string		path for config file
+	*/
+	public function GetConfigFilePath() {
 		$this->Structurate();
-		$configPath = realpath($this->structure["Config"]);
+		$configPath = $this->GetConfigPath();
 		$configFile = $configPath."/magrathea.conf";
 		if(empty($configPath)) {
-			throw new Exception("invalid config path: ".$this->structure["Config"]);
+			throw new Exception("invalid config path: ".$configPath);
 		}
 		return $configFile;
 	}
@@ -131,7 +153,7 @@ class Start extends \Magrathea2\Singleton {
 	* @return 	boolean		true if file was created, false if don't
 	*/
 	public function CreateDefaultConfigFile() {
-		$configFile = $this->getConfigFilePath();
+		$configFile = $this->GetConfigFilePath();
 		if(file_exists($configFile)) {
 			echo "file [".$configFile."] already exists";
 			return false;
@@ -139,11 +161,16 @@ class Start extends \Magrathea2\Singleton {
 
 		$configDefaultPath = realpath(dirname(__FILE__)."/docs");
 		$configDefaultFile = $configDefaultPath."/magrathea.conf.sample";
-		echo "creating config file [".$configFile."]";
+		echo "creating config file [".$configFile."] from [".$configDefaultFile."]";
 		try {
-			copy($configDefaultFile, $configFile);
+			$success = @copy($configDefaultFile, $configFile);
 		} catch(Exception $ex) {
 			throw new Exception("could not copy file [".$configDefaultFile."] to [".$configFile."]");
+		}
+		if(!$success) {
+			echo "<br/><br/>could not create config file!<br/>base file:<br/>";
+			echo "<pre>".file_get_contents($configDefaultFile)."</pre>";
+			echo "<br/><hr/>";
 		}
 		return true;
 	}
@@ -159,5 +186,9 @@ class Start extends \Magrathea2\Singleton {
 		echo file_get_contents($configFile);
 	}
 
-}
+	public function PreLoad($appRoot) {
+		$this->appPath = $appRoot;
+		$this->CreateDefaultConfigFile();
+	}
 
+}

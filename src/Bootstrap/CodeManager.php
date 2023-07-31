@@ -1,10 +1,14 @@
 <?php
 
 namespace Magrathea2\Bootstrap;
+use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Exceptions\MagratheaException;
 use Magrathea2\MagratheaPHP;
 use Magrathea2\ConfigFile;
 use Exception;
+use Magrathea2\Admin\ObjectManager;
 
+use function Magrathea2\now;
 use function Magrathea2\p_r;
 
 #######################################################################################
@@ -22,225 +26,92 @@ use function Magrathea2\p_r;
  */
 class CodeManager extends \Magrathea2\Singleton { 
 
-	private $appPath;
-	private $configPath;
-	private $objectsConfFile = "magrathea_objects.conf";
-
 	/**
-	 * Loads the class and returns the class itself
-	 * @return CodeManager		itself
-	 */
-	public function Load() {
-		$this->appPath = MagratheaPHP::Instance()->magRoot;
-		$this->configPath = MagratheaPHP::Instance()->getConfigRoot();
-		return $this;
-	}
-
-	/**
-	 * Return the path for the magrathea_objects.conf file
-	 * @return string 	string for the path or null if the file does not exist
-	 */
-	public function getMagratheaObjectsFile() {
-		$confFilePath = $this->configPath."/".$this->objectsConfFile;
-		$confFile = realpath($confFilePath);
-		return $confFile;
-	}
-
-	/**
-	 * Return the path for the magrathea_objects.conf file
-	 * @return array 	array of objects config
-	 */
-	public function getMagratheaObjectsData() {
-		$mconfig = new ConfigFile();
-		$mconfig->SetPath($this->configPath);
-		$mconfig->SetFile($this->objectsConfFile);
-		$config = $mconfig->GetConfig();
-		return $config;
-	}
-
-	/** 
-	 * Return array of fields for a database from an object of magrathea_objects.conf
-	 * @param			array			magrathea_objects.conf element
-	 * @return 		array			array with [field_name] => type
-	 */
-	public function getFieldsFromObject($arrObject) {
-		$fields = [];
-		foreach($arrObject as $name => $type){
-			if( substr($name, -5) == "_type" ){
-				$field_name = substr($name, 0, -5);
-				$fields[$field_name] = $type;
-			}
-		}
-		return $fields;
-	}
-
-	/** 
-	 * Return array of fields for a database from an object of magrathea_objects.conf
-	 * @param			array			magrathea_objects.conf element
-	 * @return 		string		mySQL table query
-	 */
-	public function generateQueryForObject($arrObject) {
-		$columnsArr = $this->getFieldsFromObject($arrObject);
-		$table = $arrObject["table_name"];
-		$pk = $arrObject["db_pk"];
-		$columns = "";
-		foreach($columnsArr as $name => $type) {
-			switch($type) {
-				case "string":
-					$t = "VARCHAR (255)";
-					break;
-				default:
-					$t = strtoupper($type);
-			}
-			$columns .= "\t${name}\t${t}";
-			if ($name == $pk) {
-				$columns .= " NOT NULL AUTO_INCREMENT";
-			}
-			$columns .= ",\n";
-		}
-		$query = "CREATE TABLE IF NOT EXISTS ${table} \n(\n${columns} \t PRIMARY KEY (${pk})\n);";
-		return $query;
-	}
-
-	/** 
-	 * check if the folder exists and is writable
-	 * @param 		string		folder path
-	 * @param 		string		folder name (for error messages)
-	 * @return 		boolean		true if it's all good
-	 */
-	private function canUseFolder($folder, $name="directory") {
-		if(!$folder) {
-			throw new Exception($name." does not exists [".$folder."]");
-		}
-		if(!is_writable($folder)) {
-			throw new Exception($name." is not writable [".$folder."]");
-		}
-		return true;
+	 * @param string $object 	object name
+	 * @return array files that will be generated ["file-name", "file-desc", "gen-function"]
+	*/
+	public function GetFileList($object): array {
+		return [
+			"model-base" => [
+				"file-name" => $object."ModelBase.php",
+				"file-desc" => $object." Base Code",
+				"gen-function" => "GetCodeForObjectBase"
+			],
+			"control-base" => [
+				"file-name" => $object."ControlBase.php",
+				"file-desc" => $object." Control Base Code",
+				"gen-function" => "GetCodeForObjectControlBase"
+			],
+			"model" => [
+				"file-name" => $object."Model.php",
+				"file-desc" => $object." Model Code",
+				"gen-function" => "GetCodeForObject"
+			],
+			"control" => [
+				"file-name" => $object."ModelControl.php",
+				"file-desc" => $object." Model Control Code",
+				"gen-function" => "GetCodeForControl"
+			],
+		];
 	}
 
 	/**
-	 * Writes a file with some content (code, please)
-	 * Deletes the file before writing, so beware!
-	 * @param		string 		file that will be written
-	 * @param		string		content to be written
-	 * @return 	boolean		success?
+	 * comment for the header of the file
+	 * @return string
 	 */
-	function writeFile($file, $content){
-		if(file_exists($file)){
-			unlink($file);
-		}
-		if (!$handle = @fopen($file, 'w')) { 
-			return false; 
-		} 
-		if (!fwrite($handle, $content)) { 
-			return false; 
-		} 
-		fclose($handle); 
-		return true; 
-	}
-
-	
-	private function getRelations(){
-		$relations = null;
-		try	{
-			$mconfig = $this->getMagratheaObjectsData();
-			@$relations = $mconfig["relations"];
-		} catch (Exception $ex){
-			$error_msg = "Error: ".$ex->getMessage();
-		}
-		return $relations;
-	}
-	
-	/**
-	 * returns a relation from relation array
-	 * this is a function from Magrathea 1.0, I didn't care to explore it deeply
-	 * @param 		array			array Relation, maybe?
-	 * @param 		integer		index for something
-	 * @return 		array			something
-	 */
-	private function extractRelFromRelArray($rel_arr, $index){
-		$relation = array();
-		$relation["rel_name"] = $rel_arr["rel_name"][$index];
-		$relation["rel_obj_base"] = $rel_arr["rel_obj_base"][$index];
-		$relation["rel_type"] = $rel_arr["rel_type"][$index];
-		$relation["rel_type_text"] = $rel_arr["rel_type_text"][$index];
-		$relation["rel_object"] = $rel_arr["rel_object"][$index];
-		$relation["rel_field"] = $rel_arr["rel_field"][$index];
-		$relation["rel_property"] = $rel_arr["rel_property"][$index];
-		$relation["rel_method"] = $rel_arr["rel_method"][$index];
-		$relation["rel_lazyload"] = @$rel_arr["rel_lazyload"][$index];
-		$relation["rel_autoload"] = @$rel_arr["rel_autoload"][$index];
-		return $relation;
+	private function GetCommentAlert(): string {
+		$msg = "";
+		$msg .= "## FILE GENERATED BY MAGRATHEA.\n";
+		$msg .= "## This file was automatically generated and changes can be overwritten through the admin\n";
+		$msg .= "## -- date of creation: [".now()."]\n";
+		$msg .= "\n";
+		return $msg;
 	}
 
 	/**
-	 * Returns the relation for some object
-	 * @param			array			magrathea_objects.conf element
-	 * @return		array			relations array
+	 * Gets the data that will be used to create the code
+	 * @return array		array like [ "success", "data", "errors" ]
 	 */
-	private function getRelationsByObject($obj){
-		$rels = $this->getRelations();
-		$relations = array();
-		if( !$rels || count($rels) == 0 ) return $relations;
-		$index = 0;
-		foreach( $rels["rel_obj_base"] as $objbase ){
-			if($objbase == $obj){
-				array_push($relations, $this->extractRelFromRelArray($rels, $index));
-			}
-			$index++;
+	public function GetCodeCreationData(): array {
+		$rs = [];
+		$success = true;
+		$errors = [];
+		$configControl = new AdminConfigControl();
+		$path = $configControl->GetValueByKey("code_path");
+		if(empty($path)) $path = MagratheaPHP::Instance()->appRoot;
+		$structure = $configControl->GetValueByKey("code_structure");
+		if (empty($structure)) {
+			$success = false;
+			array_push($errors, "Structure Type is empty or invalid");
 		}
-		return $relations;
-	}
-
-	/**
-	 * Generate codes for a given object
-	 * @param			string		object name
-	 * @param			array			magrathea_objects.conf element
-	 * @return 		boolean		success or not to generate object
-	 */
-	public function generateCode($object, $data, $debug=false) {
-		$success = $this->writeBaseCode($object, $data, $debug);
+		$namespace = $configControl->GetValueByKey("code_namespace");
+		if (empty($namespace)) {
+			$success = false;
+			array_push($errors, "namespace is empty");
+		}
+		$rs = [
+			"success" => $success,
+			"data" => [
+				"code-path" => $path,
+				"code-structure" => $structure,
+				"code-namespace" => $namespace,
+			]
+		];
 		if(!$success) {
-			if($debug) {
-				echo "\tERROR: could not generate base code\n";
-			}
-			return $success;
+			$rs["errors"] = $errors;
 		}
-		$success = $this->writeModelsCode($object, $data, $debug);
-		return $success;
+		return $rs;
 	}
 
 	/**
-	 * Write base code for a given object
-	 * @param			string		object name
-	 * @param			array			magrathea_objects.conf element
-	 * @return 		boolean		success or not to generate object
+	 * Generate Base Code for object
+	 * @param 	string 		$object			object name
+	 * @param 	array			$data				array with magrathea_conf data for object
+	 * @param 	string 		$namespace	(optional) namespace for class code
+	 * @return 	string		code
 	 */
-	public function writeBaseCode($object, $data, $debug=false) {
-		$modelsDir = $this->appPath."/Models";
-		$baseDir = $modelsDir."/Base";
-		try {
-			$this->canUseFolder($baseDir, "Base dir");
-		} catch(Exception $ex) {
-			throw $ex;
-		}
-
-		$code = $this->generateBaseCode($object, $data);
-		$baseFile = $baseDir."/".$object."Base.php";
-		if ($debug) {
-			echo "\twriting ".$object." base file at [".$baseFile."]\n"; 
-		}
-		return $this->writeFile($baseFile, $code);
-	}
-
-	/**
-	 * Generate only base code for a given object
-	 * @param			string		object name
-	 * @param			array			magrathea_objects.conf element
-	 */
-	public function generateBaseCode($object, $data) {
+	private function GenerateBaseCodeForObject($object, $data, $namespace=null) {
 		$code = "";
-
 		$obj_fields = array();
 		foreach($data as $key => $item){
 			if( substr($key, -6) == "_alias" ){
@@ -251,7 +122,7 @@ class CodeManager extends \Magrathea2\Singleton {
 		}
 
 		$relations = array();
-		$relations = $this->getRelationsByObject($data);
+		$relations = ObjectManager::Instance()->GetRelationsByObject($object);
 		$relations_properties = "";
 		$relations_functions = "";
 		$relations_autoload = array();
@@ -288,8 +159,14 @@ class CodeManager extends \Magrathea2\Singleton {
 
 		} // close foreach relations
 	
-		$code = "<?php\n\n";
-		$code .= "## FILE GENERATED BY MAGRATHEA.\n## SHOULD NOT BE CHANGED MANUALLY\n\n";
+		$code = "<?php\n";
+		$code .= $this->GetCommentAlert();
+		if ($namespace) {
+			$code .= "namespace ".$namespace.";\n\n";
+		}
+		$code .= "use Magrathea2\iMagratheaModel;\n";
+		$code .= "use Magrathea2\MagratheaModel;\n\n";
+
 
 		$code .= "class ".$object."Base extends MagratheaModel implements iMagratheaModel {\n\n";
 		
@@ -328,65 +205,258 @@ class CodeManager extends \Magrathea2\Singleton {
 
 		$code .= "\t// >>> relations:\n".$relations_functions."\n";
 
-		$code .= "}\n\n";
-		
-		$code .= "class ".$object."ControlBase extends MagratheaModelControl {\n";
-			$code .= "\tprotected static \$modelName = \"".$object."\";\n";
-			$code .= "\tprotected static \$dbTable = \"".$data["table_name"]."\";\n";
-		$code .= "}\n";		
-
-		$code .= "?>";
+		$code .= "}\n";
 		return $code;
 	}
 
 	/**
-	 * Write model code for a given object
-	 * @param			string		object name
-	 * @param			array			magrathea_objects.conf element
-	 * @return 		boolean		success or not to generate object
+	 * Generate Base Code for object
+	 * @param 	string 		$object			object name
+	 * @param 	array			$data				array with magrathea_conf data for object
+	 * @param 	string 		$namespace	(optional) namespace for class code
+	 * @return 	string		code
 	 */
-	public function writeModelsCode($object, $data, $debug=false) {
-		$modelsDir = $this->appPath."/Models";
+	private function GenerateBaseCodeForObjectControl($object, $data, $namespace=null) {
+		$code = "";
+		$code = "<?php\n";
+		$code .= $this->GetCommentAlert();
+		if ($namespace) {
+			$code .= "namespace ".$namespace.";\n\n";
+		}
+		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
+
+		$code .= "class ".$object."ControlBase extends MagratheaModelControl {\n";
+			$code .= "\tprotected static \$modelNamesapce = \"".$namespace."\";\n";
+			$code .= "\tprotected static \$modelName = \"".$object."\";\n";
+			$code .= "\tprotected static \$dbTable = \"".$data["table_name"]."\";\n";
+		$code .= "}\n\n";
+		return $code;
+	}
+
+	/**
+	 * Generate Code for object
+	 * @param 	string 		$object		object name
+	 * @param 	string 		$namespace	(optional) namespace for class code
+	 * @return 	string		code
+	 */
+	private function GenerateCodeForObject($object, $namespace=null) {
+		$code = "<?php\n";
+		$code .= "include(__DIR__.\"/".$object."ModelBase.php\");\n\n";
+
+		if ($namespace) {
+			$code .= "namespace ".$namespace.";\n\n";
+		}
+
+		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
+
+		$code .= "class ".$object." extends ".$object."Base {\n";
+		$code .= "\t// model code goes here!\n";
+		$code .= "}\n\n";
+		return $code;
+	}
+
+	/**
+	 * Generate Code for object
+	 * @param 	string 		$object		object name
+	 * @param 	string 		$namespace	(optional) namespace for class code
+	 * @return 	string		code
+	 */
+	private function GenerateCodeForObjectControl($object, $namespace=null) {
+		$code = "<?php\n";
+		$code .= "include(__DIR__.\"/".$object."ModelBase.php\");\n\n";
+
+		if ($namespace) {
+			$code .= "namespace ".$namespace.";\n\n";
+		}
+
+		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
+
+		$code .= "class ".$object."Control extends ".$object."ModelControlBase {\n";
+		$code .= "\t// model code goes here!\n";
+		$code .= "}\n\n";
+		return $code;
+	}
+
+	/**
+	 * @param 	string 	$object	object name
+	 * @return 	string	code
+	 */
+	public function GetCodeForObjectBase($object): string {
+		$objectData = ObjectManager::Instance()->GetObjectData($object);
+		$codeData = $this->GetCodeCreationData();
+		if(!$codeData["success"]) {
+			throw new MagratheaException("error generating code");
+		}
+		return $this->GenerateBaseCodeForObject($object, $objectData, $codeData["data"]["code-namespace"]);
+	}
+	/**
+	 * @param 	string 	$object	object name
+	 * @return 	string	code
+	 */
+	public function GetCodeForObjectControlBase($object): string {
+		$objectData = ObjectManager::Instance()->GetObjectData($object);
+		$codeData = $this->GetCodeCreationData();
+		if(!$codeData["success"]) {
+			throw new MagratheaException("error generating code");
+		}
+		return $this->GenerateBaseCodeForObjectControl($object, $objectData, $codeData["data"]["code-namespace"]);
+	}
+	/**
+	 * @param 	string 	$object	object name
+	 * @return 	string	code
+	 */
+	public function GetCodeForObject($object): string {
+		$codeData = $this->GetCodeCreationData();
+		if(!$codeData["success"]) {
+			throw new MagratheaException("error generating code");
+		}
+		return $this->GenerateCodeForObject($object, $codeData["data"]["code-namespace"]);
+	}
+	/**
+	 * @param 	string 	$object	object name
+	 * @return 	string	code
+	 */
+	public function GetCodeForControl($object): string {
+		$codeData = $this->GetCodeCreationData();
+		if(!$codeData["success"]) {
+			throw new MagratheaException("error generating code");
+		}
+		return $this->GenerateCodeForObjectControl($object, $codeData["data"]["code-namespace"]);
+	}
+
+	/**
+	 * @param 	string 	$object	object name
+	 * @return 	array		["code", "overwritable", "file-exists", "file-destination"]
+	 */
+	public function PrepareCodeFileGeneration($type, $object): array {
+		$list = $this->GetFileList($object);
+		$fileData = @$list[$type];
+		if (!$type || !$fileData) {
+			throw new MagratheaException("incorrect type for code generation: [".$type."]");
+		}
+		$structureData = $this->PrepareStructureForCodeGeneration($object);
+		$fileDestination = $structureData["code-destination"]."/".$fileData["file-name"];
+		$fn = $fileData["gen-function"];
+		$code = $this->$fn($object);
+		return [
+			"code" => $code,
+			"file-exists" => file_exists($fileDestination),
+			"overwritable" => ($type == "model-base" || $type == "control-base") ? true : false,
+			"file-destination" => $fileDestination,
+		];
+	}
+
+	/**
+	 * @param 	string 		$type 		file type ("model-base", "control-base", "model", "control")
+	 * @param 	string		$obj			object name
+	 * @return 	array			[ ["success", "file-name", "error?"]* ]
+	 */
+	public function WriteCodeFile($type, $obj) {
+		$fileData = $this->PrepareCodeFileGeneration($type, $obj);
+		$file = $fileData["file-destination"];
+		$content = $fileData["code"];
+		$overwrite = $fileData["overwritable"];
 		try {
-			$this->canUseFolder($modelsDir, "Models dir");
+			$w = $this->WriteFile($file, $content, $overwrite);
 		} catch(Exception $ex) {
 			throw $ex;
 		}
-
-		$baseFile = $modelsDir."/".$object.".php";
-		if(file_exists($baseFile)){
-			echo "\tclass for ".$object." already exists at [".$baseFile."]\n";
-			return false;
-		}
-
-		$code = $this->generateModelsCode($object, $data);
-		if ($debug) {
-			echo "\twriting ".$object." model file at [".$baseFile."]\n"; 
-		}
-		return $this->writeFile($baseFile, $code);
+		$rs = [
+			"success" => $w["success"],
+			"overwrite" => @$w["overwrite"],
+			"type" => $type,
+			"file-name" => $file,
+		];
+		if(!$w["success"]) $rs["error"] = $w["error"];
+		return $rs;
 	}
 
 	/**
-	 * Generate only base code for a given object
-	 * @param			string		object name
-	 * @param			array			magrathea_objects.conf element
+	 * Get data for generating a code file
+	 * @param			string			object name
+	 * @return 		array				data
 	 */
-	public function generateModelsCode($object, $data) {
-		$code = "<?php\n\n";
-		$code .= "include(__DIR__.\"/Base/".$object."Base.php\");\n\n";
-
-		$code .= "class ".$object." extends ".$object."Base {\n";
-		$code .= "\t// your code goes here!\n";
-		$code .= "}\n\n";
-		
-		$code .= "class ".$object."Control extends ".$object."ControlBase {\n";
-		$code .= "\t// and here!\n";
-		$code .= "}\n\n";
-		
-		$code .= "?>";
-		return $code;
+	public function PrepareStructureForCodeGeneration($object) {
+		$codeData = $this->GetCodeCreationData();
+		if(!$codeData["success"]) {
+			throw new MagratheaException("Could not create code for ".$object, 400);
+		}
+		$rs = [];
+		$data = $codeData["data"];
+		$codePath = $data["code-path"];
+		$rs["structure"] = $data["code-structure"];
+		$rs["namespace"] = $data["code-namespace"];
+		if($rs["structure"] == "feature") {
+			$rs["features-path"] = $codePath."/features";
+			$rs["code-destination"] = $rs["features-path"]."/".$object;
+			$rs["is-writable"] = is_writable($rs["code-destination"]);
+		}
+		$rs["code-path"] = $codePath;
+		return $rs;
 	}
 
+	/**
+	 * Create Folders for object
+	 * @param			string			object name
+	 * @return 		array				data ["success", "data"]
+	 */
+	public function PrepareFolders($object) {
+		$data = $this->PrepareStructureForCodeGeneration($object);
+		$rs = [];
+		$codeData = [];
+		$codeData["path"] = $data["code-path"];
+		$codeData["exists"] = is_dir($data["code-path"]);
+		$codeData["writable"] = is_writable($data["code-path"]);
+		$rs["base"] = $codeData;
+		if($data["structure"] == "feature") {
+			$featuresData = [];
+			$featuresData["path"] = $data["features-path"];
+			if(!is_dir($data["features-path"])){
+				$featuresData["created"] = @mkdir($data["features-path"]);
+			} else {
+				$featuresData["exists"] = true;
+			}
+			$featuresData["writable"] = is_writable($data["features-path"]);
+			$rs["features"] = $featuresData;
 
+			$objectData = [];
+			$objectData["path"] = $data["code-destination"];
+			if(!is_dir($data["code-destination"])){
+				$objectData["created"] = @mkdir($data["code-destination"]);
+			} else {
+				$objectData["exists"] = true;
+			}
+			$objectData["writable"] = is_writable($data["code-destination"]);
+			$rs["object"] = $objectData;
+		}
+		return $rs;
+	}
+
+	/**
+	 * Writes a file with some content (code, please)
+	 * @param		string 		$file				file that will be written
+	 * @param		string		$content		content to be written
+	 * @param 	boolean 	$overwrite	should we overwrite whater is in the file?
+	 * @return 	array			["success", "error?", "data?"]
+	 */
+	function WriteFile($file, $content, $overwrite=false){
+		$file_existed = false;
+		if(file_exists($file)){
+			$file_existed = true;
+			if($overwrite) {
+				unlink($file);
+			} else {
+				return ["success" => false, "error" => "file already exists"];
+			}
+		}
+		if (!$handle = @fopen($file, 'w')) { 
+			return ["success" => false, "error" => "could not open file", "data" => $handle];
+		} 
+		if (!fwrite($handle, $content)) { 
+			return ["success" => false, "error" => "could not write file", "data" => $handle];
+		} 
+		fclose($handle); 
+		return ["success" => true, "overwrite" => $file_existed];
+	}
 
 }

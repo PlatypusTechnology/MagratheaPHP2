@@ -1,9 +1,9 @@
 <?php
 
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\AdminUsers;
-use Magrathea2\Admin\Start;
 
-$admin = Start::Instance();
+$admin = AdminManager::Instance();
 
 if(count($_POST) > 0) {
 	switch ($_POST["action"]) {

@@ -411,10 +411,10 @@ class MagratheaApi {
 				"message" => $data->getMessage()
 			];
 			if($data->getCode() != 0) {
-				$data["code"] = $data->getCode();
+				$rs["code"] = $data->getCode();
 			}
 			if(!empty($data->GetData())) {
-				$data["code"] = $data->GetData();
+				$rs["data"] = $data->GetData();
 			}
 		} else {
 			$rs = $data;

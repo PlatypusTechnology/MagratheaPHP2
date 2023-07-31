@@ -50,6 +50,10 @@
 	margin-top: 20px;
 	padding-left: 10px;
 	color: var(--primary);
+	cursor: default;
+}
+.side-menu span.title {
+	background-color: inherit;
 }
 .side-menu a {
 	color: var(--bs-list-group-action-color);

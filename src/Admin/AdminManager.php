@@ -3,8 +3,14 @@
 namespace Magrathea2\Admin;
 
 use Exception;
+use Magrathea2\Admin\Features\User\AdminUser;
+use Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog;
+use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
 use Magrathea2\Singleton;
 use Magrathea2\MagratheaPHP;
+
+use function Magrathea2\isMagratheaModel;
+use function Magrathea2\p_r;
 
 #######################################################################################
 ####
@@ -21,7 +27,29 @@ use Magrathea2\MagratheaPHP;
  */
 class AdminManager extends Singleton {
 
+	public $title = "Magrathea Admin";
 	public $primaryColor = "203, 128, 8";
+	private $adminLogo = __DIR__."/views/logo.svg";
+	private $features = [];
+	private $menu = null;
+
+
+	public function Initialize() {
+		$this
+			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
+			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
+			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
+	}
+
+	/**
+	 * Sets title
+	 * @param 	string 		$title		title
+	 * @return 	Start
+	 */
+	public function SetTitle($t): AdminManager {
+		$this->title = $t;
+		return $this;
+	}
 
 	/**
 	 * Sets color as decimal value
@@ -42,114 +70,137 @@ class AdminManager extends Singleton {
 	}
 
 	/**
+	 * Defines admin logo
+	 * @param string $logo		logo address
+	 * @return AdminManager		itself
+	 */
+	public function SetAdminLogo($logo): AdminManager {
+		$this->adminLogo = $logo;
+		return $this;
+	}
+
+	/**
 	 * Prints the logo
 	 * @param int $logoSize		size of the logo
 	 */
 	public function PrintLogo($logoSize): void {
-		include(__DIR__."/views/logo.svg");
+		include($this->adminLogo);
 	}
 
-	public function IsMenuActive($item): bool {
-		$page = @$_GET["magrathea_page"];
-		return ($page == $item);
+	/**
+	 * sets admin feature
+	 * @param AdminFeature $feature		feature class to be added
+	 * @return AdminManager						itself
+	 */
+	public function AddFeature($feature): AdminManager {
+		$this->features[$feature->featureId] = $feature;
+		return $this;
+	}
+	/**
+	 * gets admin feature id and returns its object
+	 * @param string $featureId				admin feature id
+	 * @return 	AdminFeature | null		Admin Feature class (null if it does not exists)
+	 */
+	public function GetFeature($featureId): AdminFeature | null {
+		if(array_key_exists($featureId, $this->features)) {
+			return $this->features[$featureId];
+		}
+		return null;
+	}
+	/**
+	 * returns active feature (the one from "magrathea_feature" data)
+	 */
+	public function GetActiveFeature(): AdminFeature | null {
+		$featureId = @$_GET["magrathea_feature"];
+		if(!$featureId) return null;
+		return $this->GetFeature($featureId);
 	}
 
+	/**
+	 * Saves menu inside menu var
+	 * @return 	void
+	 */
+	public function BuildMenu(): void {
+		$adminMenu = new AdminMenu();
+		$adminMenu
+			->Add($adminMenu->GetItem("conf-file"))
+			->Add($adminMenu->GetItem("app-conf"))
+			->Add($adminMenu->GetItem("tests"))
 
-	public function GetMenuItems() {
-		$adminUrls = AdminUrls::Instance();
-		return [
-			[
-				'title' => "Users",
-				'link' => $adminUrls->GetPageUrl("users"),
-				'active' => $this->IsMenuActive("users"),
-			],
-			[
-				'title' => "App Configuration",
-				'link' => $adminUrls->GetPageUrl("config-data"),
-				'active' => $this->IsMenuActive("config-data"),
-			],
-			[
-				'title' => "Configuration File",
-				'link' => $adminUrls->GetConfigUrl(),
-				'active' => $this->IsMenuActive("config"),
-			],
-			[
-				'title' => "Tests",
-				'link' => $adminUrls->GetPageUrl("tests"),
-				'active' => $this->IsMenuActive("tests"),
-			],
+			->Add($adminMenu->GetDatabaseSection())
+			->Add($adminMenu->GetObjectSection())
+			->Add($adminMenu->GetDebugSection())
 
-			[
-				'title' => "Database",
-				'type' => "Sub"
-			],
-			[
-				'title' => "View Tables",
-				'link' => $adminUrls->GetPageUrl("db-tables"),
-				'active' => $this->IsMenuActive("db-tables"),
-			],
+			->Add($adminMenu->GetMenuFeatures([
+				$this->features["AdminFeatureUser"],
+				$this->features["AdminFeatureUserLog"],
+			], "Users"))
 
-			[
-				'title' => "Objects",
-				'type' => "Sub"
-			],
-			[
-				'title' => "View Objects",
-				'link' => $adminUrls->GetPageUrl("objects-view"),
-				'active' => $this->IsMenuActive("objects-view"),
-			],
-			[
-				'title' => "Edit Objects",
-				'link' => $adminUrls->GetPageUrl("objects-edit"),
-				'active' => $this->IsMenuActive("objects-edit"),
-			],
-			[
-				'title' => "Objects Config",
-				'link' => $adminUrls->GetPageUrl("objects-config"),
-				'active' => $this->IsMenuActive("objects-config"),
-			],
-			[
-				'title' => "Generate Code",
-				'link' => $adminUrls->GetPageUrl("generate-code"),
-				'active' => $this->IsMenuActive("generate-code"),
-			],
+			->Add("Tools")
+			->Add($this->features["AdminFeatureFileEditor"]->GetMenuItem())
 
-			[
-				'title' => "Debugging",
-				'type' => "Sub"
-			],
-			[
-				'title' => "Logs",
-				'link' => $adminUrls->GetPageUrl("logs"),
-				'active' => $this->IsMenuActive("logs"),
-			],
-			[
-				'title' => "Structure",
-				'link' => $adminUrls->GetPageUrl("structure"),
-				'active' => $this->IsMenuActive("structure"),
-			],
-			[
-				'title' => "Server",
-				'link' => $adminUrls->GetPageUrl("server"),
-				'active' => $this->IsMenuActive("server"),
-			],
+			->Add($adminMenu->GetHelpSection())
+			->Add($adminMenu->GetLogoutMenuItem());
+		$this->SetMenu($adminMenu);
+	}
 
-			[
-				'title' => "Help",
-				'type' => "Sub"
-			],
-			[
-				'title' => "Admin Demos",
-				'link' => $adminUrls->GetPageUrl("form-demo"),
-				'active' => $this->IsMenuActive("form-demo"),
-			],
+	/**
+	 * Sets the menu
+	 * @param AdminMenu $m		menu
+	 * @return AdminManager		itself
+	 */
+	public function SetMenu($m): AdminManager {
+		$this->menu = $m;
+		return $this;
+	}
 
-			[
-				'title' => "Logout",
-				'class' => 'menu-logout',
-				'link' => $adminUrls->GetPageUrl(null, "logout"),
-			],
-		];
+	/**
+	 * Gets the AdminMenu
+	 * @return array		menu items
+	 */
+	public function GetMenu(): AdminMenu {
+		if(!$this->menu) $this->BuildMenu();
+		return $this->menu;
+	}
+
+	/**
+	 * Log an action
+	 * @param string 	$action		action executed
+	 * @param array|object 	$data			data for log
+	 * @param int			$user_id  action user id
+	 * @return void
+	 */
+	public function Log($action, $data=null, $user_id=false): void {
+		if(!$user_id) {
+			$user = $this->GetLoggedUser();
+			$user_id = $user->id;
+		}
+		if (isMagratheaModel($data)) {
+			$data = json_encode($data);
+		}
+		$control = new AdminLogControl();
+		$control->Log($user_id, $action, $data);
+	}
+
+	/**
+	 * Starts Admin
+	 */
+	public function Start() {
+		Start::Instance()->StartDb()->Load();
+	}
+
+	/**
+	 * Return logged user
+	 */
+	public function GetLoggedUser(): AdminUser {
+		return \Magrathea2\Admin\AdminUsers::Instance()->GetLoggedUser();
+	}
+
+	/**
+	 * Show permission denied page
+	 */
+	public function PermissionDenied() {
+		die("Permission denied!");
 	}
 
 }

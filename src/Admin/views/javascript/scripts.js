@@ -1,8 +1,11 @@
-function showToast(message, title="Error") {
+function showToast(message, title="Error", isError=false) {
 	let toast = $("#bread-pack .toast").clone();
 	$(toast.find(".toast-title")).html(title);
 	$(toast.find(".toast-body")).html(message);
 	$(toast).appendTo("#toast-container");
+	if(isError) {
+		$(toast).addClass("toast-error");
+	}
 	$(toast).addClass("show");
 	window.scrollTo(0,0);
 }
@@ -28,6 +31,16 @@ function showOn(container, rs, debug=false) {
 	$(container).html(rs);
 	$(container).show('slow');
 }
+function addTo(container, rs, first=true, debug=false) {
+	if(debug) {
+		console.info("["+container+"]", rs);
+	}
+	if(first) {
+		$(container).prepend(rs);
+	} else {
+		$(container).append(rs);
+	}
+}
 function showOnVanilla(container, rs, debug=false) {
 	if(debug) {
 		console.info("["+container+"]", rs);
@@ -39,6 +52,11 @@ function showLoading() {
 }
 function hideLoading() {
 	$("#loading").slideUp();
+}
+
+// as presented by Google's Bard
+function arrayToObject(array) {
+	return array.reduce((obj, item) => ({...obj, [item]: item}), {});
 }
 
 function getCurrentPage() {
@@ -54,33 +72,53 @@ function ucfirst(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function ajax(method, url, data) {
+function ajax(method, url, payload, debug=false) {
 	showLoading();
+	if(debug) console.info("Calling ["+method+"]"+url+" with payload", payload);
   return new Promise(function(resolve, reject) {
-    $.ajax({
-      url: url,
-      method: method,
-      data: data,
-      success: function(response) {
-				hideLoading();
-        resolve(response);
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-				hideLoading();
-        reject(errorThrown);
-      }
-    });
+		if(method.toUpperCase() == "POST") {
+			$.post(url, payload, (rs) => {
+				hideLoading(); resolve(rs);
+			})
+		} else {
+			let ajaxData = {
+				url: url,
+				method,
+				type: method,
+				data: payload,
+				processData: false,
+				success: function(response) {
+					hideLoading();
+					resolve(response);
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					hideLoading();
+					console.error("error!" , errorThrown);
+					reject(errorThrown);
+				}
+			};
+			if(debug) console.info("ajaxData:", ajaxData);
+			$.ajax(ajaxData);
+			}
   });
 }
 
 function callAction(action, method="GET", data=null) {
-	let url = "/"+getCurrentPage()+"?magrathea_action="+action;
+	let url = "/"+getCurrentPage()+"?magrathea_subpage="+action;
 	return ajax(method, url, data);
 }
 
 function callApi(object, fn, params=null) {
 	let url = "/"+getCurrentPage()+"?magrathea_api="+ucfirst(object)+"&magrathea_api_method="+ucfirst(fn);
 	return ajax("POST", url, params);
+}
+
+function callFeature(feature, action=null, method="GET", data=null) {
+	let url = "/"+getCurrentPage()+"?magrathea_feature="+feature;
+	if (action) {
+		url += "&magrathea_feature_action=" + action;
+	}
+	return ajax(method, url, data);
 }
 
 function toggleCol(el, col) {

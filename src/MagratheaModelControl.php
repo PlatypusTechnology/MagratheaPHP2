@@ -24,8 +24,13 @@ use Magrathea2\Exceptions\MagratheaModelException;
 #######################################################################################
 
 abstract class MagratheaModelControl{
+	protected static $modelNamespace;
 	protected static $modelName;
 	protected static $dbTable;
+
+	public static function GetModelName() {
+		return static::$modelNamespace."\\".static::$modelName;
+	}
 
 	/**
 	 * Run a query and return a list of the objects
@@ -37,8 +42,9 @@ abstract class MagratheaModelControl{
 		$objects = array();
 		$result = $magdb->queryAll($sql);
 		foreach($result as $item){
+			$modelName = static::GetModelName();
 			$splitResult = Query::SplitArrayResult($item);
-			$new_object = new static::$modelName();
+			$new_object = new $modelName();
 			if(count($splitResult) > 0)
 				$item = $splitResult[$new_object->GetDbTable()];
 			$new_object->LoadObjectFromTableRow($item);
@@ -57,7 +63,8 @@ abstract class MagratheaModelControl{
 		$new_object = null;
 		if(!empty($row)){
 			$splitResult = Query::SplitArrayResult($row);
-			$new_object = new static::$modelName();
+			$modelName = static::GetModelName();
+			$new_object = new $modelName();
 			if(count($splitResult) > 0)
 				$row = $splitResult[$new_object->GetDbTable()];
 			$new_object->LoadObjectFromTableRow($row);
@@ -128,7 +135,8 @@ abstract class MagratheaModelControl{
 			$result = static::QueryResult($magQuery->SQL());
 			foreach ($result as $r) {
 				$splitResult = Query::SplitArrayResult($r);
-				$new_object = new static::$modelName();
+				$modelName = static::GetModelName();
+				$new_object = new $modelName();
 				if(count($splitResult) > 1)
 					$r = $splitResult[$new_object->GetDbTable()];
 				$new_object->LoadObjectFromTableRow($r);

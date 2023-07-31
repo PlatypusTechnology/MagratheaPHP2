@@ -147,9 +147,9 @@ class Config extends Singleton {
 	/**
 	 * Alias for GetConfigFromDefault
    	 * @param 	string 	$config_name Item to be returned from the `magrathea.conf`. 
- 	 * @return 	string
+ 	 * @return 	string|int|null
 	 */
-	public function Get($config_name): string{
+	public function Get($config_name): string|int|null {
 		return $this->GetConfigFromDefault($config_name);
 	}
 	/**
@@ -157,9 +157,9 @@ class Config extends Singleton {
 	* It will get from the section defined on `general/use_environment`.
 	* @param 	string 		$config_name 	Item to be returned from the `magrathea.conf`.
 	* @param 	boolean 	$throwable 		should this function throw an exception if array key don't exist?
-	* @return 	string
+	* @return 	string|int|null
 	*/
-	public function GetConfigFromDefault($config_name, $throwable=false){
+	public function GetConfigFromDefault($config_name, $throwable=false): string|int|null {
 		if( $this->configs == null ){
 			$this->LoadFile();
 		}

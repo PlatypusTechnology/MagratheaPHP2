@@ -3,6 +3,9 @@ function showOn(container, rs) {
 	$(container).show('slow');
 }
 
+function viewCodeFile() {
+	
+}
 function generateCode() {
 	let url = "/?action=generate-code";
 	$.get(url, rs => showOn("#code-gen-rs", rs));

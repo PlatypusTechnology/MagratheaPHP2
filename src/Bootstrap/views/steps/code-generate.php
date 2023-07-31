@@ -1,10 +1,10 @@
 <?php
 
 	$bootstrap = Magrathea2\Bootstrap\CodeManager::Instance()->Load();
-	$confFile = $bootstrap->getMagratheaObjectsFile();
+	$confFile = $bootstrap->GetMagratheaObjectsFile();
 
 	?>
-	<h5>Generating code</h5>
+	<h5>Generate Objects code</h5>
 	<span><?=$confFile?></span>
 	<br/>
 	<?
@@ -14,6 +14,16 @@
 		<span class="error">no magrathea_objects.conf file</span>
 		<?
 		return;
+	} else {
+		?>
+		<div class="row">
+			<div class="col-12 btn-obj-view-file">
+				<pre class="code"><? $configFile = realpath($bootstrap->GetMagratheaObjectsFile());
+echo file_get_contents($configFile); ?>
+				</pre>
+			</div>
+		</div>
+		<?
 	}
 
 ?>

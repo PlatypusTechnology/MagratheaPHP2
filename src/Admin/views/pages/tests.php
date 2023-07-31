@@ -78,7 +78,7 @@ $tests = $testManager->GetTests();
 
 <script type="text/javascript">
 	function callTestRun(data, containerShow) {
-		return ajax('POST', "?magrathea_action=test-run", data)
+		return ajax('POST', "?magrathea_subpage=test-run", data)
 			.then(rs => showOn(containerShow, rs) );
 	}
 	function callRunFolder(folder, containerShow) {

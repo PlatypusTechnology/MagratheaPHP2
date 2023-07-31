@@ -33,7 +33,7 @@ CREATE TABLE `_magrathea_logs` (
 	`id` bigint(11) unsigned NOT NULL AUTO_INCREMENT,
 	`user_id` int(11) NOT NULL,
 	`action` varchar(255) NOT NULL,
-	`data` text DEFAULT NULL,
+	`info` text DEFAULT NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
 	`updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY (`id`)

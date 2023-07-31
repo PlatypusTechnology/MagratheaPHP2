@@ -391,7 +391,7 @@ class ObjectManager extends \Magrathea2\Singleton {
 			],
 			"save" => [
 				"name" => "Save()",
-				"description" => "Saves the ".$name.": updates if existis, inserts otherwise",
+				"description" => "Saves the ".$name.": updates if exists, inserts otherwise",
 			],
 			"delete" => [
 				"name" => "Delete()",
@@ -406,40 +406,6 @@ class ObjectManager extends \Magrathea2\Singleton {
 				"description" => "Gets the ".$name." with the given id",
 			],
 		];
-	}
-
-	/**
-	 * Gets the data that will be used to create the code
-	 * @return array		array like [ "success", "data", "errors" ]
-	 */
-	public function GetCodeCreaationData(): array {
-		$rs = [];
-		$success = true;
-		$errors = [];
-		$configControl = new AdminConfigControl();
-		$path = MagratheaPHP::Instance()->appRoot;
-		$structure = $configControl->GetByKey("structure");
-		if (empty($structure)) {
-			$success = false;
-			array_push($errors, "Structure Type is empty or invalid");
-		}
-		$namespace = $configControl->GetByKey("namespace");
-		if (empty($namespace)) {
-			$success = false;
-			array_push($errors, "namespace is empty");
-		}
-		$rs = [
-			"success" => $success,
-			"data" => [
-				"code-path" => $path,
-				"structure" => $structure,
-				"namespace" => $namespace,
-			]
-		];
-		if(!$success) {
-			$rs["errors"] = $errors;
-		}
-		return $rs;
 	}
 
 }

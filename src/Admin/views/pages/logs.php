@@ -101,9 +101,9 @@ foreach ($dirData as $d) {
 				<div class="col-2">
 					<?
 					$argsTailStart = ["id" => "tail-start", "styles" => ""];
-					$adminElements->Button("Tail! &#x23F5", "start()", "btn-success w-100", false, $argsTailStart);
+					$adminElements->Button("Tail! &#x23F5", "start()", "btn-success w-100", null, false, $argsTailStart);
 					$argsTailStop = ["id" => "tail-stop", "styles" => "display: none;"];
-					$adminElements->Button("Pause! &#x23F8;", "pause()", "btn-warning w-100", false, $argsTailStop);
+					$adminElements->Button("Pause! &#x23F8;", "pause()", "btn-warning w-100", null, false, $argsTailStop);
 					?>
 				</div>
 				<div class="col-12 mt-2">

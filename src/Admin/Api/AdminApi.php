@@ -21,6 +21,20 @@ class AdminApi extends \Magrathea2\MagratheaApi {
 		Debugger::Instance()->SetType(Debugger::LOG);
 	}
 
+	/**
+	 * Removes "Api" from the end of string
+	 * as provided by chatGPT
+	 * @param 	string  $name		api Name
+	 * @return	string	new api Name
+	 * 
+	 */
+	private function removeApiSuffix($name) {
+		$suffix = 'Api';
+		if (substr($name, -strlen($suffix)) === $suffix) {
+			return substr($name, 0, -strlen($suffix));
+		}
+		return $name;
+	}
 
 	public function Call($api, $method="Default") {
 		try {

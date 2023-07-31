@@ -248,11 +248,11 @@ class Debugger extends Singleton {
 			$html .= "</div>";
 		} else if (is_array($deb)) {
 			$html .= "<div style='padding: 10px; border: 1px dotted black; margin-bottom: 5px; line-height: 120%;'>";
-			$html .= "<span>".nice_p_r($deb)."</span><br/>";
+			$html .= "<span>".\Magrathea2\p_r($deb)."</span><br/>";
 			$html .= "</div>";
 		} else {
 			$html .= "<div style='padding: 10px; border: 1px dotted black; margin-bottom: 5px; line-height: 120%;'>";
-			$html .= "<pre>".nice_p_r($deb)."</pre><br/>";
+			$html .= "<pre>".\Magrathea2\p_r($deb)."</pre><br/>";
 			$html .= "</div>";
 		}
 		return $html;

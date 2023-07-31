@@ -24,7 +24,7 @@ if($closeFn) {
 		<div class="row">
 			<div class="col-sm-12 col-md-6" id="object-view-<?=$objectName?>">
 				<?
-				$adminElements->Button("View Object Details", "viewObject('".$objectName."')", ["btn-primary", "w-100"], false, ["id" => "btn-view-".$objectName]);
+				$adminElements->Button("View Object Details", "viewObject('".$objectName."')", ["btn-primary", "w-100"], null, false, ["id" => "btn-view-".$objectName]);
 				?>
 			</div>
 			<div class="col-sm-12 col-md-6 mt-xs-4">

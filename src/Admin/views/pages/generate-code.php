@@ -4,18 +4,21 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminForm;
 use Magrathea2\Admin\AdminUrls;
 use Magrathea2\Admin\ObjectManager;
+use Magrathea2\Bootstrap\CodeManager;
+
+use function Magrathea2\p_r;
 
 $pageTitle = "Generate Code";
 include(__DIR__."/../sections/header.php");
 
-$data = ObjectManager::Instance()->GetCodeCreaationData();
-$codeData = $data["data"];
-$path = $codeData["code-path"];
-$structure = $codeData["structure"];
+$data = CodeManager::Instance()->GetCodeCreationData();
+$codeData = @$data["data"];
+$path = @$codeData["code-path"];
+$structure = @$codeData["code-structure"];
 if(empty($structure)) {
 	$structure = "feature";
 }
-$namespace = $codeData["namespace"];
+$namespace = @$codeData["code-namespace"];
 
 $structureForm = new AdminForm();
 $structureForm
@@ -61,6 +64,7 @@ $structureForm
 			"name" => "Save",
 			"class" => "w-100 btn-success",
 			"size" => "col-4",
+			"key" => "saveCodeGenerationConfig(this);",
 		],
 	],
 	[
@@ -97,9 +101,9 @@ $structureForm
 	</div>
 	<?
 	if(!$data["success"]) {
-		echo "<br/>";
-		AdminElements::Instance()->Alert("Can't create code: ".implode('; ', $data["errors"]).".", "danger");
-		echo "<br/>";
+		echo "<br/><div class='message-container'>";
+		AdminElements::Instance()->Alert("Can't create code: ".implode('; ', $data["errors"]).".", "danger", false);
+		echo "<br/></div>";
 	}
 	?>
 
@@ -111,7 +115,6 @@ $structureForm
 <script type="text/javascript">
 let cards = [];
 function objClick(obj) {
-	console.info('openingn ' +obj);
 	if(cards[obj]) return;
 	$("#btn-"+obj).addClass("active");
 	cards[obj] = true;
@@ -125,4 +128,5 @@ function closeCodeCard(obj) {
 	$("#btn-"+obj).removeClass("active");
 }
 
+<?php include(__DIR__."/../javascript/code-creation.js"); ?>
 </script>

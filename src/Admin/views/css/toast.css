@@ -12,6 +12,10 @@
 	animation: hide-toast 2s linear;
 }
 
+.toast.toast-error {
+	border-color: var(--error);
+}
+
 .toast.show {
 	animation: show-toast 0.5s linear;
 }
@@ -30,8 +34,11 @@
 	height: 40px;
 	border-bottom: var(--bs-toast-border-width) solid var(--bs-toast-border-color) !important;
 }
-.toast .toast-header .toast-title {
+.toast.toast-error .toast-header .toast-title {
 	color: var(--error);
+}
+.toast .toast-header .toast-title {
+	color: var(--primary);
 }
 .toast .toast-header .toast-close {
 	position: absolute;

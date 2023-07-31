@@ -464,6 +464,7 @@ class Database extends Singleton {
 			$lastId = $stm->insert_id;
 			$stm->close();
 		} catch(MagratheaDBException $ex) {
+			$ex->SetData($query, $args);
 			return null;
 		} catch(Exception $err){
 			throw $this->ConnectionErrorHandle($err, $err);
@@ -487,7 +488,9 @@ class Database extends Singleton {
 			$refs = array(); 
 			foreach($arr as $key => $value) {
 				if(is_object($value)) {
-					throw new MagratheaDBException("MySQL operation does not work with given object - query-key=".$key, 5022);
+					$ex = new MagratheaDBException("MySQL operation does not work with given object - query-key=".$key.", value=[".$value."]", 5022);
+					$ex->SetData(null, $arr);
+					throw $ex;
 				}
 				$refs[$key] = &$arr[$key];
 			}
