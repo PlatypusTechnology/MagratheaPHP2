@@ -6,7 +6,7 @@ $testManager = \Magrathea2\Tests\TestsManager::Instance();
 $adminElements = \Magrathea2\Admin\AdminElements::Instance();
 
 $pageTitle = "Tests";
-include(__DIR__."/../sections/header.php");
+$adminElements->Header($pageTitle);
 
 $tests = $testManager->GetTests();
 

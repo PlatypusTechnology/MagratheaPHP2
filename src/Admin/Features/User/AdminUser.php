@@ -22,7 +22,7 @@ use Magrathea2\MagratheaModel;
 class AdminUser extends MagratheaModel implements iMagratheaModel { 
 
 	public $id;
-	public $email, $password, $last_login, $role_id;
+	public $email, $password, $last_login, $role_id, $active;
 	public $created_at, $updated_at;
 	protected $autoload = null;
 
@@ -43,11 +43,13 @@ class AdminUser extends MagratheaModel implements iMagratheaModel {
 			"email" => "string",
 			"password" => "string",
 			"last_login" => "datetime",
-			"role_id" => "int"
+			"role_id" => "int",
+			"active" => "bool"
 		];
 	}
 
 	public function Insert() {
+		$this->active = true;
 		$id = parent::Insert();
 		AdminManager::Instance()->Log("user-created", $this);
 		return $id;
@@ -85,6 +87,14 @@ class AdminUser extends MagratheaModel implements iMagratheaModel {
 	 * checks if the user can edit another user
 	 */
 	public function PermissionCanEdit(): bool {
+		return $this->IsAdmin();
+	}
+
+	/**
+	 * checks if it's admin
+	 * @return bool
+	 */
+	public function IsAdmin(): bool {
 		return ($this->role_id == 2 || $this->role_id == 1);
 	}
 

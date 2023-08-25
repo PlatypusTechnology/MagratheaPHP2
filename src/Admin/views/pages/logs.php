@@ -11,7 +11,7 @@ $logPath = $logger->GetLogPath();
 $activeFile = $logger->GetFullLogFile();
 
 $pageTitle = "Logs";
-include(__DIR__."/../sections/header.php");
+$adminElements->Header($pageTitle);
 
 $info = [
 	[

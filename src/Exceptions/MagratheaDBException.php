@@ -20,7 +20,7 @@ class MagratheaDBException extends MagratheaException {
 	 * @param 	array|string 	$values		SQL values
 	 * @return	MagratheaDBException 		itself
 	 */
-	public function SetData($query, $values): MagratheaDBException {
+	public function SetQueryData($query, $values): MagratheaDBException {
 		$this->query = $query;
 		$this->values = $values;
 		return $this;

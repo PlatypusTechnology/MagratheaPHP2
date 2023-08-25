@@ -92,6 +92,21 @@ class ObjectManager extends \Magrathea2\Singleton {
 	}
 
 	/**
+	 * Gets objects data by the name of its table
+	 * @param string $name		table name
+	 * @return array					object data
+	 */
+	public function GetObjectDataByTable($table): array|null {
+		$configData = $this->GetFullObjectData();
+		foreach ($configData as $key => $data) {
+			if (isset($data['table_name']) && $data['table_name'] === $table) {
+					return ['object' => $key, 'data' => $data];
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Gets objects details by the name
 	 * @param string $name		object name
 	 * @return array					object details
@@ -375,6 +390,19 @@ class ObjectManager extends \Magrathea2\Singleton {
 	}
 
 	/**
+	 * Gets an object config and saves it
+	 * @param string $objName			name of object
+	 * @param array $properties		properties of the object
+	 * @return bool				success of the operation
+	*/
+	function SaveObject($objName, $properties): bool {
+		$data = $this->GetFullObjectData();
+		$data[$objName] = $properties;
+		$this->objData = null;
+		return $this->confObject->SetConfig($data)->Save();
+	}
+
+	/**
 	 * Gets the automatically generated methods
 	 * @return array		public methods in format ["name", "description"]
 	 */
@@ -406,6 +434,62 @@ class ObjectManager extends \Magrathea2\Singleton {
 				"description" => "Gets the ".$name." with the given id",
 			],
 		];
+	}
+
+	/**
+	 * Checks if the object name is a valid name
+	 * @param string $objName		object name
+	 * @return bool							is it valid?
+	 */
+	public function ValidateName($objName): bool {
+		$keywords = array('__halt_compiler', 'abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach', 'function', 'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor');
+		if( in_array(strtolower($objName), $keywords)) return false;
+		return true;
+	}
+
+	/**
+	 * Get PHP type from database type
+	 * @param string $type	db type
+	 * @return string				php type
+	 */
+	public function GetType($fieldType): string {
+		$currentType = "";
+		$stype = substr($fieldType, 0, 3);
+		switch($stype){
+			case "tin":
+				$currentType = "boolean";
+				break;
+			case "big":
+			case "int":
+				$currentType = "int";
+				break;
+			case "var":
+				$currentType = "string";
+				break;
+			case "tex":
+				$currentType = "text";
+				break;
+			case "tim":
+			case "dat":
+				$currentType = "datetime";
+				break;
+			case "flo":
+				$currentType = "float";
+				break;
+			default:
+				$currentType = "unknown";
+				break;
+		}
+		return $currentType;
+	}
+
+	/**
+	 * Get array of types
+	 * @return array
+	 */
+	public function GetTypesArr(): array {
+		$types = array("int", "boolean", "string", "text", "float", "datetime");
+		return array_combine($types, $types);
 	}
 
 }

@@ -101,3 +101,11 @@ function loadRelations(object) {
 			viewObject(object);
 		});
 }
+
+function saveObjectInfo(el) {
+	let data = getFormDataFromElement(el);
+	let table = data["table_name"];
+	let container = "#rs-for-"+table;
+	callAction("object-creation-save", "POST", data)
+		.then(rs => showOn(container, rs, true));
+}

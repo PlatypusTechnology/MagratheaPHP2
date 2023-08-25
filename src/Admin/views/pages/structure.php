@@ -8,7 +8,7 @@ use Magrathea2\Logger;
 use Magrathea2\MagratheaPHP;
 
 $pageTitle = "Structure";
-include(__DIR__."/../sections/header.php");
+AdminElements::Instance()->Header($pageTitle);
 
 function checkPathIsOk($p) {
 	$nok = "<span class='error'>&#9746;</span> ";

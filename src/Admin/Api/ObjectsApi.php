@@ -6,7 +6,7 @@ use Exception;
 use Magrathea2\Admin\Models\AdminConfigControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\Admin\ObjectManager;
-use Magrathea2\Bootstrap\CodeManager;
+use Magrathea2\Admin\CodeManager;
 
 #######################################################################################
 ####

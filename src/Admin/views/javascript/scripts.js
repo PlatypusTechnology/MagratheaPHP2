@@ -69,37 +69,58 @@ function getCurrentPage() {
 }
 
 function ucfirst(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+	return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function ajax(method, url, payload, debug=false) {
+function ajax(method, url, payload, authorization, debug=false) {
 	showLoading();
 	if(debug) console.info("Calling ["+method+"]"+url+" with payload", payload);
-  return new Promise(function(resolve, reject) {
-		if(method.toUpperCase() == "POST") {
-			$.post(url, payload, (rs) => {
-				hideLoading(); resolve(rs);
-			})
-		} else {
-			let ajaxData = {
-				url: url,
-				method,
-				type: method,
-				data: payload,
-				processData: false,
-				success: function(response) {
-					hideLoading();
-					resolve(response);
-				},
-				error: function(jqXHR, textStatus, errorThrown) {
-					hideLoading();
-					console.error("error!" , errorThrown);
-					reject(errorThrown);
+	return new Promise(function(resolve, reject) {
+		switch(method.toUpperCase()) {
+			case "POST":
+				$.post(url, payload, (rs) => {
+					hideLoading(); resolve(rs);
+				})
+				break;
+			case "GET":
+				if(payload != null) {
+					let queryString = Object.entries(payload)
+					.map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
+					.join('&');
+					url = url + '&' + queryString;
 				}
-			};
-			if(debug) console.info("ajaxData:", ajaxData);
-			$.ajax(ajaxData);
-			}
+			default:
+				let ajaxData = {
+					url: url,
+					method,
+					type: method,
+					data: payload,
+					processData: false,
+					success: function(response) {
+						hideLoading();
+						resolve(response);
+					},
+					error: function(jqXHR, textStatus, errorThrown) {
+						let err = {
+							"status": textStatus,
+							"error": errorThrown,
+						};
+						if(jqXHR && jqXHR.responseJSON) {
+							err["data"] = jqXHR.responseJSON;
+						}
+						hideLoading();
+						console.error("error!" , err);
+						reject(err);
+					}
+				};
+				if(authorization) {
+					ajaxData["beforeSend"] = (xhr) => { 
+						xhr.setRequestHeader('Authorization', "Basic " + authorization);
+					};
+				}
+				if(debug) console.info("ajaxData:", ajaxData);
+				$.ajax(ajaxData);
+		}
   });
 }
 
@@ -132,9 +153,14 @@ function getFormDataFromElement(el) {
 	if(!form) return;
 	let data = $(form)
 		.serializeArray()
-    .reduce((json, { name, value }) => {
-      json[name] = value;
-      return json;
-    }, {});
+		.reduce((json, { name, value }) => {
+			json[name] = value;
+			return json;
+		}, {});
 	return data;
+}
+
+function now() {
+	let n = new Date();
+	return n.toISOString().replace('T', ' ');
 }

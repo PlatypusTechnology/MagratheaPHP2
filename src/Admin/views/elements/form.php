@@ -27,7 +27,7 @@ $elements = AdminElements::Instance();
 				} else { $value = ""; }
 			} else { $value = ""; }
 			$type = @$el["type"];
-			if(is_callable($type)) {
+			if(is_callable($type) && $type !== "date") {
 				$type($values);
 			} else if(is_array($type)) {
 				$elements->Select($key, $name, $type, $value, @$el["class"], @$el["placeholder"], @$el['attributes']);
@@ -40,6 +40,7 @@ $elements = AdminElements::Instance();
 					case "text":
 					case "email":
 					case "number":
+					case "date":
 					case "disabled":
 						$elements->Input($type, $key, $name, $value, @$el['class'], @$el['outerClass'], @$el['placeholder'], @$el['attributes']);
 						break;

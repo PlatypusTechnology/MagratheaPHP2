@@ -3,7 +3,7 @@
 use function Magrathea2\now;
 
 $pageTitle = "Server & Info";
-include(__DIR__."/../sections/header.php");
+\Magrathea2\Admin\AdminElements::Instance()->Header($pageTitle);
 
 ?>
 

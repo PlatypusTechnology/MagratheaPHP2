@@ -3,19 +3,17 @@
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminManager;
 
-use function Magrathea2\p_r;
-
-	$magrathea_subpage = @$_GET["magrathea_subpage"];
-	if(!empty($magrathea_subpage)) {
-		include("actions/".$magrathea_subpage.".php");
-		die;
-	}
+$magrathea_subpage = @$_GET["magrathea_subpage"];
+if(!empty($magrathea_subpage)) {
+	include("actions/".$magrathea_subpage.".php");
+	die;
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-uk">
 <?
-		$pageTitle = AdminManager::Instance()->title;
+		$pageTitle = AdminManager::Instance()->GetTitle();
 		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast"];
 		include("sections/meta.php");
 	?>
@@ -54,7 +52,5 @@ use function Magrathea2\p_r;
 			</div>
 		</div>
 	</body>
-	<script type="text/javascript">
-		<?php include("javascript/scripts.js"); ?>
-	</script>
+	<script type="text/javascript"><?=AdminManager::Instance()->GetJs();?></script>
 </html>

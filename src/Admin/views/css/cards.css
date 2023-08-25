@@ -18,6 +18,7 @@
 	margin: 50px 20px;
 	position: fixed;
 	border: 1px solid var(--error);
+	z-index: 9999;
 }
 .card.error-card .card-header {
 	background: var(--error);

@@ -24,6 +24,7 @@ CREATE TABLE `_magrathea_users` (
 	`password` varchar(255) DEFAULT NULL,
 	`last_login` timestamp,
 	`role_id` int(11) NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
 	`updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY (`id`)

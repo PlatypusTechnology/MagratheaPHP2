@@ -2,6 +2,7 @@
 namespace Magrathea2;
 
 use Magrathea2\DB\Database;
+use Magrathea2\Exceptions\MagratheaException;
 
 #######################################################################################
 ####
@@ -29,7 +30,9 @@ function now(): string {
  * @param  	boolean  											$beautyme	How beautifull do you want your object printed?
  */
 function p_r($debugme){
+	echo "<pre>";
 	print_r($debugme);
+	echo "</pre>";
 }
 
 /**
@@ -39,15 +42,69 @@ function isMagratheaModel($object): bool {
 	return is_a($object, "\Magrathea2\MagratheaModel");
 }
 
+/**
+ * As asked to ChatGPT:
+ * a function that gets a full class name, such as MagratheaContacts\Users\AdminUsers and return just the last part AdminUsers
+ * @param string $fullClassName		full class name
+ * @return 	string								class name
+ */
+function getClassNameOfClass($fullClassName) {
+	$lastBackslash = strrpos($fullClassName, '\\');
+	if ($lastBackslash === false) {
+		return $fullClassName;
+	}
+	return substr($fullClassName, $lastBackslash + 1);
+}
+
+/**
+ * Array of types available at Magrathea
+ * @return  	array
+ */
+function magrathea_getTypesArr() : array{
+	$types = array("int", "boolean", "string", "text", "float", "datetime");
+	return $types;
+}
+
+/**
+ * Function that will be executed after script is complete!
+ * in Magrathea, will print debug, if available...
+ * 	@todo  print debug in a beautifull way in the end of the page...
+ */
+register_shutdown_function(function(){
+	if(Debugger::Instance()->GetType() == Debugger::DEBUG){
+		Debugger::Instance()->Show();
+	}
+});
+
+/**
+ * Autoload classes
+ */
+spl_autoload_register(function ($class) {
+	$folders = MagratheaPHP::Instance()->codeFolder;
+	$class_name = getClassNameOfClass($class);
+	foreach ($folders as $dir) {
+		if (file_exists($dir."/".$class_name.'.php')) {
+			require_once ($dir."/".$class_name.'.php');
+			return;
+		}
+	}
+	$ex = new MagratheaException("Could not find class [".$class_name."]", 500);
+	$ex->SetData($folders);
+	throw $ex;
+});
 
 
+
+
+
+// DEPRECATED:
 /**
  * Loads database configuration for the selected environment.
  * 	If no environment is sent, it will use the information from the default environment
  * @param 	string 		$env	Environment to load
  * @return 	MagratheaDatabase Instance
  */
-function loadMagratheaEnv($env = null): Database|bool{
+function loadMagratheaEnv_deprecated($env = null): Database|bool{
 	global $magdb;
 	if( empty($env) ){
 		try {
@@ -88,7 +145,7 @@ function loadMagratheaEnv($env = null): Database|bool{
  * @param 	string 		type to be selected
  * @return 	boolean		is field selected?
  */
-function magrathea_printFields($fields_arr, $selected = null) : bool {
+function magrathea_printFields_deprecated($fields_arr, $selected = null) : bool {
 	$options = "";
 	$selected = false;
 	foreach($fields_arr as $field){
@@ -103,24 +160,4 @@ function magrathea_printFields($fields_arr, $selected = null) : bool {
 	return $selected;
 }
 
-/**
- * Array of types available at Magrathea
- * @return  	array
- */
-function magrathea_getTypesArr() : array{
-	$types = array("int", "boolean", "string", "text", "float", "datetime");
-	return $types;
-}
 
-/**
- * Function that will be executed after script is complete!
- * in Magrathea, will print debug, if available...
- * 	@todo  print debug in a beautifull way in the end of the page...
- */
-register_shutdown_function(function(){
-	if(Debugger::Instance()->GetType() == Debugger::DEBUG){
-		Debugger::Instance()->Show();
-	}
-});
-
-?>

@@ -5,7 +5,7 @@ use Magrathea2\Admin\AdminForm;
 use function Magrathea2\p_r;
 
 $pageTitle = "Admin Forms and Elements";
-include(__DIR__."/../sections/header.php");
+AdminElements::Instance()->Header($pageTitle);
 
 $formData = [
 	[
@@ -121,6 +121,12 @@ $adminElements = AdminElements::Instance();
 .code-form-data {
 	height: 800px;
 	overflow-y: scroll;
+}
+.arr-key {
+	text-align: right;
+	font-family: monospace;
+	margin-bottom: 10px;
+	font-weight: bold;
 }
 </style>
 
@@ -294,6 +300,52 @@ AdminElements::Instance->Table($countries, $countriesCols, [ "mt-2" ]);
 					<?
 						$adminElements->Table($countries, $countriesCols, [ "mt-2" ]);
 					?>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-header">
+			Admin Form Element
+			<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
+		</div>
+		<div class="card-body">
+			<div class="row">
+				<div class="col-4 arr-key">type</div>
+				<div class="col-8">
+					available types:<br/>
+					hidden, empty (for a empty div),
+					text, disabled, number, email,<br/>
+					checkbox, switch,
+					submit, button, save-button, delete-button,<br/>
+					array (builds a select 'id' => 'name')
+				</div>
+				<div class="col-4 arr-key">key</div>
+				<div class="col-8">
+					object's property. can be a function (in case of a button)<br/>
+					Mostly used as element's id.
+				</div>
+				<div class="col-4 arr-key">name</div>
+				<div class="col-8">
+					label (in case of a form element), caption (in case of a button)
+				</div>
+				<div class="col-4 arr-key">size</div>
+				<div class="col-8">
+					col-something (from a bootstrap col-12 size)
+				</div>
+				<div class="col-4 arr-key">class</div>
+				<div class="col-8">
+					any other extra class for the element (it can be an array of classes or a string)
+				</div>
+				<div class="col-4 arr-key">placeholder</div>
+				<div class="col-8">
+					most elements are prepared to have a placeholder
+				</div>
+				<div class="col-4 arr-key">attributes</div>
+				<div class="col-8">
+					an array with extra attributes - something like:<br/>
+					[ "onclick" => "someAction()" ]
 				</div>
 			</div>
 		</div>

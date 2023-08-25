@@ -3,7 +3,7 @@
 use Magrathea2\Admin\ObjectManager;
 
 $pageTitle = "Objects Config File";
-include(__DIR__."/../sections/header.php");
+\Magrathea2\Admin\AdminElements::Instance()->Header($pageTitle);
 
 $objControl = ObjectManager::Instance();
 $viewFile = $objControl->GetObjectFilePath()."/".$objControl->fileName;

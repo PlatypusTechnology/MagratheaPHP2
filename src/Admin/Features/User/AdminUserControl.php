@@ -78,4 +78,25 @@ class AdminUserControl extends MagratheaModelControl {
 		return [ "success" => ($saved === true) ];
 	}
 
+	public function GetSelect() {
+		return array_map(function($i) {
+			return [
+				"id" => $i->id,
+				"name" => $i->email
+			];
+		}, $this->GetAll());
+	}
+
+	public function  GetSelectWithRoles() {
+		$user = new AdminUser();
+		$roles = $user->GetRoles();
+		return array_map( function($i) use ($roles) {
+			$role = $roles[$i->role_id];
+			return [
+				"id" => $i->id,
+				"name" => $i->email." (".$role.") "
+			];
+		}, $this->GetAll());		
+	}
+
 }

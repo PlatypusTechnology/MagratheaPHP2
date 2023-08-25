@@ -23,6 +23,7 @@ class MagratheaApi {
 	public $action = "Index";
 	public $params = array();
 	public $returnRaw = false;
+	public $apiAddress = null;
 
 	protected static $inst = null;
 
@@ -43,15 +44,34 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Start the server, getting base calls
+	 * Set address
+	 * @param string $addr		api url
+	 * @return 	MagratheaApi	itself
 	 */
-	public function Start(){
+	public function SetAddress($addr): MagratheaApi {
+		$this->apiAddress = $addr;
+		return $this;
+	}
+	/**
+	 * gets address
+	 * @return string|null		api address
+	 */
+	public function GetAddress(): string|null {
+		return $this->apiAddress;
+	}
+
+	/**
+	 * Start the server, getting base calls
+	 * @return 	MagratheaApi	itself
+	 */
+	public function Start(): MagratheaApi {
 		if(!@empty($_GET["magrathea_control"])) self::$inst->control = $_GET["magrathea_control"];
 		if(!@empty($_GET["magrathea_action"])) self::$inst->action = $_GET["magrathea_action"];
 		if(!@empty($_GET["magrathea_params"])) self::$inst->params = $_GET["magrathea_params"];
+		header('Access-Control-Allow-Headers: Access-Control-Allow-Origin, Content-Type, Authorization');
 		header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS'); 
 		header('Access-Control-Max-Age: 1000');
-		header('Access-Control-Allow-Headers: Authorization, Content-Type');
+		header('Content-Type: application/json, charset=utf-8');
 		return $this;
 	}
 
@@ -59,13 +79,10 @@ class MagratheaApi {
 	 * includes header to allow all
 	 * @return 		MagratheaApi
 	 */
-	public function AllowAll(){
-		header('Access-Control-Allow-Headers: Access-Control-Allow-Origin, Content-Type, Authorization');
-		header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS'); 
+	public function AllowAll(): MagratheaApi {
 		header('Access-Control-Allow-Origin: *');
 		header('Access-Control-Allow-Credentials: true');
 		header('Access-Control-Max-Age: 86400');    // cache for 1 day
-		header('Content-Type: application/json, charset=utf-8');
 		return $this;
 	}
 
@@ -74,7 +91,7 @@ class MagratheaApi {
 	 * @param 	array 	$condition 	condition for header
 	 * @return  MagratheaApi
 	 */
-	public function Allow($allowedOrigins){
+	public function Allow($allowedOrigins): MagratheaApi{
 		if (in_array($_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
 			header('Access-Control-Allow-Origin: '.$_SERVER["HTTP_ORIGIN"]);
 		}
@@ -85,7 +102,7 @@ class MagratheaApi {
 	 * Api will return the result instead of printing it
 	 * @return 		MagratheaApi
 	 */
-	public function SetRaw() {
+	public function SetRaw(): MagratheaApi {
 		$this->returnRaw = true;
 		return $this;
 	}
@@ -96,7 +113,7 @@ class MagratheaApi {
 	 * @param 	string 		$function 	basic authorization function name
 	 * @return  MagratheaApi
 	 */
-	public function BaseAuthorization($authClass, $function) {
+	public function BaseAuthorization($authClass, $function): MagratheaApi {
 		$this->authClass = $authClass;
 		$this->baseAuth = $function;
 		return $this;
@@ -114,13 +131,12 @@ class MagratheaApi {
 
 	/**
 	 * includes header to allow all
-	 * @param 	string 	 $url 				url for Crud
-	 * @param 	object 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	object 	 $auth 				function that returns authorization for execution. "false" for public API
+	 * @param 	string				$url					url for Crud
+	 * @param 	object				$control			control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	string				$auth					function that returns authorization for execution. "false" for public API
 	 * @return  MagratheaApi
 	 */
-	public function Crud($url, $control, $auth=true) {
-
+	public function Crud($url, $control, $auth=null): MagratheaApi {
 		if(is_array($url)) {
 			$singular = $url[0];
 			$plural = $url[1];
@@ -144,10 +160,10 @@ class MagratheaApi {
 	 * @param 	string 	 $url 				custom URL
 	 * @param 	object 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
 	 * @param 	string 	 $function		function to be called from control
-	 * @param 	object 	 $auth 				function that returns authorization for execution. "false" for public API
+	 * @param 	string 	 $auth 				function that returns authorization for execution. "false" for public API
 	 * @return  MagratheaApi
 	 */
-	public function Add($method, $url, $control, $function, $auth=true) {
+	public function Add($method, $url, $control, $function, $auth=true): MagratheaApi {
 		$method = strtoupper($method);
 		$this->endpoints[$method][$url] = ["control" => $control, "action" => $function, "auth" => $this->getAuthFunction($auth)];
 		return $this;
@@ -157,35 +173,8 @@ class MagratheaApi {
 	 * print all urls
 	 * @return 		MagratheaApi
 	 */
-	public function Debug() {
-//		p_r($this->endpoints);
-		$baseUrls = array();
-		foreach ($this->endpoints as $method => $functions) {
-			foreach ($functions as $url => $fn) {
-//				p_r($fn);
-				$params = array();
-				$urlPieces = explode("/", $url);
-//				$base = $urlPieces[0];
-				$base = get_class($fn["control"]);
-//				$basePieces = explode("->", $fn);
-//				$base = $fn;
-				if(!@$baseUrls[$base]) $baseUrls[$base] = array();
-				if(!@$baseUrls[$base][$method]) $baseUrls[$base][$method] = array();
-				foreach ($urlPieces as $piece) {
-					if($piece[0] == ":") array_push($params, substr($piece, 1));
-				}
-
-				$baseUrls[$base][$method][$url] = [
-					"control" => get_class($fn["control"]),
-					"action" => $fn["action"],
-					"auth" => $fn["auth"],
-					"args" => "(".(count($params) > 0 ? "['".implode("','", $params)."']" : "").")"
-				];
-			}
-		}
-
-		ksort($baseUrls);
-
+	public function Debug(): MagratheaApi {
+		$baseUrls = $this->GetEndpoints();
 		foreach ($baseUrls as $model => $methods) {
 			echo "<h3>".$model.":</h3>";
 			foreach ($methods as $method => $api) {
@@ -199,6 +188,61 @@ class MagratheaApi {
 			echo "<hr/>";
 		}
 		return $this;
+	}
+
+	/**
+	 * Get all endpoints
+	 * @return 	array 	["control", "action", "auth", "args"]
+	 */
+	public function GetEndpoints(): array {
+		$baseUrls = array();
+		foreach ($this->endpoints as $method => $functions) {
+			foreach ($functions as $url => $fn) {
+				$params = array();
+				$urlPieces = explode("/", $url);
+				$base = get_class($fn["control"]);
+				if(!@$baseUrls[$base]) $baseUrls[$base] = array();
+				if(!@$baseUrls[$base][$method]) $baseUrls[$base][$method] = array();
+				foreach ($urlPieces as $piece) {
+					if($piece[0] == ":") array_push($params, substr($piece, 1));
+				}
+
+				$baseUrls[$base][$method][$url] = [
+					"control" => $base,
+					"action" => $fn["action"],
+					"auth" => $fn["auth"],
+					"args" => "(".(count($params) > 0 ? "['".implode("','", $params)."']" : "").")"
+				];
+			}
+		}
+
+		ksort($baseUrls);
+		return $baseUrls;
+	}
+
+	public function GetEndpointsDetail() {
+		$endpoints = [];
+		foreach ($this->endpoints as $method => $functions) {
+			foreach ($functions as $url => $fn) {
+				$baseClass = get_class($fn["control"]);
+				if(!@$endpoints[$url]) $endpoints[$url] = array();
+				$urlPieces = explode("/", $url);
+				$params = [];
+				foreach ($urlPieces as $piece) {
+					if($piece[0] == ":") array_push($params, substr($piece, 1));
+				}
+				$data = [
+					"url" => $url,
+					"method" => $method,
+					"function" => $baseClass,
+					"params" => $params,
+					"auth" => $fn["auth"],
+				];
+				array_push($endpoints[$url], $data);
+			}
+		}
+		sort($endpoints);
+		return $endpoints;
 	}
 
 	private function CompareRoute($route, $url) {
@@ -264,7 +308,8 @@ class MagratheaApi {
 	 * @return 		string|null
 	 */
 	public function Run($returnRaw = false) {
-		$urlCtrl = $_GET["magrathea_control"];
+		Debugger::Instance()->SetType(0);
+		$urlCtrl = @$_GET["magrathea_control"];
 		$action = @$_GET["magrathea_action"];
 		$params = @$_GET["magrathea_params"];
 		$method = $this->getMethod();
@@ -356,7 +401,7 @@ class MagratheaApi {
 	 */
 	private function Return404() {
 		$method = $_SERVER['REQUEST_METHOD'];
-		$url = $_GET["magrathea_control"];
+		$url = @$_GET["magrathea_control"];
 		if(@$_GET["magrathea_action"]) $url.= "/".$_GET["magrathea_action"];
 		if(@$_GET["magrathea_params"]) $url.= "/".$_GET["magrathea_params"];
 		$message = "(".$method.") > /".$url." is not a valid endpoint";

@@ -62,6 +62,42 @@ body {
 	font-variant: small-caps;
 	font-weight: bold;
 }
+.page-header .header-center {
+	padding-left: 10%;
+	padding-top: 20px;
+}
+.page-header .header-title {
+	font-size: 16px;
+	font-variant: small-caps;
+	font-weight: bold;
+}
+.page-header .header-error {
+	display: inline;
+	float: right;
+	margin-right: 20px;
+}
+.page-header .header-right {
+	float: right;
+	height: 60px;
+	top: 0;
+}
+.user-card {
+	display: inline-block;
+}
+.user-card .profile-info {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin-top: 10px;
+	margin-right: 5px;
+	text-align: right;
+	font-size: 12px;
+}
+.user-card .profile-info .icon {
+	font-size: 20px;
+	margin: 0;
+	line-height: 12px;
+}
 
 #page-content-wrapper { 
 	width: 100%;

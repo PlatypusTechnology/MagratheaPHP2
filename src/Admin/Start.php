@@ -78,7 +78,12 @@ class Start extends Singleton {
 	 */
 	public function Load(): void {
 		if ($this->IsStarted()) {
+			$this->ShouldLogout();
 			if($this->IsLoggedIn()) {
+				if(!AdminManager::Instance()->Auth()) {
+					$message = "Access Denied: User is not an admin!";
+					AdminManager::Instance()->ErrorPage($message);
+				}
 				$this->CheckApi();
 				$this->CheckFeature();
 				include ("views/index.php");
@@ -87,6 +92,16 @@ class Start extends Singleton {
 			}
 		} else {
 			include ("views/setup.php");
+		}
+	}
+
+	public function ShouldLogout() {
+		$logout = @$_GET["magrathea_logout"];
+		if($logout == "true") {
+			\Magrathea2\Admin\AdminUsers::Instance()->Logout();
+			$url = strtok($_SERVER['REQUEST_URI'], '?');
+			header('Location: ' . $url);
+			exit;
 		}
 	}
 

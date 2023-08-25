@@ -24,6 +24,23 @@ use function Magrathea2\p_r;
 class AdminElements extends Singleton {
 
 	/**
+	 * Returns the content instead of printing it
+	 * @return AdminElements	itself
+	 */
+	public function Buffer(): AdminElements {
+		ob_start();
+		return $this;
+	}
+
+	/**
+	 * Gets content Buffered
+	 * @return string		content
+	 */
+	public function Get(): string {
+		return ob_get_clean();
+	}
+
+	/**
 	 * Prints a table
 	 * @param array $rows  	row result
 	 * @param array	$cols		cols (can be in [ title, key ] format)
@@ -125,18 +142,20 @@ class AdminElements extends Singleton {
 	 * @param string|array $class		class for the select
 	 * @param string 	$placeholder 	placeholder
 	 * @param	array		$attributes		any extra attributes (as ["onchange" => "alert();"])
+	 * @return AdminElements	itself
 	 */
-	public function Select($id, $name="", $options=null, $value="", $class="", $placeholder="", $attributes=[]) {
+	public function Select($id, $name="", $options=null, $value="", $class="", $placeholder="", $attributes=[]): AdminElements {
 		if(empty($name) && $name !== false) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		$atts = $this->GetAttributesStr($attributes);
 		$view = __DIR__."/views/elements/form-select.php";
 		include($view);
+		return $this;
 	}
 
 	/**
 	 * Print a Input
-	 * @param string 	$type	 		type (as "text", "disabled", "number", "email")
+	 * @param string 	$type	 		type (as "text", "disabled", "number", "email", "date")
 	 * @param string 	$id	 			id
 	 * @param string 	$name 		title of the input (default: $id)
 	 * @param string	$value		value for input (default: "")
@@ -144,19 +163,22 @@ class AdminElements extends Singleton {
 	 * @param string|array $outerClass	class for the container of input
 	 * @param string	$placeholder	placeholder
 	 * @param	array	$attributes		any extra attributes (as ["onkeyup" => "alert();"])
+	 * @return AdminElements	itself
 	 */
-	public function Input($type, $id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]) {
+	public function Input($type, $id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]): AdminElements {
 		$hideLabel = $name === false;
 		if(empty($name)) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		if($type === "disabled") {
-			$typeStr = 'type="text" disabled';
+			$typeStr = 'type="text" readonly';
+			$class .= " readonly";
 		} else {
 			$typeStr = 'type="'.$type.'"';
 		}
 		$atts = $this->GetAttributesStr($attributes);
 		$view = __DIR__."/views/elements/form-input.php";
 		include($view);
+		return $this;
 	}
 
 	/**
@@ -168,13 +190,15 @@ class AdminElements extends Singleton {
 	 * @param string|array $class		class for the select
 	 * @param string $switch	should be a switch? (default: false)
 	 * @param	array	$attributes		any extra attributes (as ["onchange" => "alert();"])
+	 * @return AdminElements	itself
 	 */
-	public function Checkbox($id, $name="", $value=true, $checked=false, $class=[], $switch=false, $attributes=[]) {
+	public function Checkbox($id, $name="", $value=true, $checked=false, $class=[], $switch=false, $attributes=[]): AdminElements {
 		if(empty($name)) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		$atts = $this->GetAttributesStr($attributes);
 		$view = __DIR__."/views/elements/form-checkbox.php";
 		include($view);
+		return $this;
 	}
 
 	/**
@@ -186,14 +210,16 @@ class AdminElements extends Singleton {
 	 * @param string|array $outerClass	class for the container of input
 	 * @param string	$placeholder	placeholder
 	 * @param	array	$attributes		any extra attributes (as ["onkeyup" => "alert();"])
+	 * @return AdminElements	itself
 	 */
-	public function Textarea($id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]) {
+	public function Textarea($id, $name="", $value="", $class="", $outerClass="", $placeholder="", $attributes=[]): AdminElements {
 		$hideLabel = $name === false;
 		if(empty($name)) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		$atts = $this->GetAttributesStr($attributes);
 		$view = __DIR__."/views/elements/form-textarea.php";
 		include($view);
+		return $this;
 	}
 
 	/**
@@ -204,8 +230,9 @@ class AdminElements extends Singleton {
 	 * @param string|array $outerClass	class for the button
 	 * @param boolean $submit	is it a type=submit button? (default:false)
 	 * @param	array	$extraArgs		extra data: [ "id", "styles" ]
+	 * @return AdminElements	itself
 	 */
-	public function Button($name, $click, $class="btn-primary", $outerClass="", $submit=false, $extraArgs=[]): void {
+	public function Button($name, $click, $class="btn-primary", $outerClass="", $submit=false, $extraArgs=[]): AdminElements {
 		if(is_array($class)) $class = implode(' ', $class);
 		if(empty($click)) $click = "";
 		$click = str_replace('"', "'", $click);
@@ -213,6 +240,14 @@ class AdminElements extends Singleton {
 		$btnStyles = @$extraArgs["styles"] ? $extraArgs["styles"] : "";
 		$view = __DIR__."/views/elements/form-button.php";
 		include($view);
+		return $this;
+	}
+
+	public function UserCard() {
+		$user = AdminManager::Instance()->GetLoggedUser();
+		$view = __DIR__."/views/elements/user-card.php";
+		include($view);
+		return $this;
 	}
 
 }

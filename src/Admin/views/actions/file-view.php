@@ -15,7 +15,8 @@ if(!file_exists($file)) {
 echo '<pre class="code file-pre">';
 $lines = @$_POST["lines"];
 if(empty($lines)) {
-	echo file_get_contents($file);
+	$content = file_get_contents($file);
+	echo htmlentities($content);
 	die;
 }
 

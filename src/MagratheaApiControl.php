@@ -18,7 +18,7 @@ use Magrathea2\Exceptions\MagratheaApiException;
 * Control for Create, Read, List, Update, Delete
 **/
 class MagratheaApiControl {
-	
+
 	protected $model = null;
 	protected $service = null;
 
@@ -32,14 +32,22 @@ class MagratheaApiControl {
 		return $headers;
 	}
 
-	public function GetAuthorizationBearer() {
+	public function GetAuthorizationToken() {
 		$token = $this->GetAllHeaders()["Authorization"];
-		if (substr($token, 0, 7) !== 'Bearer ') {
-			$ex = new MagratheaApiException("Invalid Bearer Token: [".$token."]", true);
+		$gotToken = false;
+		if (substr($token, 0, 6) == 'Basic ') {
+			$token = trim(substr($token, 6));
+			$gotToken = true;
+		}
+		if (substr($token, 0, 7) == 'Bearer ') {
+			$token = trim(substr($token, 7));
+			$gotToken = true;
+		}
+		if(!$gotToken) {
+			$ex = new MagratheaApiException("Invalid Token: [".$token."]", true);
 			$ex->SetStatus(401);
 			throw $ex;
 		}
-		$token = trim(substr($token, 7));
 		return $token;
 	}
 

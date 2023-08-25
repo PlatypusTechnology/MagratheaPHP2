@@ -22,8 +22,7 @@ if(!empty(@$_GET["env"])) {
 	$activeEnv = $defaultEnv;
 }
 
-$pageTitle = "Config";
-include(__DIR__."/../sections/header.php");
+AdminElements::Instance()->Header("Config");
 
 if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 	$data = $_POST;

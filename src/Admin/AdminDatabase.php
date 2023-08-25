@@ -10,6 +10,7 @@ use Magrathea2\DB\Database;
 use Magrathea2\MagratheaPHP;
 
 use function Magrathea2\now;
+use function Magrathea2\p_r;
 
 #######################################################################################
 ####
@@ -93,6 +94,29 @@ class AdminDatabase extends Singleton {
 		return $this;
 	}
 
+	/**
+	 * Get Table Columns for object
+	 * @param string 	$table		table name
+	 * @return array	return with ["name", "type", "null", "default" "pk"]
+	 */
+	public function GetTableColumns($table): array {
+		$rs = [];
+		$magdb = Database::Instance();
+		$query = "SHOW columns FROM ".$table;
+		$columns = $magdb->QueryAll($query);
+		foreach($columns as $c) {
+			$field = [
+				"name" => $c["field"],
+				"type" => $c["type"],
+				"default" => $c["default"],
+				"nullable" => ($c["null"] != "NO"),
+				"pk" => ($c["key"] == "PRI")
+			];
+			array_push($rs, $field);
+		}
+		return $rs;
+	}
+
 
 	/**
 	 * Gets the backup path
@@ -144,7 +168,4 @@ class AdminDatabase extends Singleton {
 		return [ "rs" => $rs, "code" => $code ];
 	}
 
-
 }
-
-?>

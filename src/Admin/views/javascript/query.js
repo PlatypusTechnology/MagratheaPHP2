@@ -5,9 +5,9 @@ function setType() {
 	let init = "";
 	console.info(type);
 	if(type && type != "_") {
-		init = "MagratheaQuery()" + text;
+		init = "\\Magrathea2\\DB\\Query()" + text;
 	} else {
-		init = "new MagratheaQuery() ";
+		init = "new \\Magrathea2\\DB\\Query() ";
 	}
 	$("#pre-code").val(init);
 }

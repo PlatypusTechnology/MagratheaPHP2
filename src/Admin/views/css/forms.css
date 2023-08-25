@@ -11,6 +11,11 @@
 	font-weight: bold;
 }
 
+input.readonly {
+	background-color: #EEE;
+	border-color: var(--primary);
+}
+
 .card-form {
 	margin-top: 20px;
 }
@@ -33,4 +38,7 @@
 
 .col-form-padding {
 	padding-top: 25px;
+}
+.no-margin {
+	margin: 0;
 }

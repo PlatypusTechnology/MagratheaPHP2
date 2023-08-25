@@ -50,6 +50,10 @@ class AdminUrls extends Singleton {
 		return "?".http_build_query($params);
 	}
 
+	public function GetLogoutUrl() {
+		return "?magrathea_logout=true";
+	}
+
 	public function GetConfigUrl($env="") {
 		return $this->GetPageUrl("config", null, ["env" => $env]);
 	}
@@ -64,7 +68,7 @@ class AdminUrls extends Singleton {
 		if (str_starts_with($file, $base)) {
 			$file = substr($file, strlen($base)+1);
 		}
-		return $this->GetPageUrl("file-editor", null, ["file" => $file]);
+		return $this->GetFeatureUrl("AdminFeatureFileEditor", null, ["file" => $file]);
 	}
 
 }

@@ -5,8 +5,7 @@ use function Magrathea2\p_r;
 $dbManager = Magrathea2\Admin\AdminDatabase::Instance();
 $adminElements = \Magrathea2\Admin\AdminElements::Instance();
 
-$pageTitle = "Database";
-include(__DIR__."/../sections/header.php");
+$adminElements->Header("Database");
 
 ?>
 

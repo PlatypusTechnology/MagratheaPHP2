@@ -4,7 +4,6 @@ namespace Magrathea2\Admin\Features\UserLogs;
 
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminFeature;
-use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\Features\User\AdminUser;
 use Magrathea2\Admin\iAdminFeature;
 
@@ -25,15 +24,15 @@ use function Magrathea2\p_r;
  */
 class AdminFeatureUserLog extends AdminFeature implements iAdminFeature { 
 
-	public $featureName = "UserLog";
-	public $featureId = "AdminFeatureUserLog";
+	public string $featureName = "UserLog";
+	public string $featureId = "AdminFeatureUserLog";
 
 	public function __construct() {
 		parent::__construct();
 		$this->SetClassPath(__DIR__);
 	}
 
-	public function HasPermission(): bool {
+	public function HasPermission($action=null): bool {
 		return true;
 	}
 

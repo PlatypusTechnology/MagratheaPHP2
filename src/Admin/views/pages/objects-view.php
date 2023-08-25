@@ -1,7 +1,6 @@
 <?php
 
-$pageTitle = "Objects";
-include(__DIR__."/../sections/header.php");
+\Magrathea2\Admin\AdminElements::Instance()->Header("Objects");
 
 ?>
 

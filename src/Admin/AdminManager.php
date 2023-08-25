@@ -4,8 +4,8 @@ namespace Magrathea2\Admin;
 
 use Exception;
 use Magrathea2\Admin\Features\User\AdminUser;
-use Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog;
 use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
+use Magrathea2\MagratheaJavascriptCompressor;
 use Magrathea2\Singleton;
 use Magrathea2\MagratheaPHP;
 
@@ -27,56 +27,26 @@ use function Magrathea2\p_r;
  */
 class AdminManager extends Singleton {
 
-	public $title = "Magrathea Admin";
-	public $primaryColor = "203, 128, 8";
-	private $adminLogo = __DIR__."/views/logo.svg";
-	private $features = [];
-	private $menu = null;
-
+	private null|AdminMenu $menu = null;
+	private null|MagratheaJavascriptCompressor $javascript = null;
+	private null|Admin $admin = null;
 
 	public function Initialize() {
-		$this
-			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
-			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
-			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
 	}
 
 	/**
-	 * Sets title
-	 * @param 	string 		$title		title
-	 * @return 	Start
+	 * Gets title
+	 * @return string	title
 	 */
-	public function SetTitle($t): AdminManager {
-		$this->title = $t;
-		return $this;
-	}
-
-	/**
-	 * Sets color as decimal value
-	 * @param string $color		Color as hexaRGB
-	 */
-	public function SetPrimaryColor($color): AdminManager {
-		$helper = new \Magrathea2\Helper();
-		$dec = $helper->HexToRgb($color);
-		return $this->SetPrimaryColorDecimal(implode(',', $dec));
+	public function GetTitle(): string {
+		return $this->admin->title;
 	}
 	/**
-	 * Sets color as decimal value
-	 * @param string $color		Color as Decimal RGB
+	 * Gets color
+	 * @return string	color in decimal format (255, 255, 255)
 	 */
-	public function SetPrimaryColorDecimal($color): AdminManager {
-		$this->primaryColor = $color;
-		return $this;
-	}
-
-	/**
-	 * Defines admin logo
-	 * @param string $logo		logo address
-	 * @return AdminManager		itself
-	 */
-	public function SetAdminLogo($logo): AdminManager {
-		$this->adminLogo = $logo;
-		return $this;
+	public function GetColor(): string {
+		return $this->admin->primaryColor;
 	}
 
 	/**
@@ -84,26 +54,18 @@ class AdminManager extends Singleton {
 	 * @param int $logoSize		size of the logo
 	 */
 	public function PrintLogo($logoSize): void {
-		include($this->adminLogo);
+		include($this->admin->adminLogo);
 	}
 
-	/**
-	 * sets admin feature
-	 * @param AdminFeature $feature		feature class to be added
-	 * @return AdminManager						itself
-	 */
-	public function AddFeature($feature): AdminManager {
-		$this->features[$feature->featureId] = $feature;
-		return $this;
-	}
 	/**
 	 * gets admin feature id and returns its object
 	 * @param string $featureId				admin feature id
 	 * @return 	AdminFeature | null		Admin Feature class (null if it does not exists)
 	 */
 	public function GetFeature($featureId): AdminFeature | null {
-		if(array_key_exists($featureId, $this->features)) {
-			return $this->features[$featureId];
+		$features = $this->admin->GetFeatures();
+		if(array_key_exists($featureId, $features)) {
+			return $features[$featureId];
 		}
 		return null;
 	}
@@ -117,49 +79,20 @@ class AdminManager extends Singleton {
 	}
 
 	/**
-	 * Saves menu inside menu var
-	 * @return 	void
-	 */
-	public function BuildMenu(): void {
-		$adminMenu = new AdminMenu();
-		$adminMenu
-			->Add($adminMenu->GetItem("conf-file"))
-			->Add($adminMenu->GetItem("app-conf"))
-			->Add($adminMenu->GetItem("tests"))
-
-			->Add($adminMenu->GetDatabaseSection())
-			->Add($adminMenu->GetObjectSection())
-			->Add($adminMenu->GetDebugSection())
-
-			->Add($adminMenu->GetMenuFeatures([
-				$this->features["AdminFeatureUser"],
-				$this->features["AdminFeatureUserLog"],
-			], "Users"))
-
-			->Add("Tools")
-			->Add($this->features["AdminFeatureFileEditor"]->GetMenuItem())
-
-			->Add($adminMenu->GetHelpSection())
-			->Add($adminMenu->GetLogoutMenuItem());
-		$this->SetMenu($adminMenu);
-	}
-
-	/**
 	 * Sets the menu
 	 * @param AdminMenu $m		menu
 	 * @return AdminManager		itself
 	 */
-	public function SetMenu($m): AdminManager {
+	public function SetMenu(AdminMenu $m): AdminManager {
 		$this->menu = $m;
 		return $this;
 	}
-
 	/**
 	 * Gets the AdminMenu
 	 * @return array		menu items
 	 */
 	public function GetMenu(): AdminMenu {
-		if(!$this->menu) $this->BuildMenu();
+		if(!$this->menu) $this->SetMenu($this->admin->BuildMenu());
 		return $this->menu;
 	}
 
@@ -183,10 +116,53 @@ class AdminManager extends Singleton {
 	}
 
 	/**
-	 * Starts Admin
+	 * Adds a javascript file to admin
 	 */
-	public function Start() {
+	public function AddJs($file): AdminManager {
+		$this->GetJSManager()->AddFile($file);
+		return $this;
+	}
+	public function GetJSManager(): MagratheaJavascriptCompressor {
+		if($this->javascript == null) {
+			$this->javascript = new MagratheaJavascriptCompressor();
+		}
+		return $this->javascript;
+	}
+	public function GetJs(): string {
+		return $this->GetJSManager()->GetCode();
+	}
+
+	/**
+	 * Starts Admin
+	 * @param Admin $admin	admin class
+	 * @return AdminManager	itself
+	 */
+	public function Start(Admin $admin): AdminManager {
+		$admin->Initialize();
+		$admin->SetFeatures();
+		$this->admin = $admin;
 		Start::Instance()->StartDb()->Load();
+		return $this;
+	}
+	/**
+	 * Starts a default admin
+	 * @param		null|string 	$title 		(optional) default title
+	 * @param		null|string 	$color 		(optional) default color
+	 * @return AdminManager	itself
+	 */
+	public function StartDefault(null|string $title=null, null|string $color=null): AdminManager {
+		$default = new Admin;
+		if($title) $default->SetTitle($title);
+		if($color) $default->SetPrimaryColor($color);
+		$this->Start($default);
+		return $this;
+	}
+	/**
+	 * returns the current admin.
+	 * @return null|Admin		admin
+	 */
+	public function GetAdmin(): null|Admin {
+		return $this->admin;
 	}
 
 	/**
@@ -197,10 +173,25 @@ class AdminManager extends Singleton {
 	}
 
 	/**
+	 * Permission verification
+	 */
+	public function Auth(): bool {
+		$user = $this->GetLoggedUser();
+		return $this->admin->Auth($user);
+	}
+
+	/**
 	 * Show permission denied page
 	 */
 	public function PermissionDenied() {
 		die("Permission denied!");
+	}
+	/**
+	 * display error page
+	 */
+	public function ErrorPage($message) {
+		include("views/message.php");
+		die;
 	}
 
 }

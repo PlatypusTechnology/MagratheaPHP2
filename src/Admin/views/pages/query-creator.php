@@ -6,7 +6,7 @@ $dbManager = Magrathea2\Admin\AdminDatabase::Instance();
 $adminElements = \Magrathea2\Admin\AdminElements::Instance();
 
 $pageTitle = "Magrathea Query Tester [WIP]";
-include(__DIR__."/../sections/header.php");
+$adminElements->Header($pageTitle);
 
 ?>
 <style>
@@ -118,7 +118,7 @@ include(__DIR__."/../sections/header.php");
 			<div class="row mt-2">
 				<div class="col-12">
 					<?
-					$val = "new MagratheaQuery()";
+					$val = "new \Magrathea2\DB\Query()";
 					$adminElements->Input("disabled", "pre-code", false, $val, "mono");
 					$adminElements->Textarea("query", false, "", "code", "mag-query", "->...");
 					?>

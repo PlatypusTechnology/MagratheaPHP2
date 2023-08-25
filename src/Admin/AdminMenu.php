@@ -99,6 +99,7 @@ class AdminMenu {
 			$this->CreateTitle("Database"),
 			$this->GetItem("tables"),
 			$this->GetItem("backups"),
+			$this->GetItem("objects-create"),
 			$this->GetItem("mag-query")
 		);
 		return $rs;
@@ -111,9 +112,10 @@ class AdminMenu {
 		$rs = [];
 		array_push($rs,
 			$this->CreateTitle("Magrathea Objects"),
+			$this->GetItem("objects-conf"),
+			$this->GetItem("objects-create"),
 			$this->GetItem("objects"),
 			$this->GetItem("objects-edit"),
-			$this->GetItem("objects-conf"),
 			$this->GetItem("code-gen")
 		);
 		return $rs;
@@ -140,7 +142,8 @@ class AdminMenu {
 		$rs = [];
 		array_push($rs,
 			$this->CreateTitle("Help"),
-			$this->GetItem("help-admin-demos")
+			$this->GetItem("help-admin-demos"),
+			$this->GetItem("help-admin-scripts")
 		);
 		return $rs;
 	}
@@ -168,7 +171,7 @@ class AdminMenu {
 		return [
 			'title' => "Logout",
 			'class' => 'menu-logout',
-			'link' => AdminUrls::Instance()->GetPageUrl(null, "logout"),
+			'link' => AdminUrls::Instance()->GetLogoutUrl(),
 		];
 	}
 
@@ -210,19 +213,22 @@ class AdminMenu {
 		$this->menuItems = [
 			"app-conf" => $this->SimpleItem("App Configuration","config-data"),
 			"conf-file" => $this->SimpleItem("Configuration File", "config"),
+			"htaccess" => $this->SimpleItem(".htaccess", "htaccess"),
 			"tests" => $this->SimpleItem("Tests", "tests"),
 			"tables" => $this->SimpleItem("View Tables", "db-tables"),
 			"backups" => $this->SimpleItem("Backups", "backups"),
 			"mag-query" => $this->SimpleItem("Magrathea Query", "query-creator"),
+			"objects-create" => $this->SimpleItem("Create Objects", "objects-create"),
+			"objects-conf" => $this->SimpleItem("Objects Config", "objects-config"),
 			"objects" => $this->SimpleItem("View Objects", "objects-view"),
 			"objects-edit" => $this->SimpleItem("Edit Objects", "objects-edit"),
-			"objects-conf" => $this->SimpleItem("Objects Config", "objects-config"),
 			"code-gen" => $this->SimpleItem("Generate Code", "generate-code"),
 			"logs" => $this->SimpleItem("Logs", "logs"),
 			"structure" => $this->SimpleItem("Structure", "structure"),
 			"server" => $this->SimpleItem("Server", "server"),
 			"tools-file-editor" => $this->SimpleItem("File Editor", "file-editor"),
-			"help-admin-demos" => $this->SimpleItem("Admin Demos", "form-demo"),
+			"help-admin-demos" => $this->SimpleItem("Admin Elements", "demo-form"),
+			"help-admin-scripts" => $this->SimpleItem("Admin Scripts", "demo-scripts"),
 		];	
 	}
 

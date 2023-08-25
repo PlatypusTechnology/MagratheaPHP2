@@ -4,12 +4,12 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminForm;
 use Magrathea2\Admin\AdminUrls;
 use Magrathea2\Admin\ObjectManager;
-use Magrathea2\Bootstrap\CodeManager;
+use Magrathea2\Admin\CodeManager;
 
 use function Magrathea2\p_r;
 
 $pageTitle = "Generate Code";
-include(__DIR__."/../sections/header.php");
+AdminElements::Instance()->Header($pageTitle);
 
 $data = CodeManager::Instance()->GetCodeCreationData();
 $codeData = @$data["data"];

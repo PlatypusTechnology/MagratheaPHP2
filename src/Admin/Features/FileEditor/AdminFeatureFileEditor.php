@@ -27,8 +27,8 @@ use function Magrathea2\p_r;
  */
 class AdminFeatureFileEditor extends AdminFeature implements iAdminFeature { 
 
-	public $featureName = "File Editor";
-	public $featureId = "AdminFeatureFileEditor";
+	public string $featureName = "File Editor";
+	public string $featureId = "AdminFeatureFileEditor";
 
 	public function __construct() {
 		parent::__construct();

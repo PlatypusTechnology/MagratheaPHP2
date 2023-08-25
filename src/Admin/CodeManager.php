@@ -1,6 +1,6 @@
 <?php
 
-namespace Magrathea2\Bootstrap;
+namespace Magrathea2\Admin;
 use Magrathea2\Admin\Models\AdminConfigControl;
 use Magrathea2\Exceptions\MagratheaException;
 use Magrathea2\MagratheaPHP;
@@ -27,13 +27,24 @@ use function Magrathea2\p_r;
 class CodeManager extends \Magrathea2\Singleton { 
 
 	/**
+	 * returns full object name with namespace
+	 */
+	private function GetFullObjName($obj, $namespace=null): string {
+		if($namespace) {
+			return "\\".$namespace."\\".$obj."\\".$obj;
+		} else {
+			return $obj;
+		}
+	}
+
+	/**
 	 * @param string $object 	object name
 	 * @return array files that will be generated ["file-name", "file-desc", "gen-function"]
 	*/
 	public function GetFileList($object): array {
 		return [
 			"model-base" => [
-				"file-name" => $object."ModelBase.php",
+				"file-name" => $object."Base.php",
 				"file-desc" => $object." Base Code",
 				"gen-function" => "GetCodeForObjectBase"
 			],
@@ -43,12 +54,12 @@ class CodeManager extends \Magrathea2\Singleton {
 				"gen-function" => "GetCodeForObjectControlBase"
 			],
 			"model" => [
-				"file-name" => $object."Model.php",
+				"file-name" => $object.".php",
 				"file-desc" => $object." Model Code",
 				"gen-function" => "GetCodeForObject"
 			],
 			"control" => [
-				"file-name" => $object."ModelControl.php",
+				"file-name" => $object."Control.php",
 				"file-desc" => $object." Model Control Code",
 				"gen-function" => "GetCodeForControl"
 			],
@@ -135,7 +146,7 @@ class CodeManager extends \Magrathea2\Singleton {
 			$relations_functions .= "\tpublic function ".$rel["rel_method"]."(){\n";
 			$relations_functions .= "\t\tif(\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] != null) return \$this->relations[\"properties\"][\"".$rel["rel_property"]."\"];\n";
 			if( $rel["rel_type"] == "belongs_to" ) {
-				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = new ".$rel["rel_object"]."(\$this->".$rel["rel_field"].");\n";
+				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = new ".$this->GetFullObjName($rel["rel_object"], $namespace)."(\$this->".$rel["rel_field"].");\n";
 			} else if ( $rel["rel_type"] == "has_many" ) {
 				$relations_functions .= "\t\t\$pk = \$this->dbPk;\n";
 				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = ".$rel["rel_object"]."ControlBase::GetWhere(array(\"".$rel["rel_field"]."\" => \$this->\$pk));\n";
@@ -153,8 +164,14 @@ class CodeManager extends \Magrathea2\Singleton {
 			}
 
 			if($rel["rel_autoload"] == 1){
-				array_push($relations_autoload, "\"".$rel["rel_property"]."\" => \"".$rel["rel_field"]."\"");
-				array_push($autoload_objs, $rel["rel_property"]);
+				$obj = $rel["rel_property"];
+				$relAuto = [
+					"name" => $obj,
+					"obj" => $this->GetFullObjName($obj, $namespace),
+					"field" => $rel["rel_field"],
+				];
+				$relations_autoload[$obj] = "\"".$obj."\" => [\"obj\" => \"".$relAuto["obj"]."\",\"field\" => \"".$relAuto["field"]."\"]";
+				array_push($autoload_objs, $obj);
 			}
 
 		} // close foreach relations
@@ -162,7 +179,7 @@ class CodeManager extends \Magrathea2\Singleton {
 		$code = "<?php\n";
 		$code .= $this->GetCommentAlert();
 		if ($namespace) {
-			$code .= "namespace ".$namespace.";\n\n";
+			$code .= "namespace ".$namespace."\\".$object.";\n\n";
 		}
 		$code .= "use Magrathea2\iMagratheaModel;\n";
 		$code .= "use Magrathea2\MagratheaModel;\n\n";
@@ -221,15 +238,15 @@ class CodeManager extends \Magrathea2\Singleton {
 		$code = "<?php\n";
 		$code .= $this->GetCommentAlert();
 		if ($namespace) {
-			$code .= "namespace ".$namespace.";\n\n";
+			$code .= "namespace ".$namespace."\\".$object.";\n\n";
 		}
 		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
 
 		$code .= "class ".$object."ControlBase extends MagratheaModelControl {\n";
-			$code .= "\tprotected static \$modelNamesapce = \"".$namespace."\";\n";
+			$code .= "\tprotected static \$modelNamespace = \"".$namespace."\\".$object."\";\n";
 			$code .= "\tprotected static \$modelName = \"".$object."\";\n";
 			$code .= "\tprotected static \$dbTable = \"".$data["table_name"]."\";\n";
-		$code .= "}\n\n";
+		$code .= "}\n";
 		return $code;
 	}
 
@@ -241,17 +258,14 @@ class CodeManager extends \Magrathea2\Singleton {
 	 */
 	private function GenerateCodeForObject($object, $namespace=null) {
 		$code = "<?php\n";
-		$code .= "include(__DIR__.\"/".$object."ModelBase.php\");\n\n";
 
 		if ($namespace) {
-			$code .= "namespace ".$namespace.";\n\n";
+			$code .= "namespace ".$namespace."\\".$object.";\n\n";
 		}
-
-		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
 
 		$code .= "class ".$object." extends ".$object."Base {\n";
 		$code .= "\t// model code goes here!\n";
-		$code .= "}\n\n";
+		$code .= "}\n";
 		return $code;
 	}
 
@@ -263,17 +277,16 @@ class CodeManager extends \Magrathea2\Singleton {
 	 */
 	private function GenerateCodeForObjectControl($object, $namespace=null) {
 		$code = "<?php\n";
-		$code .= "include(__DIR__.\"/".$object."ModelBase.php\");\n\n";
 
 		if ($namespace) {
-			$code .= "namespace ".$namespace.";\n\n";
+			$code .= "namespace ".$namespace."\\".$object.";\n\n";
 		}
 
 		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
 
-		$code .= "class ".$object."Control extends ".$object."ModelControlBase {\n";
+		$code .= "class ".$object."Control extends ".$object."ControlBase {\n";
 		$code .= "\t// model code goes here!\n";
-		$code .= "}\n\n";
+		$code .= "}\n";
 		return $code;
 	}
 

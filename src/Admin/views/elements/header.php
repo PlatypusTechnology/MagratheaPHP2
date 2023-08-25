@@ -1,23 +1,21 @@
 <div class="bg-light border-bottom page-header page-header">
 	<div class="container-fluid">
-		<!--button class="btn btn-primary">Toggle Menu</button-->
-		<h3><?=$pageTitle?></h3>
-		<div class="collapse navbar-collapse">
-			<ul class="navbar-nav ms-auto mt-2 mt-lg-0">
+		<div class="row">
+			<div class="col-9 header-center">
+				<span class="header-title"><?=$pageTitle?></span>
 				<?php
-				if(@$errorMsgHeader) {
+					if(@$errorMsgHeader) {
+						?>
+						<span class="header-error error">Error: <?=$errorMsgHeader?></span>
+						<?php
+					}
 					?>
-					<li class="nav-item">
-						<span class="nav-link error">Error: <?=$errorMsgHeader?></span>
-					</li>
-					<?php
-				}
+			</div>
+			<div class="col-3 header-right">
+				<?
+					\Magrathea2\Admin\AdminElements::Instance()->UserCard();
 				?>
-				<!--li class="nav-item active"><a class="nav-link" href="#!">Home</a></li>
-				<li class="nav-item"><a class="nav-link" href="#!">Link</a></li-->
-			</ul>
+			</div>
 		</div>
-		<!--div class="navbar-nav">
-		</div-->
 	</div>
 </div>

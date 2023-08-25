@@ -7,6 +7,10 @@
 	db_user = "db_user"
 	db_pass = "password123"
 	logs_path = ""
+	backups_path = ""
+	compress_path = ""
+	compress_js = false
+	compress_css = false
 	timezone = "America/Sao_Paulo"
 	app_url = "http://localhost.com"
 	jwt_key = ""

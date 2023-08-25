@@ -130,18 +130,18 @@ abstract class MagratheaModel{
 		}
 		if( $this->autoload && count($this->autoload) > 0 ) {
 			$tabs = array();
-			foreach ($this->autoload as $objName => $relation) {
-				$obj = new $objName();
-				$sql->InnerObject($obj, $obj->dbTable.".".$obj->GetPkName()." = ".$this->dbTable.".".$relation);
-				$tabs[$objName] = $obj->dbTable;
+			foreach ($this->autoload as $objName => $relData) {
+				$obj = new $relData["obj"]();
+				$sql->InnerObject($obj, $obj->dbTable.".".$obj->GetPkName()." = ".$this->dbTable.".".$relData["field"]);
+				$tabs[$objName] = ["table" => $obj->dbTable, "obj" => $relData["obj"]];
 			}
 			$result = Database::Instance()->queryRow($sql->SQL());
 			if( empty($result) ) throw new MagratheaModelException("Could not find ".get_class($this)." with id ".$id."!");
 
 			$splitResult = Query::SplitArrayResult($result);
 			$this->LoadObjectFromTableRow($splitResult[$this->GetDbTable()]);
-			foreach ($tabs as $obj => $table) {
-				$new_object = new $obj();
+			foreach ($tabs as $obj => $relData) {
+				$new_object = new $relData["obj"]();
 				$new_object->LoadObjectFromTableRow($splitResult[$new_object->GetDbTable()]);
 				$this->$obj = $new_object;
 			}
@@ -177,9 +177,20 @@ abstract class MagratheaModel{
 	}
 
 	/**
+	 * Gets an array of whatever and assign it to the properties of model
+	 * @param 	array 	$data		data
+	 * @return MagratheaModel		itself
+	 */
+	public function Assign($data): MagratheaModel {
+		foreach($data as $key => $val) {
+			$this->Set($key, $val, true);
+		}
+		return $this;
+	}
+	/**
 	 * Saves: Using a insert if pk is not set and an update if pk is set
 	 * Basically, Inserts if id does not exists and updates if id does exists
-	 * @return  int or boolean 		id if inserted and true if updated
+	 * @return  int|boolean 		id if inserted and true if updated
 	 */
 	public function Save(){
 		$pk = $this->dbPk;
@@ -270,12 +281,13 @@ abstract class MagratheaModel{
 	}
 
 	/**
-	 * MAGIC FUNCTION: gets required property
+	 * gets required property
 	 * @param  	string		$key 			property
+	 * @param		boolean		$supressException			if set to true, function will not throw Exception if property does not exist
 	 * @return 	string		property value
 	 * @throws 	MagratheaModelException 	if property does not exists into object
 	 */
-	public function __get($key){
+	public function Get($key, $supressException=false) {
 		if( array_key_exists($key, $this->dbAlias) ){
 			$real_key = $this->dbAlias[$key];
 			return $this->$real_key;
@@ -288,28 +300,54 @@ abstract class MagratheaModel{
 			}
 			return $this->relations["properties"][$key];
 		} else {
+			if($supressException) {
+				return null;
+			}
 			throw new MagratheaModelException("Property ".$key." does not exists in ".get_class($this)."!");
 		}
 	}
-	
 	/**
-	 * MAGIC FUNCTION: updates required property
+	 * MAGIC FUNCTION: gets required property
+	 * @param  	string		$key 			property
+	 * @return 	string		property value
+	 * @throws 	MagratheaModelException 	if property does not exists into object
+	 */
+	public function __get($key){
+		return $this->Get($key, false);
+	}
+	/**
+	 * Sets given property
 	 * @param  	string 		$key 			property
-	 * @param  	object 		$value 			value
+	 * @param  	object 		$value 		value
+	 * @param		boolean		$supressException			if set to true, function will not throw Exception if property does not exist
 	 * @return 	object|null     	property value
 	 * @throws 	MagratheaModelException 	if property does not exists into object
 	 */
-	public function __set($key, $value){
+	public function Set($key, $value, $supressException=false){
 		if( $key == "created_at" || $key == "updated_at" ) return null;
-		if( array_key_exists($key, $this->dbAlias) ){
+		if( array_key_exists($key, $this->dbValues) ){
+			$this->$key = $value;
+		} else if( array_key_exists($key, $this->dbAlias) ){
 			$real_key = $this->dbAlias[$key];
 			$this->$real_key = $value;
 		} else if( @is_array($this->relations["properties"]) && array_key_exists($key, $this->relations["properties"]) ){
 			$method_set = $this->relations["methods"][$key];
  			$this->relations["properties"][$key] = $value;
 		} else {
+			if($supressException) { return; }
 			throw new MagratheaModelException("Property ".$key." does not exists in ".get_class($this)."!");
 		}
+	}
+	/**
+	 * MAGIC FUNCTION: updates required property
+	 * @param  	string 		$key 			property
+	 * @param  	object 		$value 		value
+	 * @param		boolean		$supressException			if set to true, function will not throw Exception if property does not exist
+	 * @return 	object|null     	property value
+	 * @throws 	MagratheaModelException 	if property does not exists into object
+	 */
+	public function __set($key, $value) {
+		return $this->Set($key, $value, false);
 	}
 
 	/**

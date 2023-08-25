@@ -60,7 +60,7 @@ class AdminForm {
 	 * Prints a form for a object
 	 * 		types: 
 	 * 				hidden, empty (for a empty div),
-	 * 				text, disabled, number, email,
+	 * 				text, disabled, number, email, date,
 	 * 				checkbox, switch,
 	 * 				submit, button, save-button, delete-button,
 	 * 				array (builds a select 'id' => 'name')

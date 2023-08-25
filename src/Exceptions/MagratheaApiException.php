@@ -9,10 +9,8 @@ use Magrathea2\Exceptions\MagratheaException;
 class MagratheaApiException extends MagratheaException {
 	public $status;
 	public $code = 0;
-	public $_data = null;
 	public function __construct($message = "Magrathea Api Error", $kill=true, $code=0, $data=null, \Exception $previous = null) {
 		$this->code = $code;
-		$this->_data = $data;
 		if($kill) {
 			$this->killerError = true;
 			$this->status = 500;
@@ -30,18 +28,6 @@ class MagratheaApiException extends MagratheaException {
 	public function SetStatus($st): MagratheaApiException {
 		$this->status = $st;
 		return $this;
-	}
-	/**
-	 * Set data
-	 * @param 	array|object		$data 	data
-	 * @return MagratheaApiException
-	 */
-	public function SetData($data) {
-		$this->_data = $data;
-		return $this;
-	}
-	public function GetData() {
-		return $this->_data;
 	}
 
 	public function __toString(): string {

@@ -40,6 +40,11 @@ abstract class Singleton {
 		static::$instance[$classname] = $mocker;
 		return $mocker;
 	}
+
+	public function SetInstance($inst) {
+		$this->instance = $inst;
+		return $this;
+	}
 }
 
 ?>

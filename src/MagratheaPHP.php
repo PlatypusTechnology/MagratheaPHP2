@@ -26,6 +26,7 @@ class MagratheaPHP extends Singleton {
 	public $appRoot = "";
 		// Root of Magrathea Structure
 	public $magRoot = "";
+	public $codeFolder = [];
 
 	/**
 	* Sets App Root Path
@@ -35,6 +36,23 @@ class MagratheaPHP extends Singleton {
 	public function AppPath($path) {
 		$this->appRoot = $path;
 		$this->magRoot = realpath($path."/../");
+		return $this;
+	}
+
+	/**
+	 * @return 	string		$magratheaRoot
+	 */
+	public function GetMagratheaRoot(): string {
+		return __DIR__;
+	}
+
+	/**
+	 * Adds a code folder for autoload
+	 * @param string $folder	foldername
+	 * @return MagratheaPHP		itself
+	 */
+	public function AddCodeFolder(...$folder): MagratheaPHP {
+		array_push($this->codeFolder, ...$folder);
 		return $this;
 	}
 

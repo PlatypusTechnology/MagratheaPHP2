@@ -2,7 +2,7 @@
 
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminUrls;
-use Magrathea2\Bootstrap\CodeManager;
+use Magrathea2\Admin\CodeManager;
 
 use function Magrathea2\p_r;
 

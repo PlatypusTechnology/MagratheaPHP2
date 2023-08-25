@@ -18,6 +18,7 @@ use function Magrathea2\p_r;
 
 interface iAdminFeature {
 	public function GetPage();
+	public function HasPermission($action=null): bool;
 }
 
 /**
@@ -25,8 +26,8 @@ interface iAdminFeature {
  */
 class AdminFeature {
 
-	public $featureName = "Unknown";
-	public $featureId = "some-feature";
+	public string $featureName = "Unknown";
+	public string $featureId = "some-feature";
 	public $featureIcon = null;
 	public $featureClassPath = __DIR__;
 
@@ -44,7 +45,7 @@ class AdminFeature {
 	 * Checks if user has permission to see a feature
 	 * @return 		bool		has it?
 	 */
-	public function HasPermission() {
+	public function HasPermission($action=null): bool {
 		return true;
 	}
 
@@ -53,11 +54,11 @@ class AdminFeature {
 	 * loads [$featureClass] var with own class to the index page
 	 */
 	public function GetPage() {
-		if(!$this->HasPermission()) {
+		$action = @$_GET["magrathea_feature_subpage"];
+		if(!$this->HasPermission($action)) {
 			AdminManager::Instance()->PermissionDenied();
 		}
 		$featureClass = $this;
-		$action = @$_GET["magrathea_feature_subpage"];
 		if($action) {
 			$this->$action();
 		} else {

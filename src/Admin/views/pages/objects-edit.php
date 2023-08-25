@@ -1,7 +1,12 @@
 <?php
 
-$pageTitle = "Edit Objects";
-include(__DIR__."/../sections/header.php");
+use Magrathea2\Admin\AdminElements;
+use Magrathea2\Admin\AdminManager;
+
+AdminElements::Instance()->Header("Edit Objects");
+
+$jsFile = __DIR__."/../javascript/object-creation.js";
+AdminManager::Instance()->AddJs($jsFile);
 
 ?>
 
@@ -50,6 +55,5 @@ function viewObject(name) {
 	callAction("object-detail&object="+name)
 		.then(rs => showOn(container, rs));
 }
-<?php include(__DIR__."/../javascript/object-creation.js"); ?>
 </script>
 

@@ -1,4 +1,3 @@
-<? use function Magrathea2\p_r; ?>
 <table class="table table-striped <?=$extraClass?>">
 	<thead class="thead-dark">
 		<tr>
@@ -15,21 +14,32 @@
 		echo "<tr>";
 		$i = 0;
 		foreach($magratheaKeys as $key) {
-			if(is_callable($key)) {
-				$value = $key($row);
-			} else if (is_array($row)) {
-				if(isset($row[$key])) $value = $row[$key];
-				else $value = @$row[$i];
-
-				if(is_callable($value)) {
-					$value = $value($row);
+			try {
+				if(is_callable($key)) {
+					$value = $key($row);
+				} else if (is_array($row)) {
+					if(isset($row[$key])) $value = $row[$key];
+					else $value = @$row[$i];
+	
+					if(!is_string($value)) {
+						if(is_callable($value)) {
+							$value = $value($row);
+						}
+					}
+				} else if (is_a($row, "\Magrathea2\MagratheaModel")) {
+					$value = $row->$key;
 				}
-			} else if (is_a($row, "\Magrathea2\MagratheaModel")) {
-				$value = $row->$key;
+				echo '<td '.($i === 0 ? 'scope="row"' : '').'>';
+				echo $value.'</td>';
+				$i++;
+			} catch(Exception $ex) {
+				$e = new Magrathea2\Exceptions\MagratheaException("Error building table", 500, $ex);
+				$e->SetData([
+					"row" => $row,
+					"key" => $key
+				]);
+				throw $e;
 			}
-			echo '<td '.($i === 0 ? 'scope="row"' : '').'>';
-			echo $value.'</td>';
-			$i++;
 		}
 		echo "</tr>";
 		?>

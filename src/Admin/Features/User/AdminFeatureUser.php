@@ -27,8 +27,8 @@ use function Magrathea2\p_r;
  */
 class AdminFeatureUser extends AdminFeature implements iAdminFeature { 
 
-	public $featureName = "Users";
-	public $featureId = "AdminFeatureUser";
+	public string $featureName = "Users";
+	public string $featureId = "AdminFeatureUser";
 
 	public function __construct() {
 		parent::__construct();

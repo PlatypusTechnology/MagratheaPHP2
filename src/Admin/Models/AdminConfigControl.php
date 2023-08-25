@@ -15,7 +15,7 @@ use function Magrathea2\p_r;
 ####    Magrathea by Paulo Henrique Martins
 ####    Platypus technology
 ####    Admin created: 2023-02 by Paulo Martins
-####
+####`
 #######################################################################################
 
 /**

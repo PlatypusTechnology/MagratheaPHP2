@@ -16,8 +16,8 @@ $adminManager = AdminManager::Instance();
 			--error: #C32;
 			--success: green;
 
-			--primary: rgb(<?=$adminManager->primaryColor?>);
-			--primary-light: rgba(<?=$adminManager->primaryColor?>, .5);
+			--primary: rgb(<?=$adminManager->GetColor()?>);
+			--primary-light: rgba(<?=$adminManager->GetColor()?>, .5);
 		}
 		<?php 
 			include(__DIR__."/../css/_variables.css");

@@ -176,7 +176,7 @@ class Debugger extends Singleton {
 		switch ($this->debugType) {
 			case self::NONE:
 			case self::LOG:
-				Logger::Instance()->Log(dump($debug));
+				Logger::Instance()->Log(var_dump($debug));
 				return;
 			case self::DEV:
 				echo "<pre>INFO: ".$debug."</pre>";

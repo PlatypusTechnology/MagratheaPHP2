@@ -5,8 +5,7 @@ use Magrathea2\Admin\AdminForm;
 use Magrathea2\Admin\Models\AdminConfig;
 use Magrathea2\Admin\Models\AdminConfigControl;
 
-$pageTitle = "App Configuration";
-include(__DIR__."/../sections/header.php");
+AdminElements::Instance()->Header("App Configuration");
 
 ?>
 <div class="container">
