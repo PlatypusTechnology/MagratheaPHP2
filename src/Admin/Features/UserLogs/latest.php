@@ -20,6 +20,7 @@ $latest = $control->GetLatest();
 		[
 			"user_id" => "User ID",
 			"action" => "Action",
+			"victim" => "Victim",
 			"created_at" => "Date",
 			[
 				"title" => "",

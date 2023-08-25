@@ -22,7 +22,7 @@ use Magrathea2\MagratheaModel;
 class AdminLog extends MagratheaModel implements iMagratheaModel { 
 
 	public $id;
-	public $user_id, $action, $info;
+	public $user_id, $action, $victim, $info;
 	public $created_at, $updated_at;
 	protected $autoload = null;
 
@@ -42,6 +42,7 @@ class AdminLog extends MagratheaModel implements iMagratheaModel {
 			"id" => "int",
 			"user_id" => "int",
 			"action" => "string",
+			"victim" => "string",
 			"info" => "text",
 		];
 		$this->dbAlias["data"] = "info";

@@ -440,4 +440,11 @@ abstract class MagratheaModel{
 		return "<pre>".$print_this."</pre>";
 	}
 	
+	/**
+	 * returns the name of the class without the namespace
+	 */
+	public function ModelName(): string {
+		return getClassNameOfClass(get_class($this));
+	}
+
 }

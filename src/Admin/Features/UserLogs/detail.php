@@ -10,7 +10,8 @@
 			</div>
 			<div class="col-4">
 				<b><?=$log->action?></b><br/>
-				at (<?=$log->created_at?>)
+				at (<?=$log->created_at?>)<br/><br/>
+				<b>Victim:</b><br/><?=$log->victim?>
 			</div>
 			<div class="col-4">
 				<?
