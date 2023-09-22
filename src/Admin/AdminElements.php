@@ -137,7 +137,7 @@ class AdminElements extends Singleton {
 	 * Print a Select
 	 * @param string 	$id	 			id
 	 * @param string 	$name 		title of the select
-	 * @param array 	$options	array with options (as ["value" => "option caption"])
+	 * @param array 	$options	array with options (as ["value" => "option caption"] or ["id", "name"])
 	 * @param string 	$value 		selected value
 	 * @param string|array $class		class for the select
 	 * @param string 	$placeholder 	placeholder

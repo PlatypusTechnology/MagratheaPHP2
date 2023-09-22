@@ -47,6 +47,9 @@ $elements = AdminElements::Instance();
 					case "hidden":
 						echo '<input type="hidden" name="'.$key.'" id="'.$key.'" value="'.$value.'" />';
 						break;
+					case "textarea":
+						$elements->Textarea($key, $name, $value, @$el['class'], @$el['outerClass'], @$el['placeholder'], @$el['attributes']);
+						break;
 					case "switch":
 					case "checkbox":
 						$checkVal = "1";

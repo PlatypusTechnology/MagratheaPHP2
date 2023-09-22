@@ -64,9 +64,10 @@ class Start extends Singleton {
 		try { 
 			$feature = AdminManager::Instance()->GetFeature($featureName);
 			if (!$feature) {
-				AdminElements::Instance()->ErrorCard("Feature not available!");
+				AdminElements::Instance()->ErrorCard("Feature [".$featureName."] not available!");
+			} else {
+				$feature->$action();
 			}
-			$feature->$action();
 			die;
 		} catch(Exception $ex) {
 			AdminElements::Instance()->ErrorCard($ex->getMessage());

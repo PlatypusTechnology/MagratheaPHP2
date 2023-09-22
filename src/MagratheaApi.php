@@ -241,7 +241,7 @@ class MagratheaApi {
 				array_push($endpoints[$url], $data);
 			}
 		}
-		sort($endpoints);
+		ksort($endpoints);
 		return $endpoints;
 	}
 
@@ -359,7 +359,7 @@ class MagratheaApi {
 			if($params) {
 				$data = $control->$fn($params);
 			} else {
-				$data = $control->$fn();
+				$data = $control->$fn(null);
 			}
 			return $this->ReturnSuccess($data);
 		} catch(MagratheaApiException $ex) {

@@ -33,7 +33,19 @@ class AdminFeature {
 
 	public function __construct() {
 		$className = get_class($this);
-		$this->featureId = basename(str_replace('\\', '/', $className));
+		if(empty($this->featureId)) {
+			$this->featureId = basename(str_replace('\\', '/', $className));
+		}
+	}
+
+	/**
+	 * Add a JS file to admin
+	 * @param string $file		absolute path of tile
+	 * @return AdminFeature		itself
+	 */
+	public function AddJs(string $file): AdminFeature {
+		AdminManager::Instance()->AddJs($file);
+		return $this;
 	}
 
 	/**

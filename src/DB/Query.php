@@ -370,11 +370,11 @@ class Query{
 	/**
 	 * Builds where!
 	 * 	Is possible to send a string or an array, where the keys of the array will be the name of the fields which the query will be done
-	 * @param 	string or array 	$whereSql  		String or array for building the query with
+	 * @param 	string|array 	$whereSql  		String or array for building the query with
 	 * @param 	string 				$condition 		glue condition ("AND" or "OR")
 	 * @return  Query
 	 */
-	public function Where($whereSql, $condition="AND"){
+	public function Where(string|array $whereSql, $condition="AND"){
 		if(is_array($whereSql)){
 			return $this->WhereArray($whereSql, $condition);
 		}

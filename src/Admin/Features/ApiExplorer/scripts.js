@@ -39,6 +39,7 @@ function executeApi(apiId) {
 			payloadJson = JSON.parse(payload);
 		} catch(err) {
 			console.error("payload error", err);
+			showToast("Check debug for more info", "Bad Payload", true);
 			debugAPI("\tpayload error: " + err);
 			debugAPI("\n");
 			return;

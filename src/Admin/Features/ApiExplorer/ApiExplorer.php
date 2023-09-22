@@ -19,12 +19,7 @@ class ApiExplorer extends AdminFeature implements iAdminFeature {
 	public function __construct() {
 		parent::__construct();
 		$this->SetClassPath(__DIR__);
-		$this->AddJs();
-	}
-
-	private function AddJs() {
-		$file = __DIR__."/scripts.js";
-		AdminManager::Instance()->AddJs($file);
+		$this->AddJs(__DIR__."/scripts.js");
 	}
 
 	/**

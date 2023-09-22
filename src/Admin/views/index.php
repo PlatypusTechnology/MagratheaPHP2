@@ -44,7 +44,9 @@ if(!empty($magrathea_subpage)) {
 									true
 								);
 							} else {
-								$f->GetPage();
+								$subpage = @$_GET["magrathea_feature_subpage"];
+								if(!$subpage) $subpage = "GetPage";
+								$f->$subpage();
 							}
 						}
 					}

@@ -119,7 +119,7 @@ class Install {
 		require "../vendor/autoload.php";
 
 		Magrathea2\MagratheaPHP::Instance()->AppPath(realpath(dirname(__FILE__)))->Load();
-		Magrathea2\Admin\Start::Instance()->StartDb()->Load();
+		Magrathea2\Admin\AdminManager::Instance()->StartDefault();
 		EOD;
 	}
 

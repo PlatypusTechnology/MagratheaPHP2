@@ -8,4 +8,11 @@
 	--bs-btn-hover-bg: var(--primary-light);
 	--bs-btn-hover-border-color: var(--primary-light);
 }
+.btn.active {
+	font-weight: bold;
+	--bs-btn-active-color: var(--primary);
+	--bs-btn-active-bg: var(--primary-light);
+	--bs-btn-active-border-color: var(--primary);
+
+}
 

@@ -18,7 +18,7 @@
 				if(is_callable($key)) {
 					$value = $key($row);
 				} else if (is_array($row)) {
-					if(isset($row[$key])) $value = $row[$key];
+					if(isset($row[$key])) $value = @$row[$key];
 					else $value = @$row[$i];
 	
 					if(!is_string($value)) {

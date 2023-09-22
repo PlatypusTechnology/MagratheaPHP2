@@ -37,6 +37,8 @@ $url = $feature->apiUrl;
 }
 .api-rs {
 	min-height: 300px;
+	max-height: 700px;
+	overflow-y: auto;
 }
 </style>
 
@@ -74,6 +76,7 @@ $url = $feature->apiUrl;
 				<div class="col-2">
 					<?
 					$elements->Input("hidden", "api-original-".$apiId, false, $end["url"]);
+					$elements->Input("text", "api-params-".$apiId, false, "", ["w-100", "mb-2"], null, "Query Params");
 					foreach($end["params"] as $param) {
 						$attr = [
 							"onchange" => "updateApiUrl(".$apiId.", '".$param."', this)"
