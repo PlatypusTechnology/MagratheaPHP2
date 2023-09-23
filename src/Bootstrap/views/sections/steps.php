@@ -8,7 +8,7 @@ function getClass($step) {
 }
 
 function linkTo($step) {
-	return "/?step=".$step;
+	return \Magrathea2\Bootstrap\Start::Instance()->GetStepLink($step);
 }
 
 ?>

@@ -7,6 +7,11 @@
 	}
 	$stepActive = @$_GET["step"];
 	if(empty($stepActive)) $stepActive = 1;
+
+	function linkTo($step) {
+		return \Magrathea2\Bootstrap\Start::Instance()->GetStepLink($step);
+	}
+	
 ?>
 
 <!DOCTYPE html>
@@ -62,9 +67,9 @@
 						</div>
 						<div class="actions">
 							<?php if ($stepActive > 1) { ?>
-								<button class="btn btn-primary left" onclick="window.location.href='/?step=<?=$stepActive-1?>'">Back</button>
+								<button class="btn btn-primary left" onclick="window.location.href='<?=linkTo($stepActive-1)?>'">Back</button>
 							<?php } ?>
-							<button class="btn btn-success" onclick="window.location.href='/?step=<?=$stepActive+1?>'">Next</button>
+							<button class="btn btn-success" onclick="window.location.href='<?=linkTo($stepActive+1)?>'">Next</button>
 						</div>
 					</div>
 				</div>

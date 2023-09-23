@@ -38,6 +38,16 @@ class Start extends \Magrathea2\Singleton {
 	}
 
 	/**
+	 * Gets link to step
+	 * @param int $step		step to go
+	 * @return string			step url
+	 */
+	public function GetStepLink($step) {
+		$url = strtok($_SERVER["REQUEST_URI"], '?');
+		return $url."?step=".$step;
+	}
+
+	/**
 	* Sets project's path
 	* @param 	string 	$path 	main path of the project
 	* @return 	Start

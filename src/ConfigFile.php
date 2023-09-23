@@ -92,7 +92,7 @@ class ConfigFile {
 		$configSection = @parse_ini_file($this->path.$this->configFileName, true);
 		if( empty($configSection ) ) return null;
 		if( !$configSection ){
-			throw new MagratheaConfigException("There was an error trying to load the config file.<br/>");
+			throw new MagratheaConfigException("There was an error trying to load the config file. No section [".$configSection."]<br/>");
 		}
 		return $configSection[$section_name];
 	}

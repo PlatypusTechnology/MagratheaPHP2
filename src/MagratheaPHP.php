@@ -57,6 +57,17 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Set dev display errors
+	 * @return MagratheaPHP
+	 */
+	public function Dev(): MagratheaPHP {
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+		ini_set("log_errors", 1);
+		return $this;
+	}
+
+	/**
 	 * Set debug development
 	 * @return MagratheaPHP
 	 */
