@@ -1,7 +1,9 @@
 <?php
 
-	$bootstrap = Magrathea2\Bootstrap\CodeManager::Instance()->Load();
-	$confFile = $bootstrap->getMagratheaObjectsFile();
+use function Magrathea2\p_r;
+
+	$manager = Magrathea2\Admin\ObjectManager::Instance();
+	$confFile = $manager->GetObjectFilePath();
 
 	?>
 	<h5>Loading Magrathea Objects</h5>
@@ -20,7 +22,7 @@
 	<span>Magrathea Objects:</span>
 	<br/><br/>
 	<?
-	$config = $bootstrap->getMagratheaObjectsData();
+	$config = $manager->GetFullObjectData();
 	foreach($config as $object => $data) {
 		$columns = "";
 		if($object === "relations") continue;
@@ -31,21 +33,21 @@
 				<b><?=$object?></b> (table: <i><?=$table?></i>)
 			</div>
 			<?
-			$fields = $bootstrap->getFieldsFromObject($data);
-			foreach($fields as $k => $i) {
+			$fields = $manager->GetPublicProperties($data);
+			foreach($fields as $field) {
 				?>
 				<div class="col-6">
-					<?=$k?>:
+					<?=$field["name"]?>:
 				</div>
 				<div class="col-6">
-					<?=$i?>
+					<?=$field["type"]?>
 				</div>
 				<?
 			}
 			?>
 			<div class="col-12">
 				<?
-					$query = $bootstrap->generateQueryForObject($data);
+					$query = $manager->GenerateQueryForObject($object);
 				?>
 				<br/>
 				<pre class="code" id="create-<?=$table?>"><?=$query?></pre>

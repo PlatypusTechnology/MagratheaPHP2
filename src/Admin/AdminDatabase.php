@@ -82,7 +82,7 @@ class AdminDatabase extends Singleton {
 			$backupPath = Config::Instance()->Get("backups_path");
 		} catch(MagratheaConfigException $ex) {
 			$magRoot = MagratheaPHP::Instance()->magRoot;
-			if(!$magRoot) throw new MagratheaConfigException("backups_path is invalid and mag root is null");
+			if(!$magRoot) throw new MagratheaConfigException("backups_path is invalid and magrathea root is null");
 			$backupPath = $magRoot."/backups";
 		} catch(\Exception $ex) {
 			throw $ex;

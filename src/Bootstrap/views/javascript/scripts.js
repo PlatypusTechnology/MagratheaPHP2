@@ -6,6 +6,11 @@ function showOn(container, rs) {
 function viewCodeFile() {
 	
 }
+
+function getBootstrapUrl(){
+	return window.location.href.split('?')[0];
+}
+
 function generateCode() {
 	let url = "/?action=generate-code";
 	$.get(url, rs => showOn("#code-gen-rs", rs));

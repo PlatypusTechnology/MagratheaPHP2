@@ -43,8 +43,12 @@ class Start extends \Magrathea2\Singleton {
 	 * @return string			step url
 	 */
 	public function GetStepLink($step) {
-		$url = strtok($_SERVER["REQUEST_URI"], '?');
+		$url = self::GetBootstrapURL();
 		return $url."?step=".$step;
+	}
+
+	public static function GetBootstrapURL() {
+		return strtok($_SERVER["REQUEST_URI"], '?');
 	}
 
 	/**

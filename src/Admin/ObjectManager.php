@@ -37,13 +37,21 @@ class ObjectManager extends \Magrathea2\Singleton {
 
 	/**
 	 * if object file path is not set, sets it to default config path
-	 * returns full path with file name
+	 * returns full path without file name
 	 */
-	public function GetObjectFilePath(): string {
+	private function GetObjectFileFolderPath(): string {
 		if(empty($this->filePath)) {
 			$this->filePath = MagratheaPHP::Instance()->getConfigRoot();
 		}
 		return $this->filePath;
+	}
+
+	/**
+	 * if object file path is not set, sets it to default config path
+	 * returns full path with file name
+	 */
+	public function GetObjectFilePath(): string {
+		return $this->GetObjectFileFolderPath()."/".$this->fileName;
 	}
 
 	/**
@@ -53,13 +61,17 @@ class ObjectManager extends \Magrathea2\Singleton {
 	private function GetObjectConfigFile(): ConfigFile {
 		if(!$this->confObject) {
 			$fileControl = new ConfigFile();
-			$fileControl->SetPath($this->GetObjectFilePath())->SetFile($this->fileName);
+			$fileControl->SetPath($this->GetObjectFileFolderPath())->SetFile($this->fileName);
 			$this->confObject = $fileControl;
 		}
 		return $this->confObject;
 	}
 
-	private function GetFullObjectData(): array {
+	/**
+	 * gets all objects from objects config file
+	 * @return array		data
+	 */
+	public function GetFullObjectData(): array {
 		if(!$this->objData) {
 			$this->objData = $this->GetObjectConfigFile()->GetConfig();
 		}
@@ -490,6 +502,68 @@ class ObjectManager extends \Magrathea2\Singleton {
 	public function GetTypesArr(): array {
 		$types = array("int", "boolean", "string", "text", "float", "datetime");
 		return array_combine($types, $types);
+	}
+
+	/**
+	 * Gets alter table for adding created_at
+	 * @param string $table		table name
+	 * @return string					query
+	 */
+	public function GetCreatedAtQuery(string $table): string {
+		return "ALTER TABLE ".$table." ADD created_at ".$this->GetSQLTypeFromType("created_at").";";
+	}
+
+	/**
+	 * Gets alter table for adding updated_at
+	 * @param string $table		table name
+	 * @return string					query
+	 */
+	public function GetUpdatedAtQuery(string $table): string {
+		return "ALTER TABLE ".$table." ADD  updated_at ".$this->GetSQLTypeFromType("updated_at").";";
+	}
+
+	/**
+	 * Gets a type and return the sql type for it (simplified)
+	 * @param string 	$type		type
+	 * @return 	string				sqltype
+	 */
+	private function GetSQLTypeFromType(string $type): string {
+		switch($type) {
+			case "id":
+				return "int(11) PRIMAREY KEY AUTO_INCREMENT";
+			case "int":
+				return "int(11) NULL";
+			case "boolean":
+				return "tinyint(1) NOT NULL DEFAULT 1";
+			case "text":
+				return "text DEFAULT NULL";
+			case "float":
+				return "float DEFAULT NULL";
+			case "datetime":
+				return "datetime NULL";
+			case "string":
+			default:
+				return "varchar(255) NULL";
+			case "created_at":
+				return "TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
+			case "updated_at":
+				return "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP";
+			}
+	}
+
+	public function GenerateQueryForObject(string $object): string {
+		$data = $this->GetObjectData($object);
+		$fields = $this->GetPublicProperties($data);
+		$q = "CREATE TABLE `".$data["table_name"]."` (\n";
+		foreach($fields as $field) {
+			if($field["name"] == "created_at" || $field["name"] == "updated_at") {
+				$q .= "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($field["name"]).",\n";
+			} else {
+				$q .= "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($field["type"]).",\n";
+			}
+		}
+		$q .= ");";
+		return $q;
 	}
 
 }

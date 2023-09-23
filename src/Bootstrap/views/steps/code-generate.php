@@ -1,7 +1,7 @@
 <?php
 
-	$bootstrap = Magrathea2\Bootstrap\CodeManager::Instance()->Load();
-	$confFile = $bootstrap->GetMagratheaObjectsFile();
+$manager = Magrathea2\Admin\ObjectManager::Instance();
+$confFile = $manager->GetObjectFilePath();
 
 	?>
 	<h5>Generate Objects code</h5>
@@ -18,7 +18,7 @@
 		?>
 		<div class="row">
 			<div class="col-12 btn-obj-view-file">
-				<pre class="code"><? $configFile = realpath($bootstrap->GetMagratheaObjectsFile());
+				<pre class="code"><? $configFile = realpath($manager->GetObjectFilePath());
 echo file_get_contents($configFile); ?>
 				</pre>
 			</div>

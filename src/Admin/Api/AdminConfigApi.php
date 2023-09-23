@@ -2,7 +2,7 @@
 
 namespace Magrathea2\Admin\Api;
 use Magrathea2\Admin\Models\AdminConfigControl;
-use Magrathea2\Bootstrap\CodeManager;
+use Magrathea2\Admin\CodeManager;
 use Magrathea2\Exceptions\MagratheaApiException;
 
 use function Magrathea2\p_r;
@@ -20,7 +20,7 @@ class AdminConfigApi extends \Magrathea2\MagratheaApiControl {
 
 	public function SaveConfig($params) {
 		unset($params["magrathea_api"]);
-		unset($params["magrathea_api_method"]);
+		unset($params["magrathea_api_method"]);w
 		$configs = [];
 		$control = new AdminConfigControl();
 		foreach($params as $key => $value) {

@@ -1,16 +1,16 @@
 function testConnection() {
-	let url = "/?action=database-test";
+	let url = getBootstrapUrl()+"?action=database-test";
 	ajax("GET", url).then(rs => showOn("#ajax-response", rs));
 }
 
 function getTables() {
-	let url = "/?action=show-tables";
+	let url = getBootstrapUrl()+"?action=show-tables";
 	ajax("GET", url).then(rs => showOn("#ajax-response2", rs));
 }
 
 function runQuery() {
 	let query = $("#query").val();
-	let url = "/?action=run-query";
+	let url = getBootstrapUrl()+"?action=run-query";
 	ajax("POST", url, { q: query }).then(rs => showOn("#ajax-response", rs));
 }
 

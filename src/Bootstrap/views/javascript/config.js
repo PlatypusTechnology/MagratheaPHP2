@@ -9,7 +9,7 @@ function getForm($form) {
 
 function saveDatabaseInfo() {
 	var formData = getForm($("#dbInfoForm"));
-	let postAction = "/?action=save-config";
+	let postAction = getBootstrapUrl()+"?action=save-config";
 	ajax("POST", postAction, formData).then(rs => {
 		$("#ajax-response").html(rs);
 		$("#ajax-response").show('slow');

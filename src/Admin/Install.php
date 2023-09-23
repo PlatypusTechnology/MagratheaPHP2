@@ -83,6 +83,7 @@ class Install {
 		return $logControl->Log(
 			$user->id, 
 			"first user created",
+			null,
 			json_encode(["email" => $user->email])
 		);
 	}

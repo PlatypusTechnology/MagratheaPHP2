@@ -9,7 +9,9 @@ use function Magrathea2\p_r;
 
 $table = $_GET["table"];
 
-$objectDataConfig = ObjectManager::Instance()->GetObjectDataByTable($table);
+$objManager = ObjectManager::Instance();
+
+$objectDataConfig = $objManager->GetObjectDataByTable($table);
 $objectData = [];
 $alreadyExists = false;
 $name = ucfirst($table);
@@ -38,14 +40,14 @@ if (!hasColumn($fields, "created_at")) {
 	$canCreate = false;
 	array_push($errors, [
 		"msg" => "Field `created_at` is missing",
-		"query" => "ALTER TABLE ".$table." ADD created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"
+		"query" => $objManager->GetCreatedAtQuery($table)
 	]);
 }
 if (!hasColumn($fields, "updated_at")) {
 	$canCreate = false;
 	array_push($errors, [
 		"msg" => "Field `updated_at` is missing",
-		"query" => "ALTER TABLE ".$table." ADD  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;"
+		"query" => $objManager->GetUpdatedAtQuery($table)
 	]);
 }
 

@@ -449,7 +449,6 @@ class Database extends Singleton {
 		}
 
 		$args = $arrValues;
-//		array_unshift($args, $params);
 		try{
 			$valArgs = $this->makeValuesReferenced($args);
 			if (strnatcmp(phpversion(),'8') >= 0) {
