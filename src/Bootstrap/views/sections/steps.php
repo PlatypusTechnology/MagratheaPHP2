@@ -7,7 +7,7 @@ function getClass($step) {
 	if ($step < $stepActive) return "is-done";
 }
 
-function linkTo($step) {
+function linkStepTo($step) {
 	return \Magrathea2\Bootstrap\Start::Instance()->GetStepLink($step);
 }
 
@@ -17,14 +17,14 @@ function linkTo($step) {
 	<ul class="StepProgress">
 		<?php $s = 1; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Structure</a>
+			<a href="<?=linkStepTo($s)?>">Structure</a>
 			<ul>
 				<li>Checking the structure</li>
 			</ul>
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Configuration File</a>
+			<a href="<?=linkStepTo($s)?>">Configuration File</a>
 			<ul>
 				<li>Creating the file</li>
 				<li>Writing the environments</li>
@@ -33,7 +33,7 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Logs / Debugging</a>
+			<a href="<?=linkStepTo($s)?>">Logs / Debugging</a>
 			<ul>
 				<li>Log location</li>
 				<li>Debug modes</li>
@@ -41,7 +41,7 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Database Connection</a>
+			<a href="<?=linkStepTo($s)?>">Database Connection</a>
 			<ul>
 				<li>Test Connection</li>
 				<li>View Tables</li>
@@ -49,7 +49,7 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Database management</a>
+			<a href="<?=linkStepTo($s)?>">Database management</a>
 			<ul>
 				<li>Run queries</li>
 				<li>Create tables from models</li>
@@ -57,15 +57,15 @@ function linkTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Basic Code Generation</a>
+			<a href="<?=linkStepTo($s)?>">Basic Code Generation</a>
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Install Magrathea Admin</a>
+			<a href="<?=linkStepTo($s)?>">Install Magrathea Admin</a>
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkTo($s)?>">Start Develop!</a>
+			<a href="<?=linkStepTo($s)?>">Start Develop!</a>
 		</li>
 	</ul>
 </div>
