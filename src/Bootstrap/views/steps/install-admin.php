@@ -70,14 +70,14 @@ use Magrathea2\MagratheaPHP;
 
 <script type="text/javascript">
 	function installAdmin(step) {
-		let url = "/?action=install-admin&install="+step;
+		let url = getBootstrapUrl()+"?action=install-admin&install="+step;
 		ajax("GET", url).then((rs) => {
 			showOn("#install-rs", rs);
 		});
 	}
 
 	function installAdminPreview(step) {
-		let url = "/?action=install-admin-preview&view=" + step;
+		let url = getBootstrapUrl()+"?action=install-admin-preview&view="+step;
 		ajax("GET", url).then((rs) => {
 			showOn("#preview-admin", rs);
 			$(".preview-admin-container").show("slow");

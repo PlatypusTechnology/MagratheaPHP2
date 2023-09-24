@@ -27,7 +27,7 @@
 <div class="row">
   <div class="col-12 actions">
 		<button class="btn btn-primary" onclick="testConnection();">Test Connection</button>
-		<button class="btn btn-danger" onclick="window.location.href='/?step=2'">Change Database Data</button>
+		<button class="btn btn-danger" onclick="window.location.href='<?=\Magrathea2\Bootstrap\Start::Instance()->GetStepLink(2)?>'">Change Database Data</button>
 	</div>
 </div>
 
