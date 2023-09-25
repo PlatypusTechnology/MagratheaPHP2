@@ -27,5 +27,5 @@ use Magrathea2\MagratheaPHP;
 			Execute
 		</button>
 	</div>
-	<div class="col-12" id="query-response"></div>
+	<div class="col-12" id="ajax-response" style="display: none;"></div>
 </div>

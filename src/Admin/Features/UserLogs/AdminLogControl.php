@@ -22,7 +22,8 @@ class AdminLogControl extends MagratheaModelControl {
 		$log = new AdminLog();
 		$log->user_id = $user_id;
 		$log->action = $action;
-		$log->victim = $this->GetVictim($victim);
+		if($victim) $log->victim = $this->GetVictim($victim);
+		else $log->victim = null;
 		if ($data) {
 			$log->info = $data;
 		}

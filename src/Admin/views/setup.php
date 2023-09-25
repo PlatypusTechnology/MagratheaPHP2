@@ -1,26 +1,25 @@
 <?php
 
 use Magrathea2\Admin\Install;
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\Start;
 
-use function Magrathea2\p_r;
-
 $admin = Start::Instance();
+$title = AdminManager::Instance()->GetTitle();
 
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 	<?
-		$pageTitle = $admin->title." - First setup";
+		$pageTitle = $title." - First setup";
 		$cssStyleFiles = ["login", "cards"];
 		include("sections/meta.php");
 	?>
 	<body>
 
 		<?php
-			$pageTitle = $admin->title." - SETUP";
+			$pageTitle = $title." - SETUP";
 			include("sections/header.php");
 		?>
 
@@ -68,5 +67,10 @@ $admin = Start::Instance();
 	<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 	<script type="text/javascript">
 		<?php include("javascript/scripts.js"); ?>
+		function generateRandomPassword() {
+			let randompass = Math.random().toString(36).slice(-10);
+			$("#admin_password").val(randompass);
+			$("#admin_password_gen").val(randompass);
+		}
 	</script>
 </html>

@@ -62,7 +62,7 @@ pre.code, pre.query-response, pre.log-response {
 pre.query-response {
 	border: 1px solid var(--success);
 	width: 100%;
-	height: 200px;
+	height: 350px;
 	overflow: scroll;
 }
 pre.log-response {

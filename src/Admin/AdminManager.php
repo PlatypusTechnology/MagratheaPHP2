@@ -106,7 +106,8 @@ class AdminManager extends Singleton {
 	public function Log($action, $victim=null, $user_id=false, $data=null): void {
 		if(!$user_id) {
 			$user = $this->GetLoggedUser();
-			$user_id = $user->id;
+			if(!$user) $user_id = 0;
+			else $user_id = $user->id;
 		}
 		if (!isMagratheaModel($victim)) {
 			$data = $victim;
@@ -170,7 +171,7 @@ class AdminManager extends Singleton {
 	/**
 	 * Return logged user
 	 */
-	public function GetLoggedUser(): AdminUser {
+	public function GetLoggedUser(): AdminUser | null {
 		return \Magrathea2\Admin\AdminUsers::Instance()->GetLoggedUser();
 	}
 
