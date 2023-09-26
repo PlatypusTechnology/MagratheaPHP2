@@ -16,35 +16,49 @@ if(empty($query)) {
 
 $queryType = QueryHelper::GetQueryType($query);
 $type = QueryHelper::GetTypeString($queryType);
+$error = false;
+$exception = null;
 
-if($queryType === QueryType::Select) {
-	$rs = Database::Instance()->QueryAll($query);
-} else {
-	$rs = Database::Instance()->Query($query);
+try {
+	if($queryType === QueryType::Select) {
+		$rs = Database::Instance()->QueryAll($query);
+	} else {
+		$rs = Database::Instance()->Query($query);
+	}
+} catch(Exception $ex) {
+	$error = true;
+	$rs = $ex;
+//	print_r($ex);
 }
 
 ?>
 
-<div class="card">
-	<div class="card-header">
+<div class="card ">
+	<div class="card-header <?=($error ? "error" : "")?>">
+		<?=($error ? "ERROR!" : "")?>
 		Query <?=$type?>
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">
 		<div class="row border-bottom pb-1 mb-2">
-			<div class="col-8"><?=$query?></div>
-			<div class="col-4">
-				<?
-				$switchAction = ["onchange" => "switchRs(this);"];
-				if($queryType === QueryType::Select) {
-					$adminElements->Checkbox(null, "Raw Response", true, true, [], true, $switchAction);
-				}
-				?>
-			</div>
+			<div class="col-12"><pre class="code-light"><?=$query?></pre></div>
+			<?
+			$switchAction = ["onchange" => "switchRs(this);"];
+			if($queryType === QueryType::Select) {
+				echo '<div class="raw-switch">';
+				$adminElements->Checkbox(null, "Raw Response", true, true, [], true, $switchAction);
+				echo '</div>';
+			}
+			?>
 		</div>
 		<div class="row">
 			<div class="col-12 rs-raw">
-				<pre><?print_r($rs)?></pre>
+				<?
+				if($error) {
+					echo $rs->getMessage()."<br/><br/>";
+				}
+				?>
+				<pre class="pre-raw"><?print_r($rs)?></pre>
 			</div>
 			<div class="col-12 rs-table table-scroll" style="display: none;">
 				<?

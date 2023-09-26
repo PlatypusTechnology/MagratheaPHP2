@@ -200,7 +200,7 @@ class AdminMenu {
 	 * @param string $page		page that will be called
 	 * @return array					menu item
 	 */
-	private function SimpleItem($title, $page): array {
+	public function SimpleItem($title, $page): array {
 		return [
 			'title' => $title,
 			'link' => $this->adminUrls->GetPageUrl($page),

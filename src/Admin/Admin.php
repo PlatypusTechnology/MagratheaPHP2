@@ -31,6 +31,7 @@ class Admin implements iAdmin {
 	public $title = "Magrathea Admin";
 	public $primaryColor = "203, 128, 8";
 	public $adminLogo = __DIR__."/views/logo.svg";
+	public $extraMenu = [];
 
 	public function __construct() {
 		$this->AddJs(__DIR__."/views/javascript/scripts.js");
@@ -111,8 +112,6 @@ class Admin implements iAdmin {
 		return $this;
 	}
 
-
-
 	/**
 	 * Add a JS file
 	 * @param string 	$filePath		path of js file
@@ -120,6 +119,16 @@ class Admin implements iAdmin {
 	 */
 	public function AddJs(string $filePath): Admin {
 		AdminManager::Instance()->AddJs($filePath);
+		return $this;
+	}
+
+	/**
+	 * Adds a menu item (before logout)
+	 * @param array $item			menu item ["title", "link"]
+	 * @return itself
+	 */
+	public function AddMenuItem(array ...$item): Admin {
+		array_push($this->extraMenu, ...$item);
 		return $this;
 	}
 
@@ -142,8 +151,15 @@ class Admin implements iAdmin {
 			], "Users"))
 
 			->Add("Tools")
-			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem())
+			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem());
 
+		if(count($this->extraMenu) > 0) {
+			foreach($this->extraMenu as $i) {
+				$adminMenu->Add($i);
+			}
+		}
+
+		$adminMenu
 			->Add($adminMenu->GetHelpSection())
 			->Add($adminMenu->GetLogoutMenuItem());
 		return $adminMenu;

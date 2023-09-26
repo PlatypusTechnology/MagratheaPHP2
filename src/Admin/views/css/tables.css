@@ -9,3 +9,12 @@ table.hide-header th {
 	scroll-behavior: auto;
 }
 
+.raw-switch {
+	position: absolute;
+	background: white;
+	width: 200px;
+	text-align: center;
+	right: 20px;
+	margin-top: 5px;
+}
+
