@@ -9,7 +9,7 @@ $confFile = $manager->GetObjectFilePath();
 	<br/>
 	<?
 
-	if(!$confFile) {
+	if(!$confFile || !$manager->DoesObjectFileExists()) {
 		?>
 		<span class="error">no magrathea_objects.conf file</span>
 		<?

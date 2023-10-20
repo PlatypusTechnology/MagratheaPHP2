@@ -11,10 +11,17 @@ use function Magrathea2\p_r;
 	<br/>
 	<?
 
-	if(!$confFile) {
+	if(!$confFile || !$manager->DoesObjectFileExists()) {
 		?>
 		<span class="error">no magrathea_objects.conf file</span>
 		<?
+		return;
+	}
+
+	try {
+		$config = @$manager->GetFullObjectData();
+	} catch(Exception $ex) {
+		echo '<span class="error">'.$ex->getMessage().'</span>';
 		return;
 	}
 
@@ -22,7 +29,6 @@ use function Magrathea2\p_r;
 	<span>Magrathea Objects:</span>
 	<br/><br/>
 	<?
-	$config = $manager->GetFullObjectData();
 	foreach($config as $object => $data) {
 		$columns = "";
 		if($object === "relations") continue;

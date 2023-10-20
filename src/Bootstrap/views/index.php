@@ -62,14 +62,21 @@
 								case 7:
 									include("steps/install-admin.php");
 									break;
+								case 8:
+									include("steps/develop.php");
+									break;
 								}
 							?>
 						</div>
 						<div class="actions">
 							<?php if ($stepActive > 1) { ?>
 								<button class="btn btn-primary left" onclick="window.location.href='<?=linkTo($stepActive-1)?>'">Back</button>
+							<?php 
+								}
+								if($stepActive != 8) {
+							?>
+								<button class="btn btn-success" onclick="window.location.href='<?=linkTo($stepActive+1)?>'">Next</button>
 							<?php } ?>
-							<button class="btn btn-success" onclick="window.location.href='<?=linkTo($stepActive+1)?>'">Next</button>
 						</div>
 					</div>
 				</div>

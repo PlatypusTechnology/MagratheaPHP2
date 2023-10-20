@@ -54,6 +54,11 @@ class ObjectManager extends \Magrathea2\Singleton {
 		return $this->GetObjectFileFolderPath()."/".$this->fileName;
 	}
 
+	public function DoesObjectFileExists(): bool {
+		$file = $this->GetObjectFilePath();
+		return file_exists($file);
+	}
+
 	/**
 	 * returns a ConfigFile object with the object configuration
 	 * @return 	ConfigFile;

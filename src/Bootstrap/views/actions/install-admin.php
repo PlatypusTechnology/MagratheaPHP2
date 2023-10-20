@@ -33,7 +33,7 @@
 
 	if ($installStep === "code") {
 		if ($adminInstall->CheckIfAdminFileExists()) {
-			die($adminInstall->appPath."/admin.php file already exists");
+			die($adminInstall->appPath."/".$adminInstall->adminFileName." file already exists");
 		}
 		$adminInstall->CreateAdminEntranceFile();
 		echo "<br/><br/><hr/>";

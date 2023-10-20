@@ -26,6 +26,7 @@ use Magrathea2\MagratheaPHP;
 class Install { 
 
 	public $appPath;
+	public $adminFileName = "magrathea.php";
 
 	/**
 	 * @return	Install		itself
@@ -49,7 +50,7 @@ class Install {
 		if (!$this->appPath) {
 			$this->Load();
 		}
-		return $this->appPath."/admin.php";
+		return $this->appPath."/".$this->adminFileName;
 	}
 
 	/**

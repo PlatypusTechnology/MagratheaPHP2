@@ -114,8 +114,8 @@ class Start extends \Magrathea2\Singleton {
 		$this->structure = array(
 			'Config' => $this->GetConfigPath(),
 			'Logs' => Logger::Instance()->GetLogPath(),
-			'Models' => $this->appPath."/../Models",
-			'Models-Base' => $this->appPath."/../Models/Base",
+			// 'Models' => $this->appPath."/../Models",
+			// 'Models-Base' => $this->appPath."/../Models/Base",
 			'Backups' => AdminDatabase::Instance()->GetBackupFolder(),
 		);
 	}

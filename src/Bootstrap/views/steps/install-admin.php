@@ -39,7 +39,7 @@ use Magrathea2\MagratheaPHP;
 
 <div class="row mb-2">
 	<div class="col-8">
-		Create <span class="pre">admin.php</span> file
+		Create <span class="pre">magrathea.php</span> file
 		<br/>on folder <span class="pre"><?=$folder?></span>.
 	</div>
 	<div class="col-2">
@@ -53,7 +53,7 @@ use Magrathea2\MagratheaPHP;
 <div class="row mb-2">
 	<div class="col-4"></div>
 	<div class="col-4">
-		<button class="btn btn-primary btn-100" onclick="window.location.href='/admin.php'">GO TO ADMIN</button>
+		<button class="btn btn-primary btn-100" onclick="window.location.href='/magrathea.php'">GO TO ADMIN</button>
 	</div>
 	<div class="col-4"></div>
 </div>
