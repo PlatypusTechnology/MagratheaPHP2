@@ -19,6 +19,7 @@
     ],
     "require": {
         "twbs/bootstrap": "5.2.3",
-        "components/jquery": "^3.6"
+        "components/jquery": "^3.6",
+        "tedivm/jshrink": "^1.7"
     }
 }
