@@ -26,6 +26,14 @@ class ConfigFile {
 		return $this;
 	}
 	/**
+	 * gets config file path
+	 * @return string 		full path
+	 */
+	public function GetPath(): string {
+
+		return $this->path.$this->configFileName;
+	}
+	/**
 	*	Sets the config information
 	*	@param 	array 	$c 		Config to be set
 	*	@return 	ConfigFile
@@ -47,8 +55,8 @@ class ConfigFile {
 	*	Loads the configuration file
 	*/
 	private function LoadFile(){
-		if(!file_exists($this->path."/".$this->configFileName)){
-			throw new MagratheaConfigException("Config file could not be found - ".$this->path."/".$this->configFileName);
+		if(!file_exists($this->GetPath())){
+			throw new MagratheaConfigException("Config file could not be found - ".$this->GetPath());
 		}
 	}
 	/**
@@ -56,8 +64,9 @@ class ConfigFile {
 	*	@return 	boolean	 	True if the file exists; Return of `Save()` function if it doesn't
 	*/
 	public function CreateFileIfNotExists(){
-		if(!file_exists($this->path."/".$this->configFileName)){
-			return $this->Save();
+		$file = $this->GetPath();
+		if(!file_exists($file)){
+			return file_put_contents($file, '') === false;
 		} else return true;
 	}
 	/**
@@ -70,7 +79,7 @@ class ConfigFile {
 	public function GetConfig($config_name="") {
 		if( is_null($this->configs) ){
 			$this->loadFile();
-			$this->configs = @parse_ini_file($this->path."/".$this->configFileName, true);
+			$this->configs = @parse_ini_file($this->GetPath(), true);
 		}
 		if( empty($config_name) ){
 			return $this->configs;
@@ -89,7 +98,7 @@ class ConfigFile {
 	*/
 	public function GetConfigSection($section_name){
 		$this->loadFile();
-		$configSection = @parse_ini_file($this->path.$this->configFileName, true);
+		$configSection = @parse_ini_file($this->GetPath(), true);
 		if( empty($configSection ) ) return null;
 		if( !$configSection ){
 			throw new MagratheaConfigException("There was an error trying to load the config file. No section [".$configSection."]<br/>");
@@ -147,7 +156,7 @@ class ConfigFile {
 		if(!is_writable($this->path)){
 			throw new MagratheaConfigException("Permission denied on path: ".$this->path);
 		}
-		$file = $this->path."/".$this->configFileName;
+		$file = $this->GetPath();
 		if(file_exists($file)){
 			@unlink($file);
 		}

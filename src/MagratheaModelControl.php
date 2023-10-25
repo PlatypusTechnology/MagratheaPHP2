@@ -174,7 +174,7 @@ abstract class MagratheaModelControl{
 	 * @return  array<object> 	List of objects
 	 */
 	public static function GetAll(){
-		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at DESC";
+		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at ASC";
 		return static::RunQuery($sql);
 	}
 

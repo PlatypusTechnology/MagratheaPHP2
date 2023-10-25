@@ -10,15 +10,23 @@ use function Magrathea2\p_r;
 $table = $_GET["table"];
 
 $objManager = ObjectManager::Instance();
+$alertMsg = false;
 
-$objectDataConfig = $objManager->GetObjectDataByTable($table);
-$objectData = [];
-$alreadyExists = false;
-$name = ucfirst($table);
-if($objectDataConfig) {
-	$objectData = $objectDataConfig["data"];
-	$name = ucfirst($objectDataConfig["object"]);
-	$alreadyExists = true;
+if($objManager->DoesObjectFileExists()) {
+	$objectDataConfig = $objManager->GetObjectDataByTable($table);
+	$objectData = [];
+	$alreadyExists = false;
+	$name = ucfirst($table);
+	if($objectDataConfig) {
+		$objectData = $objectDataConfig["data"];
+		$name = ucfirst($objectDataConfig["object"]);
+		$alreadyExists = true;
+	}
+} else {
+	$alertMsg = "objects file does not exist";
+	$name = ucfirst($table);
+	$objectData = array();
+	$alreadyExists = false;
 }
 
 $closeFn = @$_GET["onclose"];
@@ -64,8 +72,8 @@ if (!hasColumn($fields, "updated_at")) {
 			<div class="col-6">
 				<?
 				$elements->Input("hidden", "table_name", false, $table);
-				if($alreadyExists)
-					$elements->Alert("Object already exists! [".$name."]", "warning");
+				if($alertMsg) $elements->Alert($alertMsg, "warning");
+				if($alreadyExists) $elements->Alert("Object already exists! [".$name."]", "warning");
 				?>
 			</div>
 			<div class="col-6">

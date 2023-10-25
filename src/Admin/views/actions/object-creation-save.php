@@ -8,6 +8,10 @@ $control = ObjectManager::Instance();
 
 $data = $_POST;
 
+if(!$control->DoesObjectFileExists()) {
+	$control->CreateObjectConfigFile();
+}
+
 $object = $data["object_name"];
 if(!$object) {
 	$elements->Alert("Could not find object name", "danger");
@@ -20,7 +24,6 @@ if(!$control->ValidateName($objName)) {
 }
 
 $table = $data["table_name"];
-//$objData = $control->GetObjectData($objName);
 
 $success = $control->SaveObject($objName, $data);
 if($success) {

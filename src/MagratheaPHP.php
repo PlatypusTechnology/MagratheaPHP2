@@ -57,6 +57,23 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Adds features (and its folders)
+	 * @param string	$root			__DIR__ of the base app
+	 * @param string 	$features	features names
+	 * @return MagratheaPHP		itself
+	 */
+	public function AddFeature(...$features): MagratheaPHP {
+		$root = $this->appRoot;
+		foreach($features as $f) {
+			$this->AddCodeFolder(
+				$root."/features/".$f,
+				$root."/features/".$f."/Base"
+			);
+		}
+		return $this;
+	}
+
+	/**
 	 * Set dev display errors
 	 * @return MagratheaPHP
 	 */

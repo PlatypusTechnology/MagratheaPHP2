@@ -49,6 +49,7 @@ class MagratheaApi {
 	 * @return 	MagratheaApi	itself
 	 */
 	public function SetAddress($addr): MagratheaApi {
+		if (substr($addr, -1) !== '/') $addr .= '/';
 		$this->apiAddress = $addr;
 		return $this;
 	}

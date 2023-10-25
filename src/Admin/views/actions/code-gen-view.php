@@ -9,14 +9,16 @@ use function Magrathea2\p_r;
 	$obj = $_GET["object"];
 	$codeManager = CodeManager::Instance();
 	$files = $codeManager->GetFileList($obj);
+//	print_r($files);
 
 	echo "<div class='row'>";
 	foreach($files as $type => $f) {
 		$data = $codeManager->PrepareCodeFileGeneration($type, $obj);
+//		print_r($data);
 		?>
 		<div class="col-6 mt-2">
 			<b><?=$f["file-desc"]?></b><br/>
-			[<?=$f["file-name"]?>]
+			[<?=$data["file-destination"]?>]<br/>
 			<?
 			if($data["file-exists"]) {
 				$fileViewLink = AdminUrls::Instance()->FileViewUrl($data["file-destination"]);

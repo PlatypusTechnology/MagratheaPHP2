@@ -129,7 +129,7 @@ class Logger extends Singleton {
 		if(!is_writable($this->logPath)){
 			$message = "error trying to save file at [".$path."] - confirm permission for writing";
 			$message .= " - - error message: [".$logThis."]";
-			throw new \Magrathea2\Exceptions\MagratheaException($message);
+			throw new \Magrathea2\Exceptions\MagratheaConfigException($message);
 		}
 		file_put_contents($path, $line, FILE_APPEND);
 	}

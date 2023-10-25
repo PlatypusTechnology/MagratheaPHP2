@@ -48,12 +48,16 @@ class ObjectManager extends \Magrathea2\Singleton {
 
 	/**
 	 * if object file path is not set, sets it to default config path
-	 * returns full path with file name
+	 * @return 	string		full path with file name
 	 */
 	public function GetObjectFilePath(): string {
 		return $this->GetObjectFileFolderPath()."/".$this->fileName;
 	}
 
+	/**
+	 * checks if config file exists
+	 * @return 	bool			does file exist?
+	 */
 	public function DoesObjectFileExists(): bool {
 		$file = $this->GetObjectFilePath();
 		return file_exists($file);
@@ -70,6 +74,14 @@ class ObjectManager extends \Magrathea2\Singleton {
 			$this->confObject = $fileControl;
 		}
 		return $this->confObject;
+	}
+
+	/**
+	 * create object config file
+	 * @return 	bool			creates config file
+	 */
+	public function CreateObjectConfigFile(): bool {
+		return $this->GetObjectConfigFile()->CreateFileIfNotExists();
 	}
 
 	/**

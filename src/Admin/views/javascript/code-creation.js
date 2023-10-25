@@ -9,20 +9,30 @@ function saveCodeGenerationConfig(el) {
 			if(data['success']) {
 				$(".message-container").slideUp("slow");
 			}
-//			console.info(data);
 		});
 }
 
 function folderCreation(object, el) {
 	let rsContainer = ".folder_rs_"+object;
-	let codeContainer = ".code_create_"+object;
 	callApi("Objects", "CreateFolder", { object })
 		.then(rs => {
 			let html = '';
-			html += getPrintedEl("Base", rs.data["base"]);
-			html += getPrintedEl("Features", rs.data["features"]);
-			html += getPrintedEl("Object", rs.data["object"]);
+			let type = rs.data.type;
+			if(type == "feature") {
+				html += getPrintedEl("App", rs.data["app"]);
+				html += getPrintedEl("Object", rs.data["object"]);
+				html += getPrintedEl("Base Code", rs.data["base"]);
+			} else if(type == "mvc") {
+				html += getPrintedEl("App", rs.data["app"]);
+				html += getPrintedEl("Models", rs.data["models"]);
+				html += getPrintedEl("Models Base", rs.data["models-base"]);
+				html += getPrintedEl("Controls", rs.data["controls"]);
+				html += getPrintedEl("Controls Base", rs.data["controls-base"]);
+			} else {
+				html += "invalid structure type: ["+type+"]";
+			}
 			$(rsContainer).html(html);
+			let codeContainer = ".code_create_"+object;
 			$(codeContainer).slideDown("slow");
 			if(el) {
 				$(el).hide("slow");

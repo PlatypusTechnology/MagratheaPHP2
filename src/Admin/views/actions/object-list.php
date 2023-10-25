@@ -2,7 +2,13 @@
 
 use Magrathea2\Admin\ObjectManager;
 
-$objects = ObjectManager::Instance()->GetObjectList();
+$objManager = ObjectManager::Instance();
+if(!$objManager->DoesObjectFileExists()) {
+	$msg = "magratha conf file (and objects) does not exist";
+	\Magrathea2\Admin\AdminElements::Instance()->Alert($msg, "danger");
+	return;
+}
+$objects = $objManager->GetObjectList();
 
 ?>
 

@@ -6,7 +6,7 @@ $pageTitle = "Objects Config File";
 \Magrathea2\Admin\AdminElements::Instance()->Header($pageTitle);
 
 $objControl = ObjectManager::Instance();
-$viewFile = $objControl->GetObjectFilePath()."/".$objControl->fileName;
+$viewFile = $objControl->GetObjectFilePath();
 
 ?>
 
