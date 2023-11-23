@@ -18,6 +18,9 @@ class MagratheaApiException extends MagratheaException {
 			$this->killerError = false;
 			$this->status = 200;
 		}
+		if($data) {
+			$this->_data = $data;
+		}
 		parent::__construct($message, $code, $previous);
 	}
 	/**

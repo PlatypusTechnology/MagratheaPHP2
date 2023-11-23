@@ -234,6 +234,8 @@ abstract class MagratheaModel{
 		}
 		$pk = $this->dbPk;
 		$this->$pk = $lastId;
+		$this->created_at = now();
+		$this->updated_at = now();
 		return $lastId;
 	}
 	/**

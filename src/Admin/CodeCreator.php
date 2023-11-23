@@ -168,7 +168,7 @@ class CodeCreator extends \Magrathea2\Singleton {
 				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = new ".$this->GetFullObjName($rel["rel_object"])."(\$this->".$rel["rel_field"].");\n";
 			} else if ( $rel["rel_type"] == "has_many" ) {
 				$relations_functions .= "\t\t\$pk = \$this->dbPk;\n";
-				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = ".$rel["rel_object"]."ControlBase::GetWhere(array(\"".$rel["rel_field"]."\" => \$this->\$pk));\n";
+				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = ".$this->GetFullControlBaseName($rel["rel_object"])."::GetWhere(array(\"".$rel["rel_field"]."\" => \$this->\$pk));\n";
 			}
 			$relations_functions .= "\t\treturn \$this->relations[\"properties\"][\"".$rel["rel_property"]."\"];\n";
 			$relations_functions .= "\t}\n";
@@ -302,8 +302,6 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code = "<?php\n";
 
 		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
-
-		$code .= "use Magrathea2\MagratheaModelControl;\n\n";
 
 		$code .= "class ".$object."Control extends ".$this->GetFullControlBaseName($object)." {\n";
 		$code .= "\t// model code goes here!\n";

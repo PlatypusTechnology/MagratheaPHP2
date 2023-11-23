@@ -44,6 +44,17 @@ class Helper {
 	
 		return array('r' => $r, 'g' => $g, 'b' => $b);
 	}
-	
+
+	/**
+	 * ensure there's a slash in the end of string
+	 * @param string $str		string with or without slash
+	 * @return string				string with slash in the end, for sure		
+	 */
+	public static function EnsureTrailingSlash($str): string {
+		if (substr($str, -1) !== '/') {
+			$str .= '/';
+		}
+		return $str;
+	}
 
 }
