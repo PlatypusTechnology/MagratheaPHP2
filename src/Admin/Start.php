@@ -29,7 +29,6 @@ class Start extends Singleton {
 	protected function Initialize() {
 		MagratheaPHP::Instance()->StartSession();
 		$this->appPath = MagratheaPHP::Instance()->appRoot;
-		Debugger::Instance()->SetDebug();
 		return $this;
 	}
 

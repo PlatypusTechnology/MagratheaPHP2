@@ -6,9 +6,10 @@ use Magrathea2\Admin\ObjectManager;
 $objectName = $_GET["object"];
 
 $adminElements = AdminElements::Instance();
-$data = ObjectManager::Instance()->GetObjectData($objectName);
-$details = ObjectManager::Instance()->GetObjectDetails($objectName);
-$rels = ObjectManager::Instance()->GetRelationsByObject($objectName);
+$manager = ObjectManager::Instance();
+$data = $manager->GetObjectData($objectName);
+$details = $manager->GetObjectDetails($objectName);
+$rels = $manager->GetRelationsByObject($objectName);
 
 $relations = false;
 if($rels) {
@@ -95,6 +96,18 @@ if($closeFn) {
 			<?
 			}
 			?>
+			<div class="col-12 mt-2">
+				<?
+				$adminElements->Button("&darr;", "toggleCol(this, '.database-query')", ["btn-action", "btn-primary"]);
+				?>
+				<b>Database Query</b>
+			</div>
+			<div class="col-12 database-query" style="display: none;">
+				<?
+				$query = $manager->GenerateQueryForObject($objectName);
+				?>
+				<pre class="code mt-2" id="create-<?=$objectName?>"><?=$query?></pre>
+			</div>
 		</div>
 	</div>
 </div>

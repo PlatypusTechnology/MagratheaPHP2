@@ -97,7 +97,8 @@ class AdminMenu {
 		$rs = [];
 		array_push($rs, 
 			$this->CreateTitle("Database"),
-			$this->GetItem("tables"),
+			$this->GetItem("connect"),
+			$this->GetItem("query"),
 			$this->GetItem("backups"),
 			$this->GetItem("objects-create"),
 			$this->GetItem("mag-query")
@@ -129,8 +130,7 @@ class AdminMenu {
 		array_push($rs,
 			$this->CreateTitle("Debugging"),
 			$this->GetItem("logs"),
-			$this->GetItem("structure"),
-			$this->GetItem("server")
+			$this->GetItem("tests")
 		);
 		return $rs;
 	}
@@ -215,7 +215,8 @@ class AdminMenu {
 			"conf-file" => $this->SimpleItem("Configuration File", "config"),
 			"htaccess" => $this->SimpleItem(".htaccess", "htaccess"),
 			"tests" => $this->SimpleItem("Tests", "tests"),
-			"tables" => $this->SimpleItem("View Tables", "db-tables"),
+			"query" => $this->SimpleItem("Queries", "db-query"),
+			"connect" => $this->SimpleItem("Connect", "db-connect"),
 			"backups" => $this->SimpleItem("Backups", "backups"),
 			"mag-query" => $this->SimpleItem("Magrathea Query", "query-creator"),
 			"objects-create" => $this->SimpleItem("Create Objects", "objects-create"),

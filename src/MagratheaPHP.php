@@ -94,6 +94,17 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Set prod environment
+	 * @return MagratheaPHP
+	 */
+	public function Prod(): MagratheaPHP {
+		Debugger::Instance()->SetType(Debugger::LOG);
+		return $this;
+	}
+
+
+
+	/**
 	* Get Config Root
 	* @return string		config root
 	*/

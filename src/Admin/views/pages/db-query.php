@@ -5,7 +5,7 @@ use function Magrathea2\p_r;
 $dbManager = Magrathea2\Admin\AdminDatabase::Instance();
 $adminElements = \Magrathea2\Admin\AdminElements::Instance();
 
-$adminElements->Header("Database");
+$adminElements->Header("Run Query");
 
 ?>
 

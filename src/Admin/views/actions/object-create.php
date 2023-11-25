@@ -146,7 +146,7 @@ if (!hasColumn($fields, "updated_at")) {
 						$msg .= "<br/><br/>".join("<br/>", array_column($errors, "msg"));
 						$sql = "Run this queries to solve the issue:";
 						$sql .= "<br/>".join("<br/>", array_column($errors, "query"));
-						$sql .= "<br/><br/>To access the query manager <a href='".AdminUrls::Instance()->GetPageUrl("db-tables")."'>click here</a>.";
+						$sql .= "<br/><br/>To access the query manager <a href='".AdminUrls::Instance()->GetPageUrl("db-query")."'>click here</a>.";
 					}
 					$elements->Alert($msg, "danger", false);
 					if (@$sql) {
