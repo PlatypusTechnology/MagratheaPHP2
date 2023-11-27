@@ -21,7 +21,7 @@ use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 */
 class ConfigApp extends Singleton {
 
-	private AppConfigControl $control;
+	private ?AppConfigControl $control = null;
 
 	private function GetControl(): AppConfigControl {
 		if($this->control == null) $this->control = new AppConfigControl();
@@ -46,7 +46,7 @@ class ConfigApp extends Singleton {
 	 * @return string			key value
 	 */
 	public function Get(string $key, $default=null): string {
-		$value = $this->control->GetValueByKey($key);
+		$value = $this->GetControl()->GetValueByKey($key);
 		if($value == null) return $default;
 		return $value;
 	}

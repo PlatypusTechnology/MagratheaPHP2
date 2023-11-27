@@ -50,7 +50,8 @@ class Helper {
 	 * @param string $str		string with or without slash
 	 * @return string				string with slash in the end, for sure		
 	 */
-	public static function EnsureTrailingSlash($str): string {
+	public static function EnsureTrailingSlash($str): string|null {
+		if (empty($str)) return $str;
 		if (substr($str, -1) !== '/') {
 			$str .= '/';
 		}

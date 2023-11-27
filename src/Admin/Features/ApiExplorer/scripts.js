@@ -25,7 +25,7 @@ function tokenUser() {
 }
 
 function executeApi(apiId) {
-	let api = $("#api-"+apiId).html();
+	let api = $("#api-endpoint-"+apiId).html();
 	let method = $("#api-method-"+apiId).html();
 	let payload = $("#api-payload-"+apiId).val();
 	let token = $("#token").val();
@@ -71,7 +71,7 @@ function executeApi(apiId) {
 
 function updateApiUrl(apiId, param, el) {
 	let apiOriginal = $("#api-original-"+apiId).val();
-	let apiName = $("#api-"+apiId);
+	let apiName = $("#api-endpoint-"+apiId);
 	let val = $(el).val();
 	let url = apiOriginal.replace(':'+param, val);
 	apiName.html(url);

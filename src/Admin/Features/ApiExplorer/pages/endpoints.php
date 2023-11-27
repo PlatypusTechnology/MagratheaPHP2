@@ -69,7 +69,7 @@ $url = $feature->apiUrl;
 			<div class="row">
 				<div class="col-8 api-name" id="api-<?=$apiId?>">
 					<span class="api-description"><?=$end["description"]?></span>
-					<span class="api-url"><?=$end["url"]?></span>
+					<span class="api-url" id="api-endpoint-<?=$apiId?>"><?=$end["url"]?></span>
 				</div>
 				<div class="col-1 api-method" id="api-method-<?=$apiId?>"><?=$end["method"]?></div>
 				<div class="col-1 no-padding" id="api-btn-<?=$apiId?>">
