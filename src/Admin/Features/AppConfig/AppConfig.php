@@ -1,8 +1,8 @@
 <?php
 
-namespace Magrathea2\Admin\Models;
+namespace Magrathea2\Admin\Features\AppConfig;
 
-use Admin;
+use Magrathea2\Exceptions\MagratheaModelException;
 use Magrathea2\iMagratheaModel;
 use Magrathea2\MagratheaModel;
 
@@ -19,7 +19,7 @@ use Magrathea2\MagratheaModel;
 /**
  * Class for installing Magrathea's Admin
  */
-class AdminConfig extends MagratheaModel implements iMagratheaModel { 
+class AppConfig extends MagratheaModel implements iMagratheaModel { 
 
 	public $id;
 	public $name, $value;
@@ -33,6 +33,24 @@ class AdminConfig extends MagratheaModel implements iMagratheaModel {
 			$this->$pk = $id;
 			$this->GetById($id);
 		}
+	}
+
+	public function Validate() {
+		if($this->key == null || $this->key == "") {
+			return ["valid" => false, "error" => "key should not be empty"];
+		}
+		return ["valid" => true];
+	}
+
+	public function Insert() {
+		$valid = $this->Validate();
+		if($valid["valid"] == false) throw new MagratheaModelException($valid["error"]);
+		parent::Insert();
+	}
+	public function Update() {
+		$valid = $this->Validate();
+		if($valid["valid"] == false) throw new MagratheaModelException($valid["error"]);
+		parent::Update();
 	}
 
 	public function Start() {

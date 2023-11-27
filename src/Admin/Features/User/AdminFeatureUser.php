@@ -2,13 +2,9 @@
 
 namespace Magrathea2\Admin\Features\User;
 
-use Admin;
-use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminFeature;
 use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\iAdminFeature;
-use Magrathea2\iMagratheaModel;
-use Magrathea2\MagratheaModel;
 
 use function Magrathea2\p_r;
 

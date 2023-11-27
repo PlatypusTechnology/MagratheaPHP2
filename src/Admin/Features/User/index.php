@@ -9,10 +9,6 @@ use function Magrathea2\p_r;
 
 $elements = AdminElements::Instance();
 $elements->Header("Users Feature");
-?>
-
-<div class="container">
-<?
 
 $adminForm = new AdminForm();
 $adminForm->SetName("user-form");
@@ -24,6 +20,7 @@ $rs = $control->GetAll();
 $newUserUrl = $featureClass->GetSubpageUrl(null, [ "id" => "new" ]);
 
 ?>
+<div class="container">
 	<div class="card">
 		<div class="card-header">
 			All Users

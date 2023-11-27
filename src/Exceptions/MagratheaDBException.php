@@ -9,9 +9,33 @@ use Magrathea2\Exceptions\MagratheaException;
 class MagratheaDBException extends MagratheaException {
 	public $query = "no_query_logged";
 	public $values = null;
+	public $fullMessage;
 	public function __construct($message = "Magrathea Database has failed... =(", $query=null, $code=0, \Exception $previous = null) {
 		$this->query = $query;
-		parent::__construct($message, $code, $previous);
+		$this->fullMessage = $message;
+		parent::__construct($this->CleanErrorMessage($message), $code, $previous);
+	}
+
+	/**
+	 * Cleans an error message
+	 * @return 	string 		error message without stack trace
+	 */
+	public function CleanErrorMessage(string $errorMessage): string {
+		$duplicateEntryPosition = strpos($errorMessage, ' in /');
+		if ($duplicateEntryPosition !== false) {
+			$cleanedMessage = substr($errorMessage, 0, $duplicateEntryPosition);
+			return $cleanedMessage;
+		} else {
+			return $errorMessage;
+		}
+	}
+
+	/**
+	 * returns the error message before cleaning stack trace
+	 * @return 	string 		full error Message
+	 */
+	public function getFullMessage(): string {
+		return $this->fullMessage;
 	}
 
 	/**

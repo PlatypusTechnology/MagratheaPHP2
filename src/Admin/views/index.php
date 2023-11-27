@@ -14,7 +14,7 @@ if(!empty($magrathea_subpage)) {
 <html lang="en-uk">
 <?
 		$pageTitle = AdminManager::Instance()->GetTitle();
-		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast"];
+		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast", "pre"];
 		include("sections/meta.php");
 	?>
 		<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>

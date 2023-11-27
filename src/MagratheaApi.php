@@ -157,16 +157,23 @@ class MagratheaApi {
 
 	/**
 	 * includes header to allow all
-	 * @param 	string 	 $method			method for custom URL
-	 * @param 	string 	 $url 				custom URL
-	 * @param 	object 	 $control 		control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	string 	 $function		function to be called from control
-	 * @param 	string 	 $auth 				function that returns authorization for execution. "false" for public API
+	 * @param 	string	 		$method				method for custom URL
+	 * @param 	string	 		$url 					custom URL
+	 * @param 	object	 		$control 			control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	string			$function			function to be called from control
+	 * @param 	string|bool	$auth					function that returns authorization for execution. "false" for public API
+	 * @param 	string 			$description	description of function, for documentation (optional)
 	 * @return  MagratheaApi
 	 */
-	public function Add($method, $url, $control, $function, $auth=true): MagratheaApi {
+	public function Add($method, $url, $control, $function, $auth=true, string $description=null): MagratheaApi {
 		$method = strtoupper($method);
-		$this->endpoints[$method][$url] = ["control" => $control, "action" => $function, "auth" => $this->getAuthFunction($auth)];
+		$endpoint = [
+			"control" => $control,
+			"action" => $function,
+			"auth" => $this->getAuthFunction($auth),
+			"description" => $description,
+		];
+		$this->endpoints[$method][$url] = $endpoint;
 		return $this;
 	}
 
@@ -238,6 +245,7 @@ class MagratheaApi {
 					"function" => $baseClass,
 					"params" => $params,
 					"auth" => $fn["auth"],
+					"description" => $fn["description"] ?? "",
 				];
 				array_push($endpoints[$url], $data);
 			}

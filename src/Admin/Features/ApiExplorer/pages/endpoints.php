@@ -21,13 +21,20 @@ $url = $feature->apiUrl;
 	margin: 5px 0;
 }
 .api-name {
-	font-weight: bold;
-	font-family: monospace;
-	color: var(--primary);
-	text-align: right;
 	border-bottom: 1px solid var(--primary);
 	padding-top: 10px;
 	margin-top: 5px;
+	display: flex;
+}
+.api-name .api-url {
+	font-weight: bold;
+	font-family: monospace;
+	color: var(--primary);
+}
+.api-name .api-description {
+	font-style: italic;
+	color: var(--secondary);
+	flex-grow: 1;
 }
 .api-method {
 	padding-top: 10px;
@@ -60,12 +67,15 @@ $url = $feature->apiUrl;
 			foreach($ends as $end) {
 			?>
 			<div class="row">
-				<div class="col-6 api-name" id="api-<?=$apiId?>"><?=$end["url"]?></div>
-				<div class="col-2 api-method" id="api-method-<?=$apiId?>"><?=$end["method"]?></div>
-				<div class="col-2 no-padding" id="api-btn-<?=$apiId?>">
+				<div class="col-8 api-name" id="api-<?=$apiId?>">
+					<span class="api-description"><?=$end["description"]?></span>
+					<span class="api-url"><?=$end["url"]?></span>
+				</div>
+				<div class="col-1 api-method" id="api-method-<?=$apiId?>"><?=$end["method"]?></div>
+				<div class="col-1 no-padding" id="api-btn-<?=$apiId?>">
 					<? $elements->Button("Call", "loadApi(".$apiId.");", ["btn-primary", "no-margin"]); ?>
 				</div>
-				<div class="col-2 no-padding" id="api-btn-hide-<?=$apiId?>" style="display: none;">
+				<div class="col-1 no-padding" id="api-btn-hide-<?=$apiId?>" style="display: none;">
 					<? $elements->Button("Hide", "hideApi(".$apiId.");", ["btn-warning", "no-margin"]); ?>
 				</div>
 				<div class="col-2 api-auth" id="api-auth-<?=$apiId?>">

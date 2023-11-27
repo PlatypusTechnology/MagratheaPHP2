@@ -1,7 +1,7 @@
 <?php
 
 namespace Magrathea2\Admin\Api;
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Admin\CodeManager;
 use Magrathea2\Exceptions\MagratheaApiException;
 
@@ -22,7 +22,7 @@ class AdminConfigApi extends \Magrathea2\MagratheaApiControl {
 		unset($params["magrathea_api"]);
 		unset($params["magrathea_api_method"]);
 		$configs = [];
-		$control = new AdminConfigControl();
+		$control = new AppConfigControl();
 		foreach($params as $key => $value) {
 			$k = str_replace('-', '_', $key);
 			$configs[$k] = $value;

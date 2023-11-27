@@ -4,7 +4,7 @@ namespace Magrathea2\Admin;
 
 use Exception;
 use Magrathea2\Admin\Api\AdminApi;
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Debugger;
 use Magrathea2\Singleton;
 use Magrathea2\MagratheaPHP;
@@ -118,7 +118,7 @@ class Start extends Singleton {
 	 * Checks if MagratheaAdmin is already started
 	 */
 	public function IsStarted(): bool {
-		$configContol = new AdminConfigControl();
+		$configContol = new AppConfigControl();
 		try {
 			$config = $configContol->GetByKey("admin_install_date");
 			$hasConfig = ($config !== null);

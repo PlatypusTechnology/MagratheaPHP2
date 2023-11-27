@@ -2,16 +2,7 @@
 
 namespace Magrathea2\Admin;
 
-use Exception;
-use Magrathea2\Admin\Features\User\AdminUser;
-use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
 use Magrathea2\Admin\iAdmin;
-use Magrathea2\MagratheaJavascriptCompressor;
-use Magrathea2\Singleton;
-use Magrathea2\MagratheaPHP;
-
-use function Magrathea2\isMagratheaModel;
-use function Magrathea2\p_r;
 
 #######################################################################################
 ####
@@ -93,6 +84,7 @@ class Admin implements iAdmin {
 	}
 	public function SetFeatures() {
 		$this
+			->AddFeature(new \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig())
 			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
 			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
 			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
@@ -137,7 +129,7 @@ class Admin implements iAdmin {
 		$adminMenu
 			->Add("Setup")
 			->Add($adminMenu->GetItem("conf-file"))
-			->Add($adminMenu->GetItem("app-conf"))
+			->Add($this->adminFeatures["AdminFeatureAppConfig"]->GetMenuItem())
 			->Add($adminMenu->GetItem("structure"))
 			->Add($adminMenu->GetItem("htaccess"))
 			->Add($adminMenu->GetItem("server"))

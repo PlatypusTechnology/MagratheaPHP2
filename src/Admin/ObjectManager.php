@@ -2,7 +2,6 @@
 
 namespace Magrathea2\Admin;
 
-use Magrathea2\Admin\Models\AdminConfigControl;
 use Magrathea2\ConfigFile;
 use Magrathea2\MagratheaPHP;
 
@@ -547,7 +546,7 @@ class ObjectManager extends \Magrathea2\Singleton {
 	private function GetSQLTypeFromType(string $type): string {
 		switch($type) {
 			case "id":
-				return "int(11) PRIMAREY KEY AUTO_INCREMENT";
+				return "int(11) PRIMARY KEY AUTO_INCREMENT";
 			case "int":
 				return "int(11) NULL";
 			case "boolean":
@@ -572,13 +571,17 @@ class ObjectManager extends \Magrathea2\Singleton {
 		$data = $this->GetObjectData($object);
 		$fields = $this->GetPublicProperties($data);
 		$q = "CREATE TABLE `".$data["table_name"]."` (\n";
+		$qFields = [];
 		foreach($fields as $field) {
 			if($field["name"] == "created_at" || $field["name"] == "updated_at") {
-				$q .= "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($field["name"]).",\n";
+				array_push($qFields, "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($field["name"]));
 			} else {
-				$q .= "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($field["type"]).",\n";
+				if($data["db_pk"] == $field["name"]) $type = "id";
+				else $type = $field["type"];
+				array_push($qFields, "\t`".$field["name"]."` ".$this->GetSQLTypeFromType($type));
 			}
 		}
+		$q .= implode(",\n", $qFields)."\n";
 		$q .= ");";
 		return $q;
 	}

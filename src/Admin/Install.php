@@ -3,7 +3,7 @@
 namespace Magrathea2\Admin;
 
 use Exception;
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Admin\Features\UserLogs\AdminLog;
 use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
 use Magrathea2\Admin\Features\User\AdminUser;
@@ -90,7 +90,7 @@ class Install {
 	}
 
 	public function SetAdminInstallDate(): void {
-		$configControl = new AdminConfigControl();
+		$configControl = new AppConfigControl();
 		$configControl->Save("admin_install_date", \Magrathea2\now(), false);
 		$configControl->Save("app_name", "", false);
 	}

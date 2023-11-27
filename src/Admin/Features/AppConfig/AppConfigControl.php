@@ -1,12 +1,10 @@
 <?php
 
-namespace Magrathea2\Admin\Models;
+namespace Magrathea2\Admin\Features\AppConfig;
 
 use Exception;
 use Magrathea2\MagratheaModelControl;
 use Magrathea2\DB\Query;
-
-use function Magrathea2\p_r;
 
 #######################################################################################
 ####
@@ -21,31 +19,31 @@ use function Magrathea2\p_r;
 /**
  * Class for installing Magrathea's Admin
  */
-class AdminConfigControl extends MagratheaModelControl { 
-	protected static $modelName = "Magrathea2\Admin\Models\AdminConfig";
+class AppConfigControl extends MagratheaModelControl { 
+	protected static $modelName = "Magrathea2\Admin\Features\AppConfig\AppConfig";
 	protected static $dbTable = "_magrathea_config";
 
 	/**
 	 * returns a value for a key
 	 * @param 	string 	$key		key to get
 	 */
-	public function GetValue($key) {
+	public function GetValue(string $key) {
 		return $this->GetValueByKey($key);
 	}
 
-	public function SetValue($key, $value) {
+	public function SetValue(string $key, string $value) {
 		$query = Query::Update()
 			->SetArray([ "value" => $value ])
 			->Where([ "name" => $key ])
-			->Obj(new AdminConfig());
+			->Obj(new AppConfig());
 		return self::Run($query);
 	}
 
-	public function Save($key, $value, $overwrite=true): AdminConfig {
+	public function Save(string $key, string $value, bool $overwrite=true): AppConfig {
 		try {
 			$config = $this->GetByKey($key);
 			if(!$config) {
-				$config = new AdminConfig();
+				$config = new AppConfig();
 				$config->name = $key;
 			} else {
 				if(!$overwrite) {
@@ -60,18 +58,31 @@ class AdminConfigControl extends MagratheaModelControl {
 		}
 	}
 
-	public function GetByKey($key): AdminConfig|null {
+	public function GetByKey(string $key): AppConfig|null {
 		$query = Query::Select()
-			->Obj(new AdminConfig())
+			->Obj(new AppConfig())
 			->Where(["name" => $key]);
 		$a = self::RunRow($query);
 		return $a;
 	}
 
-	public function GetValueByKey($key) {
+	public function GetValueByKey(string $key) {
 		$c = $this->GetByKey($key);
 		if(!$c) return null;
 		return $c->GetValue();
+	}
+
+	public function ExportData(): string {
+		$export = "";
+		$data = $this->GetAll();
+		foreach($data as $c) {
+			$export .= '=='.$c->key.'==|>>'.$c->GetValue().'>>;;\n';
+		}
+		return $export;
+	}
+
+	public function ImportData(string $dataStr): bool {
+		return true;
 	}
 
 }

@@ -12,7 +12,7 @@ namespace Magrathea2\Admin;
 ####
 #######################################################################################
 
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Exceptions\MagratheaException;
 use Magrathea2\MagratheaPHP;
 use function Magrathea2\now;
@@ -33,7 +33,7 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$rs = [];
 		$success = true;
 		$errors = [];
-		$configControl = new AdminConfigControl();
+		$configControl = new AppConfigControl();
 		$path = $configControl->GetValueByKey("code_path");
 		if(empty($path)) $path = MagratheaPHP::Instance()->appRoot;
 		$structure = $configControl->GetValueByKey("code_structure");

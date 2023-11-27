@@ -3,7 +3,7 @@
 namespace Magrathea2\Admin\Api;
 
 use Exception;
-use Magrathea2\Admin\Models\AdminConfigControl;
+use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\Admin\ObjectManager;
 use Magrathea2\Admin\CodeManager;
@@ -88,7 +88,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 	public function CreateCode($params) {
 		$object = @$params["object"];
 		$type = @$params["type"];
-		$adminConfig = new AdminConfigControl();
+		$adminConfig = new AppConfigControl();
 		if(!$object) {
 			throw new MagratheaApiException("invalid object [".$object."]", false, 400, $params);
 		}

@@ -463,6 +463,7 @@ class Database extends Singleton {
 			$lastId = $stm->insert_id;
 			$stm->close();
 		} catch(MagratheaDBException $ex) {
+			echo "got error! ";
 			$ex->SetData($query, $args);
 			return null;
 		} catch(Exception $err){
