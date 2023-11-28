@@ -45,10 +45,45 @@ class ConfigApp extends Singleton {
 	 * @param string|null $default	default (optional), if config does not exists
 	 * @return string			key value
 	 */
-	public function Get(string $key, $default=null): string {
+	public function Get(string $key, $default=null): ?string {
 		$value = $this->GetControl()->GetValueByKey($key);
 		if($value == null) return $default;
 		return $value;
+	}
+
+	/**
+	 * Gets a boolean by key
+	 * @param string 		$key			config key
+	 * @param bool 			$default	default (optional), if config does not exists
+	 * @return string		key value
+	 */
+	public function GetBool(string $key, bool $default=false): bool {
+		$val = $this->Get($key, $default);
+		$boolval = filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+		if($boolval === null) return false;
+		return $boolval;
+	}
+
+	/**
+	 * Gets an integer by key
+	 * @param string 		$key			config key
+	 * @param int 			$default	default (optional), if config does not exists
+	 * @return string		key value
+	 */
+	public function GetInt(string $key, int $default=0): int {
+		$val = $this->Get($key, $default);
+		return intval($val);
+	}
+
+	/**
+	 * Gets an integer by key
+	 * @param string 		$key			config key
+	 * @param float 		$default	default (optional), if config does not exists
+	 * @return string		key value
+	 */
+	public function GetFloat(string $key, float $default=0): float {
+		$val = $this->Get($key, $default);
+		return floatval($val);
 	}
 
 }

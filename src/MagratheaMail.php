@@ -16,16 +16,21 @@ class MagratheaMail{
 	private $subject;
 	private $error;
 
+	private bool $simulate = false;
+
 	private $smtpArr;
-	
-	function Email(){}
 	
 	/**
 	 * if an error happened, it's this way you're gonna get it!
 	 * @return 		array|null|object 		error on mail sending...
 	 */
-	function getError(){
+	function GetError(){
 		return $this->error;
+	}
+
+	public function Simulate(): MagratheaMail {
+		$this->simulate = true;
+		return $this;
 	}
 
 	/**
@@ -36,7 +41,7 @@ class MagratheaMail{
 	 * @return 	MagratheaMail       itself
 	 * @deprecated for smtp, you should use PEAR library
 	 */
-	function startSMTP($smtp): MagratheaMail{
+	function StartSMTP($smtp): MagratheaMail{
 		$this->smtpArr = $smtp;
 		$this->smtpArr["auth"] = true;
 		return $this;
@@ -47,7 +52,7 @@ class MagratheaMail{
 	 * @param 		string 		$var 		destination e-mail
 	 * @return 		MagratheaMail			itself
 	 */
-	function setTo($var): MagratheaMail {
+	function SetTo($var): MagratheaMail {
 		if( is_array($var) ){
 			implode(", ", $var);
 		}
@@ -59,7 +64,7 @@ class MagratheaMail{
 	 * @param 	string 		$var 		e-mail 'reply-to'
 	 * @return 	MagratheaMail			itself
 	 */
-	function setReplyTo($var): MagratheaMail {
+	function SetReplyTo($var): MagratheaMail {
 		if( is_array($var) ){
 			implode(", ", $var);
 		}
@@ -72,7 +77,7 @@ class MagratheaMail{
 	 * @param string $reply e-mail 'reply-to' (same as `setReplyTo`) *optional*
 	 * @return 	MagratheaMail			itself
 	 */	
-	function setFrom($from, $reply=""): MagratheaMail {
+	function SetFrom($from, $reply=""): MagratheaMail {
 		$this->from = $from;
 		if( empty($replyTo) ){
 			$this->replyTo = $from;
@@ -86,7 +91,7 @@ class MagratheaMail{
 	 * @param 	string 		$subject 	message subject
 	 * @return 	MagratheaMail				itself
 	 */
-	function setSubject($subject): MagratheaMail {
+	function SetSubject($subject): MagratheaMail {
 		$this->subject = $subject;
 		return $this;
 	}
@@ -99,7 +104,7 @@ class MagratheaMail{
 	 * @param 	string 		$subject 		subject
 	 * @return 	MagratheaMail					itself
 	 */
-	function setNewEmail($to, $from, $subject): MagratheaMail {
+	function SetNewEmail($to, $from, $subject): MagratheaMail {
 		$this->to = $to;
 		$this->from = $from;
 		$this->subject = $subject;
@@ -110,7 +115,7 @@ class MagratheaMail{
 	 * @param 	string 		$message 		HTML message
 	 * @return 	MagratheaMail					itself
 	 */
-	function setHTMLMessage($message): MagratheaMail {
+	function SetHTMLMessage($message): MagratheaMail {
 		$this->htmlMessage = nl2br($message);
 		return $this;
 	}
@@ -119,7 +124,7 @@ class MagratheaMail{
 	 * @param 	string 		$message 		TXT message
 	 * @return 	MagratheaMail					itself
 	 */
-	function setTXTMessage($message): MagratheaMail {
+	function SetTXTMessage($message): MagratheaMail {
 		$this->txtMessage = $message;
 		return $this;
 	}
@@ -127,8 +132,7 @@ class MagratheaMail{
 	 * now we send it!
 	 * @return 	bool 	true on e-mail sent, false if we have any error
 	 */
-	function send(): bool {
-
+	function Send(): bool {
 		if( empty($this->to) ){ $this->error="E-mail destination empty!"; return false; }
 		if( empty($this->from) ){ $this->error="E-mail sender empty!"; return false; }
 		if( empty($this->replyTo) ){ $this->replyTo = $this->from; }
@@ -143,7 +147,9 @@ class MagratheaMail{
 
 		$message = empty($this->htmlMessage) ? $this->txtMessage : $this->htmlMessage;		
 
-		if( mail($this->to,$this->subject,$message,$headers) ){
+		if($this->simulate) $successMail = true;
+		else $successMail = mail($this->to,$this->subject,$message,$headers);
+		if( $successMail ){
 			return true;
 		} else {
 			Debugger::Instance()->Add("Error sending email to ".$this->to);

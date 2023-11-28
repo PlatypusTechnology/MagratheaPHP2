@@ -25,6 +25,7 @@ $url = $feature->apiUrl;
 	padding-top: 10px;
 	margin-top: 5px;
 	display: flex;
+	cursor: default;
 }
 .api-name .api-url {
 	font-weight: bold;
@@ -67,7 +68,7 @@ $url = $feature->apiUrl;
 			foreach($ends as $end) {
 			?>
 			<div class="row">
-				<div class="col-8 api-name" id="api-<?=$apiId?>">
+				<div class="col-8 api-name" id="api-<?=$apiId?>" onclick="toggleApi(<?=$apiId?>);">
 					<span class="api-description"><?=$end["description"]?></span>
 					<span class="api-url" id="api-endpoint-<?=$apiId?>"><?=$end["url"]?></span>
 				</div>

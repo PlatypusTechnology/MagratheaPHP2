@@ -10,6 +10,12 @@ function hideApi(apiId) {
 	$("#call-api-"+apiId).slideUp('slow');
 }
 
+function toggleApi(apiId) {
+	$("#api-btn-"+apiId).toggle();
+	$("#api-btn-hide-"+apiId).toggle();
+	$("#call-api-"+apiId).slideToggle('slow');
+}
+
 function tokenUser() {
 	let user = $("#user-selector").find(":selected").val();
 	callApi("AdminUser", "GetUserToken", { id: user })
