@@ -1,25 +1,27 @@
 {
-    "name": "platypustechnology/magratheaphp2",
-    "description": "Magrathea PHP 2",
-    "type": "library",
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Magrathea2\\": "src/"
-        },
-        "files": [
-            "src/_Functions.php",
-            "src/_FunctionsDebug.php"
-        ]
-    },
-    "authors": [
-        {
-            "name": "Platypus Technology"
-        }
-    ],
-    "require": {
-        "twbs/bootstrap": "5.2.3",
-        "components/jquery": "^3.6",
-        "tedivm/jshrink": "^1.7"
-    }
+	"name": "platypustechnology/magratheaphp2",
+	"description": "Magrathea PHP 2",
+	"type": "library",
+	"license": "MIT",
+	"autoload": {
+		"psr-4": {
+			"Magrathea2\\": "src/"
+		},
+		"files": [
+			"src/_Functions.php",
+			"src/_FunctionsDebug.php"
+		]
+	},
+	"authors": [
+		{
+			"name": "Platypus Technology"
+		}
+	],
+	"require": {
+		"components/jquery": "^3.6",
+		"firebase/php-jwt": "^5.2",
+		"phpmailer/phpmailer": "^6.9.1",
+		"twbs/bootstrap": "5.2.3",
+		"tedivm/jshrink": "~1.0"
+	}
 }
