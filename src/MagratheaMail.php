@@ -6,28 +6,32 @@ namespace Magrathea2;
  * MagratheaEmail:
  * 	function that manages e-mail sends, building headers and sending e-mails
  */
-class MagratheaMail{
+class MagratheaMail {
 	
-	private $to;
-	private $from;
-	private $replyTo;
-	private $htmlMessage;
-	private $txtMessage;
-	private $subject;
-	private $error;
+	public $to;
+	public $from;
+	public $replyTo;
+	public $htmlMessage;
+	public $txtMessage;
+	public $subject;
+	public $error;
 
-	private bool $simulate = false;
+	public bool $simulate = false;
 
-	private $smtpArr;
+	public $smtpArr;
 	
 	/**
 	 * if an error happened, it's this way you're gonna get it!
-	 * @return 		array|null|object 		error on mail sending...
+	 * @return 		string 		error on mail sending or validation error...
 	 */
-	function GetError(){
+	function GetError(): string {
 		return $this->error;
 	}
 
+	/**
+	 * just simulate the error
+	 * @return 	MagratheaMail		itself
+	 */
 	public function Simulate(): MagratheaMail {
 		$this->simulate = true;
 		return $this;
@@ -77,12 +81,12 @@ class MagratheaMail{
 	 * @param string $reply e-mail 'reply-to' (same as `setReplyTo`) *optional*
 	 * @return 	MagratheaMail			itself
 	 */	
-	function SetFrom($from, $reply=""): MagratheaMail {
+	function SetFrom($from, $reply=null): MagratheaMail {
 		$this->from = $from;
 		if( empty($replyTo) ){
-			$this->replyTo = $from;
+			$this->SetReplyTo($from);
 		} else {
-			$this->replyTo = $reply;
+			$this->SetReplyTo($reply);
 		}
 		return $this;
 	}
@@ -128,15 +132,24 @@ class MagratheaMail{
 		$this->txtMessage = $message;
 		return $this;
 	}
+
+	/**
+	 * Check if there's any visible errors in the e-mail preparation
+	 * @return 		bool
+	 */
+	public function Validate(): bool {
+		if( empty($this->to) ){ $this->error="E-mail destination empty!"; return false; }
+		if( empty($this->from) ){ $this->error="E-mail sender empty!"; return false; }
+		if( empty($this->replyTo) ){ $this->replyTo = $this->from; }
+		if( empty($this->subject) ){ $this->subject=""; }
+	}
+
 	/**
 	 * now we send it!
 	 * @return 	bool 	true on e-mail sent, false if we have any error
 	 */
 	function Send(): bool {
-		if( empty($this->to) ){ $this->error="E-mail destination empty!"; return false; }
-		if( empty($this->from) ){ $this->error="E-mail sender empty!"; return false; }
-		if( empty($this->replyTo) ){ $this->replyTo = $this->from; }
-		if( empty($this->subject) ){ $this->subject=""; }
+		if(!$this->Validate()) return false;
 
 		$content_type = empty($this->htmlMessage) ? "text/plain" : "text/html";
 

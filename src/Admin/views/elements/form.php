@@ -35,7 +35,8 @@ $elements = AdminElements::Instance();
 				switch($type) {
 					case "empty":
 					default:
-						echo '<div id="'.$key.'">'.$value.'</div>';
+						$class = @$el['class'] ? $el['class'] : "";
+						echo '<div id="'.$key.'" class="'.$class.'">'.$value.'</div>';
 						break;
 					case "text":
 					case "email":
