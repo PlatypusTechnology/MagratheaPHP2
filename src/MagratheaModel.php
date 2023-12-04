@@ -55,12 +55,26 @@ abstract class MagratheaModel{
 	 * Get all properties from model
 	 * @return 	array 		model's properties
 	 */
-	public function GetProperties(){
+	public function GetProperties(): array {
 		$properties = $this->dbValues;
 		$properties["created_at"] = "datetime";
 		$properties["updated_at"] = "datetime";
 		return $properties;
-	} 
+	}
+	/**
+	 * Get fields from model
+	 * @return array		model's fields
+	 */
+	public function GetFields(): array {
+		$properties = $this->GetProperties();
+		$properties[$this->dbPk] = "pk";
+		$external = @$this->relations["external"];
+		if($external == null) return $properties;
+		foreach($external as $f => $obj) {
+			$properties[$f] = $obj;
+		}
+		return $properties;
+	}
 
 	/**
 	 * Prepare fields for this model for a select statement
@@ -447,6 +461,13 @@ abstract class MagratheaModel{
 	 */
 	public function ModelName(): string {
 		return getClassNameOfClass(get_class($this));
+	}
+
+	/**
+	 * returns a string for identifying the object in a relation
+	 */
+	public function Ref(): string {
+		return $this->ModelName()." [".$this->GetID()."]";
 	}
 
 }

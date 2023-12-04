@@ -166,6 +166,7 @@ class CodeCreator extends \Magrathea2\Singleton {
 			$relations_functions .= "\t\tif(\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] != null) return \$this->relations[\"properties\"][\"".$rel["rel_property"]."\"];\n";
 			if( $rel["rel_type"] == "belongs_to" ) {
 				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = new ".$this->GetFullObjName($rel["rel_object"])."(\$this->".$rel["rel_field"].");\n";
+				$relations_properties .= "\t\t\$this->relations[\"external\"][\"".$rel["rel_field"]."\"] = \"".$this->GetFullObjName($rel["rel_object"])."\";\n";
 			} else if ( $rel["rel_type"] == "has_many" ) {
 				$relations_functions .= "\t\t\$pk = \$this->dbPk;\n";
 				$relations_functions .= "\t\t\$this->relations[\"properties\"][\"".$rel["rel_property"]."\"] = ".$this->GetFullControlBaseName($rel["rel_object"])."::GetWhere(array(\"".$rel["rel_field"]."\" => \$this->\$pk));\n";
@@ -231,14 +232,18 @@ class CodeCreator extends \Magrathea2\Singleton {
 			if( !empty($data[$f."_alias"]) )
 				$code .= "\t\t\$this->dbAlias[\"".$data[$f."_alias"]."\"] = \"".$f."\";\n";
 		}
-
-		$code .= "\n".$relations_properties;
 		$code .= "\t\t\$this->dbValues[\"created_at\"] =  \"datetime\";\n";
 		$code .= "\t\t\$this->dbValues[\"updated_at\"] =  \"datetime\";\n";			
-		$code .= "\n";
-		$code .= "\t}\n\n";
 
-		$code .= "\t// >>> relations:\n".$relations_functions."\n";
+		$code .= "\n".$relations_properties;
+		$code .= "\n";
+		$code .= "\t}\n";
+
+		$code .= "\n\tpublic function GetControl() {";
+		$code .= "\n\t\treturn new \\".$this->GetNamespace($object, true)."\\".$object."ControlBase();";
+		$code .= "\n\t}";
+
+		$code .= "\n\n\t// >>> relations:\n".$relations_functions."\n";
 
 		$code .= "}\n";
 		return $code;

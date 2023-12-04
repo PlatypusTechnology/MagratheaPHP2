@@ -178,6 +178,12 @@ abstract class MagratheaModelControl{
 		return static::RunQuery($sql);
 	}
 
+	public static function GetListPage(int $limit=20, int $page=0) {
+		$offset = $page * $limit;
+		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at ASC LIMIT ".$offset.",".$limit;
+		return static::RunQuery($sql);
+	}
+
 	/**
 	 * Builds query with where clause
 	 * @param 	string 					$whereSql 		where clause

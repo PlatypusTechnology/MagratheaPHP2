@@ -2,10 +2,6 @@
 
 namespace Magrathea2\Admin;
 
-use Exception;
-
-use function Magrathea2\p_r;
-
 #######################################################################################
 ####
 ####    MAGRATHEA PHP2 Admin features
