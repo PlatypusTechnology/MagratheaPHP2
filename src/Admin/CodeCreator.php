@@ -135,7 +135,6 @@ class CodeCreator extends \Magrathea2\Singleton {
 	 * Generate Base Code for object
 	 * @param 	string 		$object			object name
 	 * @param 	array			$data				array with magrathea_conf data for object
-	 * @param 	string 		$namespace	(optional) namespace for class code
 	 * @return 	string		code
 	 */
 	public function GenerateBaseCodeForObject($object, $data) {
@@ -253,7 +252,6 @@ class CodeCreator extends \Magrathea2\Singleton {
 	 * Generate Base Code for object
 	 * @param 	string 		$object			object name
 	 * @param 	array			$data				array with magrathea_conf data for object
-	 * @param 	string 		$namespace	(optional) namespace for class code
 	 * @return 	string		code
 	 */
 	public function GenerateBaseCodeForObjectControl($object, $data) {
@@ -277,7 +275,6 @@ class CodeCreator extends \Magrathea2\Singleton {
 	/**
 	 * Generate Code for object
 	 * @param 	string 		$object		object name
-	 * @param 	string 		$namespace	(optional) namespace for class code
 	 * @return 	string		code
 	 */
 	public function GenerateCodeForObject($object) {
@@ -297,7 +294,6 @@ class CodeCreator extends \Magrathea2\Singleton {
 	/**
 	 * Generate Code for object
 	 * @param 	string 		$object		object name
-	 * @param 	string 		$namespace	(optional) namespace for class code
 	 * @return 	string		code
 	 */
 	public function GenerateCodeForObjectControl($object) {
@@ -312,6 +308,31 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code .= "\t// model code goes here!\n";
 		$code .= "}\n";
 		return $code;
+	}
+
+	/**
+	 * Generate Code for AdminCRUD
+	 * @param 	string 		$object		object name
+	 * @return 	string		code
+	 */
+	public function GenerateCodeForAdmin($object) {
+		if(empty($this->structure)) {
+			throw new MagratheaException("Code creation not properly load");
+		}
+		$code = "<?php\n";
+
+		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
+
+		$code .= "use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;\n\n";
+
+		$code .= "class ".$object."Admin extends AdminCrudObject {\n";
+		$code .= "\tpublic string \$featureName = \"".$object." CRUD\";\n\n";
+		$code .= "\tpublic function Initialize() {\n";
+		$code .= "\t\t\$this->SetObject(new ".$object."());\n";
+		$code .= "\t}\n";
+		$code .= "}\n";
+		return $code;
+
 	}
 
 }

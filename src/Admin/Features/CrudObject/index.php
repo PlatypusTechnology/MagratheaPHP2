@@ -34,3 +34,14 @@ $elements->Header($feature->GetHeaderTitle());
 </div>
 
 </div>
+
+<?
+$openId = @$_GET["id"];
+if($openId) {
+	?>
+<script type="text/javascript">
+	afterLoad().then(() => editCrudObject('<?=$openId?>'));
+</script>
+	<?
+}
+?>

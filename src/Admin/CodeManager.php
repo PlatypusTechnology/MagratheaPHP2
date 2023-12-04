@@ -53,6 +53,12 @@ class CodeManager extends \Magrathea2\Singleton {
 				"type" => "control",
 				"gen-function" => "GetCodeForControl"
 			],
+			"admin" => [
+				"file-name" => $object."Admin.php",
+				"file-desc" => $object." CRUD Admin",
+				"type" => "admin",
+				"gen-function" => "GetCodeForAdmin"
+			],
 		];
 	}
 
@@ -85,6 +91,10 @@ class CodeManager extends \Magrathea2\Singleton {
 	 */
 	public function GetCodeForControl($object): string {
 		return CodeCreator::Instance()->Load()->GenerateCodeForObjectControl($object);
+	}
+
+	public function GetCodeForAdmin($object): string {
+		return CodeCreator::Instance()->Load()->GenerateCodeForAdmin($object);
 	}
 
 	private function GetFileDestination($type, $destinationPath, $fileData): string {

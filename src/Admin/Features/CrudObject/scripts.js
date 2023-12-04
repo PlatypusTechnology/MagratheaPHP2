@@ -20,7 +20,6 @@ function loadCrudObjectList() {
 function saveCrudObject(el) {
 	let featureId = $("#crud-feature-id").val();
 	let data = getFormDataFromElement(el);
-	console.info(data);
 	callFeature(featureId, "Save", "POST", data)
 		.then((rs) => {
 			rs = JSON.parse(rs);
@@ -36,5 +35,26 @@ function saveCrudObject(el) {
 			}
 			loadCrudObjectList();
 		});
+}
 
+function deleteCrudObject(el) {
+	let featureId = $("#crud-feature-id").val();
+	let data = getFormDataFromElement(el);
+	if(!data["id"]) {
+		alert("Could not find id for deletion");
+		return;
+	}
+	if(confirm("Are you sure you want to delete this object?")) {
+		callFeature(featureId, "Delete", "POST", data)
+			.then((rs) => {
+				rs = JSON.parse(rs);
+				if(!rs.success) {
+					showToast(rs.error, "Error", true);
+				} else {
+					showToast("Object removed!", "Deleted!", false);
+				}
+				showOn("#container-crudobject-form", "");
+				loadCrudObjectList();
+			});
+	}
 }

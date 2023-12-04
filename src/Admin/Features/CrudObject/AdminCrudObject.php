@@ -6,6 +6,7 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminFeature;
 use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\iAdminFeature;
+use Magrathea2\Exceptions\MagratheaModelException;
 use Magrathea2\MagratheaModel;
 use Magrathea2\MagratheaModelControl;
 
@@ -72,6 +73,19 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 		echo json_encode(["success" => false, "error" => $err]);
 		die;
 	}
+	public function ReturnException($ex, $data=null) {
+		if(empty($data)) $data = $ex;
+		echo json_encode([
+			"success" => false,
+			"data" => $data,
+			"error" => $ex->getMessage(),
+		]);
+		die;
+	}
+	public function ShowObjectNotFound($id) {
+		$errorMsg = "Can't find a ".$this->objectName." with ID [".$id."]";
+		return AdminElements::Instance()->ErrorCard($errorMsg);
+	}
 
 	/**
 	 * Gets the columns for display the list
@@ -99,20 +113,13 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 
 	/**
 	 * Gets the array of fields for a object form
+	 * @param MagratheaModel $object		object for the form
 	 * @return array
 	 */
-	public function Fields(): array {
-		$properties = $this->object->GetFields();
+	public function Fields(MagratheaModel $object): array {
+		$properties = $object->GetFields();
 		unset($properties["created_at"]);
 		unset($properties["updated_at"]);
-		return $this->BuildFields($properties);
-	}
-	/**
-	 * Gets a list of fields => types and builds a form data
-	 * @param array $properties		properties as ["field" => "type"]
-	 * @return array
-	 */
-	public function BuildFields(array $properties): array {
 		$fields = [];
 		foreach($properties as $field => $type) {
 			array_push($fields, $this->GetField($field, $type));
@@ -120,22 +127,35 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 		if(count($fields) % 2 != 0) {
 			array_push($fields, ["type" => "empty"]);
 		}
-		array_push($fields, $this->GetSaveButton());
+		if($object->id) {
+			array_push($fields,
+				["type" => "empty", "size" => "col-6"],
+				$this->GetDeleteButton(),
+				$this->GetSaveButton()
+			);
+		} else {
+			array_push($fields,
+				["type" => "empty", "size" => "col-9"],
+				$this->GetSaveButton()
+			);
+		}
 		return $fields;
 	}
+	/**
+	 * Get a field related to type
+	 * @param string $key 			Object property
+	 * @param string $type			Object type
+	 * @return array
+	 */
 	public function GetField(string $key, string $type): array {
 		if(str_starts_with($type, "\\")) {
 			$base = new $type();
 			$control = $base->GetControl();
-			$relational = $control->GetAll();
-			$selects = [];
-			foreach($relational as $s) {
-				$selects[$s->GetID()] = $s->Ref();
-			}
+			$relational = $control->GetSelectArray();
 			return [
 				"name" => ucfirst($key)." (".$type.")",
 				"key" => $key,
-				"type" => $selects,
+				"type" => $relational,
 				"size" => "col-6",
 			];
 		}
@@ -164,8 +184,21 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 			"name" => "Save",
 			"type" => "button",
 			"class" => ["w-100", "btn-success"],
-			"size" => "col-6 offset-6",
+			"size" => "col-3",
 			"action" => "saveCrudObject(this)",
+		];	
+	}
+	/**
+	 * Gets the button for deleting an object
+	 * @return array
+	 */
+	public function GetDeleteButton(): array {
+		return 	[
+			"name" => "Delete",
+			"type" => "button",
+			"class" => ["w-100", "btn-danger"],
+			"size" => "col-3",
+			"action" => "deleteCrudObject(this)",
 		];	
 	}
 
@@ -184,6 +217,9 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 			"New ".$this->objectName, "newCrudObject()", ["btn-success"]);
 	}
 
+	/**
+	 * Display the list of objects
+	 */
 	public function List() {
 		$columns = $this->Columns();
 		array_push($columns, $this->GetEditColumn());
@@ -192,31 +228,59 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 		include(__DIR__."/list.php");
 	}
 
+	/**
+	 * Display a form for the object
+	 */
 	public function Form() {
-		$formData = $this->Fields();
 		$id = @$_GET["id"];
-		$object = new $this->fullObjectName($id);
+		try {
+			$object = new $this->fullObjectName($id);
+			if(!$object) {
+				return $this->ShowObjectNotFound($id);
+			}
+			$formData = $this->Fields($object);
+		} catch(MagratheaModelException $ex) {
+			return $this->ShowObjectNotFound($id);
+		} catch(\Exception $ex) {
+			return $this->ReturnException($ex, $_POST);
+		}
 		include(__DIR__."/form.php");
 	}
 
+	/**
+	 * Saves the object
+	 */
 	public function Save() {
 		$id = $_POST["id"];
-		$u = new $this->fullObjectName($id);
-		$u = $u->Assign($_POST);
+		$o = new $this->fullObjectName($id);
+		$o = $o->Assign($_POST);
 		try {
-			$success = $u->Save();
+			$success = $o->Save();
 		} catch(\Magrathea2\Exceptions\MagratheaDBException $ex) {
-			echo json_encode([
-				"success" => false,
-				"data" => $_POST,
-				"error" => $ex->getMessage(),
-			]);
-			return;
+			return $this->ReturnException($ex, $_POST);
+		}
+		echo json_encode([
+			"success" => true,
+			"data" => $o,
+			"type" => ($id ? "update" : "insert"),
+		]);
+	}
+
+	/**
+	 * Deletes the object
+	 */
+	public function Delete() {
+		$id = $_POST["id"];
+		$o = new $this->fullObjectName($id);
+		try {
+			$success = $o->Delete();
+		} catch(\Magrathea2\Exceptions\MagratheaDBException $ex) {
+			return $this->ReturnException($ex);
 		}
 		echo json_encode([
 			"success" => $success,
-			"data" => $u,
-			"type" => ($id ? "update" : "insert"),
+			"data" => $o,
+			"type" => "delete",
 		]);
 	}
 

@@ -173,15 +173,32 @@ abstract class MagratheaModelControl{
 	 * Gets all from this object
 	 * @return  array<object> 	List of objects
 	 */
-	public static function GetAll(){
+	public static function GetAll() {
 		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at ASC";
 		return static::RunQuery($sql);
 	}
 
+	/**
+	 * Gets all from this object
+	 * @return  array<object> 	List of objects
+	 */
 	public static function GetListPage(int $limit=20, int $page=0) {
 		$offset = $page * $limit;
 		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at ASC LIMIT ".$offset.",".$limit;
 		return static::RunQuery($sql);
+	}
+
+	/**
+	 * Gets all from this object
+	 * @return  array<object> 	List of objects
+	 */
+	public static function GetSelectArray() {
+		$relational = self::GetAll();
+		$selects = [];
+		foreach($relational as $s) {
+			$selects[$s->GetID()] = $s->Ref();
+		}
+		return $selects;
 	}
 
 	/**
