@@ -125,7 +125,7 @@ class Query{
 	 * Generates a DELETE query
 	 * @return 		QueryDelete
 	 */
-	static public function Delete(){
+	static public function Delete(): QueryDelete{
 		return new QueryDelete();
 	}
 
@@ -133,7 +133,7 @@ class Query{
 	 * Generates a UPDATE query
 	 * @return 		QueryUpdate
 	 */
-	static public function Update(){
+	static public function Update(): QueryUpdate {
 		return new QueryUpdate();
 	}
 
@@ -141,7 +141,7 @@ class Query{
 	 * Generates a INSERT query
 	 * @return 		QueryInsert
 	 */
-	static public function Insert(){
+	static public function Insert(): QueryInsert {
 		return new QueryInsert();
 	}
 
@@ -149,7 +149,7 @@ class Query{
 	 * Return Query Type
 	 * @return 	QueryType
 	 */
-	public function GetType() {
+	public function GetType(): QueryType {
 		return $this->type;
 	}
 

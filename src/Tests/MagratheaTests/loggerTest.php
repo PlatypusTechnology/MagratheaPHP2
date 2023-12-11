@@ -14,7 +14,7 @@ use function Magrathea2\p_r;
 class loggerTest extends \PHPUnit\Framework\TestCase {
 
 	private $filePath;
-	private $fileName = "log.txt";
+	private $fileName = "log.log";
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -61,7 +61,7 @@ class loggerTest extends \PHPUnit\Framework\TestCase {
 		MagratheaPHP::Instance()->AppPath(__DIR__."/test-dump");
 		$path = Logger::Instance()->LoadLogsPath()->GetLogPath();
 		$this->assertEquals(__DIR__."/logs", $path);
-		$defaultFile = "log_".@date("Ym").".txt";
+		$defaultFile = "log_".@date("Ym")."log";
 		$this->assertEquals($defaultFile, Logger::Instance()->GetLogFile());
 	}
 

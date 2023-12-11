@@ -14,6 +14,7 @@ namespace Magrathea2\Admin;
 
 interface iAdminFeature {
 	public function GetPage();
+	public function Index();
 	public function HasPermission($action=null): bool;
 }
 
@@ -66,12 +67,15 @@ class AdminFeature {
 		if(!$this->HasPermission($action)) {
 			AdminManager::Instance()->PermissionDenied();
 		}
-		$featureClass = $this;
 		if($action) {
 			$this->$action();
 		} else {
-			include($this->featureClassPath."/index.php");
+			$this->Index();
 		}
+	}
+
+	public function Index() {
+		include($this->featureClassPath."/index.php");
 	}
 
 	public function GetSubpageUrl($subpage, $params=[]) {

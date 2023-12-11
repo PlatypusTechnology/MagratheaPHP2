@@ -59,6 +59,12 @@ class CodeManager extends \Magrathea2\Singleton {
 				"type" => "admin",
 				"gen-function" => "GetCodeForAdmin"
 			],
+			"api" => [
+				"file-name" => $object."Api.php",
+				"file-desc" => $object." API",
+				"type" => "api",
+				"gen-function" => "GetCodeForApi"
+			],
 		];
 	}
 
@@ -95,6 +101,10 @@ class CodeManager extends \Magrathea2\Singleton {
 
 	public function GetCodeForAdmin($object): string {
 		return CodeCreator::Instance()->Load()->GenerateCodeForAdmin($object);
+	}
+
+	public function GetCodeForApi($object): string {
+		return CodeCreator::Instance()->Load()->GenerateCodeForApi($object);
 	}
 
 	private function GetFileDestination($type, $destinationPath, $fileData): string {

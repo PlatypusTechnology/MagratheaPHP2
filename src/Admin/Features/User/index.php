@@ -17,6 +17,7 @@ $crud = $adminForm->CRUDObject(new AdminUser(), true);
 $control = new AdminUserControl();
 $rs = $control->GetAll();
 
+$featureClass = AdminManager::Instance()->GetActiveFeature();
 $newUserUrl = $featureClass->GetSubpageUrl(null, [ "id" => "new" ]);
 
 ?>
@@ -52,6 +53,7 @@ $newUserUrl = $featureClass->GetSubpageUrl(null, [ "id" => "new" ]);
 						"title" => "&nbsp;",
 						"key" => function($item) {
 							$featureClass = AdminManager::Instance()->GetActiveFeature();
+							if(empty($featureClass)) return "[error]";
 							$editUrl = $featureClass->GetSubpageUrl(null, [ "id" => $item->id ]);
 							return '<a href="'.$editUrl.'">Edit</a>';
 						}

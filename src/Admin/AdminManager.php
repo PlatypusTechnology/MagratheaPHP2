@@ -99,11 +99,12 @@ class AdminManager extends Singleton {
 	/**
 	 * Log an action
 	 * @param string 	$action		action executed
+	 * @param array|object 	$victim		victim of action
 	 * @param array|object 	$data			data for log
 	 * @param int			$user_id  action user id
 	 * @return void
 	 */
-	public function Log($action, $victim=null, $user_id=false, $data=null): void {
+	public function Log($action, $victim=null, $data=null, $user_id=false): void {
 		if(!$user_id) {
 			$user = $this->GetLoggedUser();
 			if(!$user) $user_id = 0;
@@ -112,6 +113,9 @@ class AdminManager extends Singleton {
 		if (!isMagratheaModel($victim)) {
 			$data = $victim;
 			$victim = null;
+		}
+		if(empty($data)) {
+			$data = $victim;
 		}
 		$data = json_encode($data);
 		$control = new AdminLogControl();

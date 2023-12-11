@@ -21,7 +21,7 @@ use Magrathea2\Exceptions\MagratheaDBException;
  * Magrathea class for logging anything
  * By default, the message is written with a timestamp before it.
  * 		- For *Log* function, the default file is saved with a timestamp in the name
- * 		- For *LogError* function, by default, all the data is saved in a same file called *log_error.txt*
+ * 		- For *LogError* function, by default, all the data is saved in a same file called *log_error.log*
  */
 class Logger extends Singleton {
 
@@ -59,7 +59,7 @@ class Logger extends Singleton {
 	}
 	
 	private function StartLogName(): Logger {
-		$this->activeLogFile = "log_".@date("Ym").".txt";
+		$this->activeLogFile = "log_".@date("Ym").".log";
 		return $this;
 	}
 

@@ -323,16 +323,37 @@ class CodeCreator extends \Magrathea2\Singleton {
 
 		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
 
-		$code .= "use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;\n\n";
-
-		$code .= "class ".$object."Admin extends AdminCrudObject {\n";
+		$code .= "class ".$object."Admin extends \Magrathea2\Admin\Features\CrudObject\AdminCrudObject {\n";
 		$code .= "\tpublic string \$featureName = \"".$object." CRUD\";\n\n";
 		$code .= "\tpublic function Initialize() {\n";
 		$code .= "\t\t\$this->SetObject(new ".$object."());\n";
 		$code .= "\t}\n";
 		$code .= "}\n";
 		return $code;
-
 	}
+
+	/**
+	 * Generate Code for MagratheaAPI
+	 * @param 	string 		$object		object name
+	 * @return 	string		code
+	 */
+	public function GenerateCodeForApi($object) {
+		if(empty($this->structure)) {
+			throw new MagratheaException("Code creation not properly load");
+		}
+		$code = "<?php\n";
+
+		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
+
+		$code .= "class ".$object."Api extends \Magrathea2\MagratheaApiControl {\n";
+		$code .= "\tpublic function __construct() {\n";
+		$code .= "\t\t\$this->model = get_class(new ".$object."());\n";
+		$code .= "\t\t\$this->service = new ".$object."Control();\n";
+		$code .= "\t}\n\n";
+		$code .= "}\n";
+		return $code;
+	}
+
+
 
 }

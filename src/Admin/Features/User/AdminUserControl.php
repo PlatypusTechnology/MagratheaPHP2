@@ -17,6 +17,12 @@ class AdminUserControl extends MagratheaModelControl {
 	protected static $modelName = "AdminUser";
 	protected static $dbTable = "_magrathea_users";
 
+	public function GetByEmail($email): AdminUser|null {
+		$user = $this->GetWhere(["email" => $email]);
+		if(count($user) == 0) return null;
+		return $user[0];
+	}
+
 	/**
 	 * Logs in
 	 * @param string $user			user e-mail
@@ -29,7 +35,7 @@ class AdminUserControl extends MagratheaModelControl {
 				->Where(["email" => $user])
 				->Obj(new AdminUser());
 			$user = self::RunRow($query);
-			if (!$user) {
+			if ($user == null) {
 				return [ "success" => false, "user" => null, "message" => "User not found" ];
 			}
 			$pwdCorrect = $user->CheckPassword($password);
@@ -45,8 +51,9 @@ class AdminUserControl extends MagratheaModelControl {
 
 	public function SetLoginAsNow($user) {
 		try {
-			$query = Query::Update()
-				->Table(static::$dbTable)
+			$query = Query::Update();
+			$query->Table(static::$dbTable);
+			$query
 				->SetRaw("last_login = NOW()")
 				->Where([ "id" => $user->id ]);
 			return self::Run($query);

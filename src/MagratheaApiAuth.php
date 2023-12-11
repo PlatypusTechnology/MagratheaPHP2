@@ -80,8 +80,8 @@ class MagratheaApiAuth extends MagratheaApiControl {
 		return $this->userInfo;
 	}
 
-	public function ResponseLogin($user): array {
-		$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + 7 days'));
+	public function ResponseLogin(AdminUser $user): array {
+		$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + '.$this->tokenExpire));
 		$payload = [
 			"id" => @$user->id,
 			"email" => @$user->email,
@@ -94,6 +94,19 @@ class MagratheaApiAuth extends MagratheaApiControl {
 			"refresh_token" => $jwtRefresh,
 			"token" => $jwt,
 			"user" => $user
+		];
+	}
+
+	public function ResponsePayload($payload): array {
+		$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + '.$this->tokenExpire));
+		$jwtRefresh = $this->jwtEncode($payload);
+		$payload["refresh"] = $jwtRefresh;
+		$payload["expire"] = $expire;
+		$jwt = $this->jwtEncode($payload);
+		return [
+			"refresh_token" => $jwtRefresh,
+			"token" => $jwt,
+			"data" => $payload
 		];
 	}
 

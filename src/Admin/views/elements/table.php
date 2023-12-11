@@ -33,7 +33,7 @@
 				echo $value.'</td>';
 				$i++;
 			} catch(Exception $ex) {
-				$e = new Magrathea2\Exceptions\MagratheaException("Error building table", 500, $ex);
+				$e = new Magrathea2\Exceptions\MagratheaException("Error building table: ".$ex->getMessage(), 500, $ex);
 				$e->SetData([
 					"row" => $row,
 					"key" => $key
