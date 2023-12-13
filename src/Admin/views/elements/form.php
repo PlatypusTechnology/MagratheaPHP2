@@ -55,7 +55,7 @@ $elements = AdminElements::Instance();
 					case "checkbox":
 						$checkVal = "1";
 						if(@$el["placeholder"]) $checkVal = $el["placeholder"];
-						$elements->Checkbox($key, $name, $checkVal, ($value==true), @$el['class'], ($type == "switch"), @$el['attributes']);
+						$elements->Checkbox($key, $name, $checkVal, ($value==true), @$el['class'], ($type == "switch"), @$el['attributes'], @$el['outerClass']);
 						break;
 					case "delete-button":
 						$name = $name ? $name : "Delete";

@@ -44,6 +44,8 @@ class AdminForm {
 
 	private function NormalizeFormArray($arr): array {
 		$formArr = [];
+		if($arr == null)
+			throw new \Magrathea2\Exceptions\MagratheaException("Form is empty");
 		foreach($arr as $el) {
 			if(empty(@$el['key']) && !empty(@$el['id'])) {
 				$el['key'] = $el['id'];

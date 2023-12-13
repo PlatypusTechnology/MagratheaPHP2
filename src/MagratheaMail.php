@@ -38,20 +38,6 @@ class MagratheaMail {
 	}
 
 	/**
-	 * if we want to use a different SMTP, it should be set here.
-	 * The format of the SMTP is: 
-	 * 		array(["smtp_host"] => "", ["smtp_port"] => "", ["smtp_username"] => "", ["smtp_password"] => "")
-	 * @param 	array 		$smtp  	SMTP for use, in the format above
-	 * @return 	MagratheaMail       itself
-	 * @deprecated for smtp, you should use PEAR library
-	 */
-	function StartSMTP($smtp): MagratheaMail{
-		$this->smtpArr = $smtp;
-		$this->smtpArr["auth"] = true;
-		return $this;
-	}
-
-	/**
 	 * Who's the guy(s) you have been contacting, huh?
 	 * @param 		string 		$var 		destination e-mail
 	 * @return 		MagratheaMail			itself
@@ -169,5 +155,23 @@ class MagratheaMail {
 			$this->error = "Error sending e-mail!";
 			return false;
 		}
+	}
+
+	/**
+	 * returns info about the e-mail
+	 * @return array	info
+	 */
+	public function GetInfo(): array {
+		return [
+			"from" => $this->from,
+			"to" => $this->to,
+			"subject" => $this->subject,
+			"message" => $this->htmlMessage ?? $this->txtMessage,
+		];
+	}
+
+	public function __toString() {
+		$info = $this->GetInfo();
+		return \Magrathea2\arrToStr($info);
 	}
 }

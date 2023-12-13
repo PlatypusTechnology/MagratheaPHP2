@@ -5,12 +5,11 @@ namespace Magrathea2\Admin;
 use Exception;
 use Magrathea2\Admin\Features\User\AdminUser;
 use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
-use Magrathea2\MagratheaJavascriptCompressor;
+use Magrathea2\Compressors\CssCompressor;
+use Magrathea2\Compressors\JavascriptCompressor;
 use Magrathea2\Singleton;
-use Magrathea2\MagratheaPHP;
 
 use function Magrathea2\isMagratheaModel;
-use function Magrathea2\p_r;
 
 #######################################################################################
 ####
@@ -28,7 +27,8 @@ use function Magrathea2\p_r;
 class AdminManager extends Singleton {
 
 	private null|AdminMenu $menu = null;
-	private null|MagratheaJavascriptCompressor $javascript = null;
+	private null|JavascriptCompressor $javascript = null;
+	private null|CssCompressor $css = null;
 	private null|Admin $admin = null;
 
 	public function Initialize() {
@@ -124,20 +124,59 @@ class AdminManager extends Singleton {
 
 	/**
 	 * Adds a javascript file to admin
+	 * @param string $file	
+	 * @return AdminManger itself
 	 */
 	public function AddJs($file): AdminManager {
 		$this->GetJSManager()->AddFile($file);
 		return $this;
 	}
-	public function GetJSManager(): MagratheaJavascriptCompressor {
+	/**
+	 * Gets Js compressor
+	 * @return JavascriptCompressor
+	 */
+	public function GetJSManager(): JavascriptCompressor {
 		if($this->javascript == null) {
-			$this->javascript = new MagratheaJavascriptCompressor();
+			$this->javascript = new JavascriptCompressor();
 		}
 		return $this->javascript;
 	}
+	/**
+	 * Gets Js code
+	 * @return string code
+	 */
 	public function GetJs(): string {
 		return $this->GetJSManager()->GetCode();
 	}
+
+
+	/**
+	 * Gets CSS compressor
+	 * @return CssCompressor
+	 */
+	public function GetCSSManager(): CssCompressor {
+		if($this->css == null) {
+			$this->css = new CssCompressor();
+		}
+		return $this->css;
+	}
+	/**
+	 * Adds a css file to admin
+	 * @param string $file	
+	 * @return AdminManger itself
+	 */
+	public function AddCss($file): AdminManager {
+		$this->GetCSSManager()->AddFile($file);
+		return $this;
+	}
+	/**
+	 * Gets Js code
+	 * @return string code
+	 */
+	public function GetCss(): string {
+		return $this->GetCSSManager()->GetCode();
+	}
+
 
 	/**
 	 * Starts Admin

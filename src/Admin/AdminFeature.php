@@ -44,6 +44,16 @@ class AdminFeature {
 		AdminManager::Instance()->AddJs($file);
 		return $this;
 	}
+	/**
+	 * Add a CSS file to admin
+	 * @param string $file		absolute path of tile
+	 * @return AdminFeature		itself
+	 */
+	public function AddCSS(string $file): AdminFeature {
+		AdminManager::Instance()->AddCss($file);
+		return $this;
+	}
+
 
 	/**
 	 * Sets feature class path

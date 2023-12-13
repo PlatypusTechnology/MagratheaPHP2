@@ -2,12 +2,20 @@
 
 namespace Magrathea2;
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
 
 class MagratheaMailSMTP extends MagratheaMail {
 
 	private $mail;
+
+	/**
+	 * Sets SMTP array
+	 * @param array $arr 			array with ["smtp_host", "smtp_port", "smtp_username", "smtp_password", "auth"]
+	 * @return MagratheaMailSMTP		itself
+	 */
+	public function SetSMTPArray($arr): MagratheaMailSMTP {
+		$this->smtpArr = $arr;
+		return $this;
+	}
 
 	/**
 	 * Sets SMTP info
@@ -71,6 +79,8 @@ class MagratheaMailSMTP extends MagratheaMail {
 	public function Send(): bool {
 		if(!$this->Validate()) return false;
 
+		return false;
+
 		$this->mail = new PHPMailer(true);
 		try {
 			$this->LoadSMTP();
@@ -95,6 +105,18 @@ class MagratheaMailSMTP extends MagratheaMail {
 		} catch(\Exception $ex) {
 			throw $ex;
 		}
+	}
+
+	/**
+	 * returns info about the e-mail
+	 * @return array	info
+	 */
+	public function GetInfo(): array {
+		$info = parent::GetInfo();
+		return [
+			...$info,
+			...$this->smtpArr,
+		];
 	}
 
 }

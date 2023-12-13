@@ -1,5 +1,9 @@
 <div class="form-group">
-	<? if($name !== false) { ?>
+	<?
+
+use function Magrathea2\isMagratheaModel;
+
+ if($name !== false) { ?>
 	<label for="<?=$id?>"><?=$name?></label>
 	<? } ?>
 	<select name="<?=$id?>" id="<?=$id?>" class="form-select <?=$class?>" <?=$atts?>>
@@ -11,6 +15,9 @@
 			if(is_array($name)) {
 				$id = $name["id"];
 				$name = $name["name"];
+			}
+			if(isMagratheaModel($name)) {
+				$name = $name->Ref();
 			}
 			$selected = ($id == $value ? "selected" : "");
 			?>

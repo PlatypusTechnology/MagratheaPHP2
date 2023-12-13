@@ -192,7 +192,7 @@ class AdminElements extends Singleton {
 	 * @param	array	$attributes		any extra attributes (as ["onchange" => "alert();"])
 	 * @return AdminElements	itself
 	 */
-	public function Checkbox($id, $name="", $value=true, $checked=false, $class=[], $switch=false, $attributes=[]): AdminElements {
+	public function Checkbox($id, $name="", $value=true, $checked=false, $class=[], $switch=false, $attributes=[], $outerClass=""): AdminElements {
 		if(empty($name)) $name = $id;
 		if(is_array($class)) $class = implode(' ', $class);
 		$atts = $this->GetAttributesStr($attributes);
