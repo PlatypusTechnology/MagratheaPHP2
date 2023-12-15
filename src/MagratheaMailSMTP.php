@@ -77,23 +77,21 @@ class MagratheaMailSMTP extends MagratheaMail {
 	 * @return 	bool 	true on e-mail sent, false if we have any error
 	 */
 	public function Send(): bool {
-		if(!$this->Validate()) return false;
-
-		return false;
-
-		$this->mail = new PHPMailer(true);
 		try {
-			$this->LoadSMTP();
-			$this->mail->setFrom($this->from);
-			$this->mail->addReplyTo($this->replyTo);
-			$this->mail->addAddress($this->to);
-			$this->mail->isHTML(true);
-			$this->mail->Subject = $this->subject;
-			$this->mail->Body = $this->htmlMessage;
-			$this->mail->AltBody = $this->txtMessage;
-
-			if($this->simulate) $successMail = true;
-			else $successMail = $this->mail->send();
+			if($this->Validate()) {
+				$this->mail = new PHPMailer(true);
+				$this->LoadSMTP();
+				$this->mail->setFrom($this->from);
+				$this->mail->addReplyTo($this->replyTo);
+				$this->mail->addAddress($this->to);
+				$this->mail->isHTML(true);
+				$this->mail->Subject = $this->subject;
+				$this->mail->Body = $this->htmlMessage;
+				$this->mail->AltBody = $this->txtMessage;
+	
+				if($this->simulate) $successMail = true;
+				else $successMail = $this->mail->send();					
+			} else { $successMail = false; }
 
 			if ($successMail) {
 				return true;

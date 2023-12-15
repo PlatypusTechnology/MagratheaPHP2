@@ -126,8 +126,9 @@ class MagratheaMail {
 	public function Validate(): bool {
 		if( empty($this->to) ){ $this->error="E-mail destination empty!"; return false; }
 		if( empty($this->from) ){ $this->error="E-mail sender empty!"; return false; }
+		if( empty($this->subject) ){ $this->subject=""; return false; }
 		if( empty($this->replyTo) ){ $this->replyTo = $this->from; }
-		if( empty($this->subject) ){ $this->subject=""; }
+		return true;
 	}
 
 	/**
