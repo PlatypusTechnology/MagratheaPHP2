@@ -40,6 +40,8 @@ class MagratheaMailSMTP extends MagratheaMail {
 	 * Loads SMTP inside PHPMailer
 	 */
 	public function LoadSMTP(): PHPMailer {
+		$this->mail = new PHPMailer(true);
+		$this->mail->isSMTP();
 		$this->mail->SMTPAuth = true;
 		$this->mail->Host = $this->smtpArr["smtp_host"];
 		$this->mail->Port = $this->smtpArr["smtp_port"];
@@ -79,7 +81,6 @@ class MagratheaMailSMTP extends MagratheaMail {
 	public function Send(): bool {
 		try {
 			if($this->Validate()) {
-				$this->mail = new PHPMailer(true);
 				$this->LoadSMTP();
 				$this->mail->setFrom($this->from);
 				$this->mail->addReplyTo($this->replyTo);
@@ -87,7 +88,7 @@ class MagratheaMailSMTP extends MagratheaMail {
 				$this->mail->isHTML(true);
 				$this->mail->Subject = $this->subject;
 				$this->mail->Body = $this->htmlMessage;
-				$this->mail->AltBody = $this->txtMessage;
+				$this->mail->AltBody = $this->txtMessage ?? strip_tags($this->htmlMessage);
 	
 				if($this->simulate) $successMail = true;
 				else $successMail = $this->mail->send();					
