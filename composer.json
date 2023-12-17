@@ -8,6 +8,7 @@
 			"Magrathea2\\": "src/"
 		},
 		"files": [
+			"src/_EnumTrait.php",
 			"src/_Functions.php",
 			"src/_FunctionsDebug.php"
 		]
