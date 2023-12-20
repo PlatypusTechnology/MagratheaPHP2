@@ -9,7 +9,7 @@ use Magrathea2\Exceptions\MagratheaException;
 class MagratheaApiException extends MagratheaException {
 	public $status;
 	public $code = 0;
-	public function __construct($message = "Magrathea Api Error", $kill=true, $code=0, $data=null, \Exception $previous = null) {
+	public function __construct($message = "Magrathea Api Error", $code=0, $data=null, $kill=true, \Exception $previous = null) {
 		$this->code = $code;
 		if($kill) {
 			$this->killerError = true;

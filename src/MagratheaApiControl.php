@@ -44,7 +44,7 @@ class MagratheaApiControl {
 			$gotToken = true;
 		}
 		if(!$gotToken) {
-			$ex = new MagratheaApiException("Invalid Token: [".$token."]", true);
+			$ex = new MagratheaApiException("Invalid Token: [".$token."]", 400, [ "token" => $token ], true);
 			$ex->SetStatus(401);
 			throw $ex;
 		}

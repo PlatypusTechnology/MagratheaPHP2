@@ -27,11 +27,11 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 	public function GetProperties($params) {
 		$object = @$params["object"];
 		if(!$object) {
-			throw new MagratheaApiException("invalid object: [".$object."]", false);
+			throw new MagratheaApiException("invalid object: [".$object."]", 400, $params, false);
 		}
 		$details = ObjectManager::Instance()->GetObjectDetails($object);
 		if(!$details) {
-			throw new MagratheaApiException("could not find data for object [".$object."]", false);
+			throw new MagratheaApiException("could not find data for object [".$object."]", 400, $params, false);
 		}
 		return [
 			"object" => $object,
@@ -47,7 +47,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 		if(!$params["relation_property"]) $allGood = false;
 		
 		if(!$allGood) {
-			throw new MagratheaApiException("invalid data", false, 400, $params);
+			throw new MagratheaApiException("invalid data", 400, $params, false);
 		}
 		$rel = ObjectManager::Instance()->AddRelation(
 			$params["relation_type"],
@@ -61,7 +61,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 	public function DeleteRelation($params) {
 		$relName = $params["name"];
 		if(!$relName) {
-			throw new MagratheaApiException("invalid data", false, 400, $params);
+			throw new MagratheaApiException("invalid data", 400, $params, false);
 		}
 		return ObjectManager::Instance()->DeleteRelation($relName);
 	}
@@ -72,7 +72,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 		unset($params["magrathea_api"]);
 		unset($params["magrathea_api_method"]);
 		if(!$relName) {
-			throw new MagratheaApiException("invalid data", false, 400, $params);
+			throw new MagratheaApiException("invalid data", 400, $params, false);
 		}
 		return ObjectManager::Instance()->UpdateRelation($relName, $params);
 	}
@@ -80,7 +80,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 	public function CreateFolder($params) {
 		$object = @$params["object"];
 		if(!$object) {
-			throw new MagratheaApiException("invalid object [".$object."]", false, 400, $params);
+			throw new MagratheaApiException("invalid object [".$object."]", 400, $params, false);
 		}
 		return CodeManager::Instance()->PrepareFolders($object);
 	}
@@ -90,7 +90,7 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 		$type = @$params["type"];
 		$adminConfig = new AppConfigControl();
 		if(!$object) {
-			throw new MagratheaApiException("invalid object [".$object."]", false, 400, $params);
+			throw new MagratheaApiException("invalid object [".$object."]", 400, $params, false);
 		}
 		$rs = [];
 		try {
