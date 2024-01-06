@@ -92,7 +92,7 @@ class MagratheaApi {
 	 * @return  MagratheaApi
 	 */
 	public function Allow($allowedOrigins): MagratheaApi{
-		if (in_array($_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
+		if (in_array(@$_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
 			header('Access-Control-Allow-Origin: '.$_SERVER["HTTP_ORIGIN"]);
 		}
 		return $this;
@@ -236,6 +236,7 @@ class MagratheaApi {
 				$urlPieces = explode("/", $url);
 				$params = [];
 				foreach ($urlPieces as $piece) {
+					if(empty($piece)) continue;
 					if($piece[0] == ":") array_push($params, substr($piece, 1));
 				}
 				$data = [

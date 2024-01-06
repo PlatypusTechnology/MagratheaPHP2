@@ -223,9 +223,8 @@ abstract class MagratheaModel{
 		$arr_Fields = array();
 		$arr_Values = array();
 		foreach( $this->dbValues as $field => $type ){
-			if( $field == $this->dbPk ){
-				if(empty($this->$field)) continue;
-			}
+			if( $field == $this->dbPk ) continue;
+			if( !isset($this->$field) ) continue;
 			array_push($arr_Types, $this->GetDataTypeFromField($type));
 			array_push($arr_Fields, $field);
 			if( is_a($this->$field, "MagratheaModel") ) {
@@ -264,6 +263,10 @@ abstract class MagratheaModel{
 		foreach( $this->dbValues as $field => $type ){
 			if( $field == $pkField ) continue;
 			if( $field == "created_at" ) continue;
+
+			$t = $this->GetDataTypeFromField($type);
+			if ($t == "integer" && empty($this->field)) continue;
+
 			if( is_a($this->$field, "MagratheaModel") ) {
 				$arr_Values[$field] = $this->GetRelationId($this->$field);
 			} else {
@@ -273,7 +276,7 @@ abstract class MagratheaModel{
 					$arr_Values[$field] = $this->$field;
 				}
 			}
-			array_push($arr_Types, $this->GetDataTypeFromField($type));
+			array_push($arr_Types, $t);
 			array_push($arr_Fields, "`".$field."`= ? ");
 		}
 		$query_run = "UPDATE ".$this->dbTable." SET ".implode(",", $arr_Fields)." WHERE `".$this->dbPk."`= ? ";

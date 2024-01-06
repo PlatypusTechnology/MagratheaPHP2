@@ -285,7 +285,10 @@ class CodeCreator extends \Magrathea2\Singleton {
 
 		$code .= "namespace ".$this->GetNamespace($object).";\n\n";
 
-		$code .= "class ".$object." extends ".$this->GetFullObjName($object, true)." {\n";
+		$code .= "class ".$object." extends ".$this->GetFullObjName($object, true)." {\n\n";
+		$code .= "\tpublic function __construct(\$id=0){\n";
+		$code .= "\t\tparent::__construct(\$id);\n";
+		$code .= "\t}\n\n";
 		$code .= "\t// model code goes here!\n";
 		$code .= "}\n";
 		return $code;

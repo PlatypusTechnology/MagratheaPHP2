@@ -165,7 +165,7 @@ class Database extends Singleton {
 	* @throws	MagratheaDbException
 	*/
 	private function ErrorHandle($error, $sql, $values=null): MagratheaDBException{ 
-		$ex = new MagratheaDBException($error);
+		$ex = new MagratheaDBException($error, $sql);
 		$ex->SetData($sql, $values);
 		Debugger::Instance()->Add($ex);
 		return $ex;
@@ -458,7 +458,7 @@ class Database extends Singleton {
 			}
 			$stm->execute();
 			if($stm->error) {
-				throw $this->ConnectionErrorHandle($stm->error);
+				throw $this->ErrorHandle($stm->error, $query);
 			}
 			$lastId = $stm->insert_id;
 			$stm->close();
@@ -467,7 +467,7 @@ class Database extends Singleton {
 			$ex->SetData($query, $args);
 			return null;
 		} catch(Exception $err){
-			throw $this->ConnectionErrorHandle($err, $err);
+			throw $this->ErrorHandle($stm->error, $query);
 		}
 		$this->CloseConnectionThanks();
 		if($lastId)

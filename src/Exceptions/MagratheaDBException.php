@@ -11,7 +11,7 @@ class MagratheaDBException extends MagratheaException {
 	public $values = null;
 	public $fullMessage;
 	public function __construct($message = "Magrathea Database has failed... =(", $query=null, $code=0, \Exception $previous = null) {
-		$this->query = $query;
+		$this->query = $query ? $query : " - ";
 		$this->fullMessage = $message;
 		parent::__construct($this->CleanErrorMessage($message), $code, $previous);
 	}
