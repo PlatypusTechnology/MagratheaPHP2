@@ -198,7 +198,7 @@ class Debugger extends Singleton {
 	* Adds a query to the debug
 	*
 	*	@param 	string 	$sql 	query to be debugged
-	* 	@param 	string 	$values 	values to be added to the query
+	* @param 	string 	$values 	values to be added to the query
 	*/
 	public function AddQuery($sql, $values){
 		if($this->debugType == self::NONE || !$this->queries) return;

@@ -49,15 +49,7 @@ class AdminFeatureAppConfig extends AdminFeature implements iAdminFeature {
 
 	public function Import() {
 		$postDataStr = @$_POST["data"];
-		$data = explode(">>;;\n", $postDataStr);
 		$control = new AppConfigControl();
-		foreach($data as $config) {
-			if(empty($config)) continue;
-			$config = explode("==|>>", $config);
-			$key = preg_replace('/^={2}/', '', $config[0]);
-			$value = str_replace(">>;;", "", $config[1]);
-			echo "updating: <b>".$key."</b> = ".$value."<br/>";
-			$control->Save($key, $value);
-		}
+		$control->ImportData($postDataStr, true);
 	}
 }

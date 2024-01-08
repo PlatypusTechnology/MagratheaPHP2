@@ -40,6 +40,7 @@ abstract class MagratheaModel{
 	protected $dbAlias = array();
 	protected $relations = array();
 	protected $dbPk;
+	protected $dirtyValues = array();
 	
 	/**
 	 * Gets table related to model
@@ -259,21 +260,28 @@ abstract class MagratheaModel{
 		$arr_Types = array();
 		$arr_Fields = array();
 		$arr_Values = array();
+		$updates = array();
 		$pkField = $this->dbPk;
-		foreach( $this->dbValues as $field => $type ){
+		if(count($this->dirtyValues) > 0) {
+			$updates = array_intersect_key($this->dbValues, $this->dirtyValues);
+		} else {
+			$updates = $this->dbValues;
+		}
+		foreach( $updates as $field => $type ){
 			if( $field == $pkField ) continue;
 			if( $field == "created_at" ) continue;
 
 			$t = $this->GetDataTypeFromField($type);
-			if ($t == "integer" && empty($this->field)) continue;
+			if ($t == "integer" && empty($this->$field)) continue;
 
-			if( is_a($this->$field, "MagratheaModel") ) {
-				$arr_Values[$field] = $this->GetRelationId($this->$field);
+			$value = @$this->dirtyValues[$field] ?? $this->$field;
+			if( is_a($value, "MagratheaModel") ) {
+				$arr_Values[$field] = $this->GetRelationId($value);
 			} else {
 				if( $field == "updated_at" ) {
 					$arr_Values[$field] = now();
 				} else {
-					$arr_Values[$field] = $this->$field;
+					$arr_Values[$field] = $value;
 				}
 			}
 			array_push($arr_Types, $t);
@@ -337,7 +345,7 @@ abstract class MagratheaModel{
 	/**
 	 * Sets given property
 	 * @param  	string 		$key 			property
-	 * @param  	object 		$value 		value
+	 * @param  	mixed 		$value 		value
 	 * @param		boolean		$supressException			if set to true, function will not throw Exception if property does not exist
 	 * @return 	object|null     	property value
 	 * @throws 	MagratheaModelException 	if property does not exists into object
@@ -346,9 +354,11 @@ abstract class MagratheaModel{
 		if( $key == "created_at" || $key == "updated_at" ) return null;
 		if( array_key_exists($key, $this->dbValues) ){
 			$this->$key = $value;
+			$this->dirtyValues[$key] = $value;
 		} else if( array_key_exists($key, $this->dbAlias) ){
 			$real_key = $this->dbAlias[$key];
 			$this->$real_key = $value;
+			$this->dirtyValues[$real_key] = $value;
 		} else if( @is_array($this->relations["properties"]) && array_key_exists($key, $this->relations["properties"]) ){
 			$method_set = $this->relations["methods"][$key];
  			$this->relations["properties"][$key] = $value;

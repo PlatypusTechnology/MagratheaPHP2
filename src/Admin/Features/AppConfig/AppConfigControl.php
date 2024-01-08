@@ -31,6 +31,11 @@ class AppConfigControl extends MagratheaModelControl {
 		return $this->GetValueByKey($key);
 	}
 
+	/**
+	 * sets the value for a key
+	 * @param string $key
+	 * @param string $value
+	 */
 	public function SetValue(string $key, string $value) {
 		$query = Query::Update()
 			->SetArray([ "value" => $value ])
@@ -39,7 +44,13 @@ class AppConfigControl extends MagratheaModelControl {
 		return self::Run($query);
 	}
 
-	public function Save(string $key, string $value, bool $overwrite=true): AppConfig {
+	/**
+	 * sets the value for a key
+	 * @param 	string 				$key
+	 * @param 	string|any 		$value
+	 * @param 	boolean 			$overwrite 		should overwrite value
+	 */
+	public function Save(string $key, $value, bool $overwrite=true): AppConfig {
 		try {
 			$config = $this->GetByKey($key);
 			if(!$config) {
@@ -50,7 +61,7 @@ class AppConfigControl extends MagratheaModelControl {
 					return $config;
 				}
 			}
-			$config->value = $value;
+			$config->value = strval($value);
 			$config->Save();
 			return $config;
 		} catch(Exception $ex) {
@@ -58,6 +69,11 @@ class AppConfigControl extends MagratheaModelControl {
 		}
 	}
 
+	/**
+	 * Gets an AppConfig by key
+	 * @param string $key		key
+	 * @return 	AppConfig
+	 */
 	public function GetByKey(string $key): AppConfig|null {
 		$query = Query::Select()
 			->Obj(new AppConfig())
@@ -66,12 +82,21 @@ class AppConfigControl extends MagratheaModelControl {
 		return $a;
 	}
 
-	public function GetValueByKey(string $key) {
+	/**
+	 * Gets the value of an AppConfig
+	 * @param string 	$key
+	 * @param string 	$default		if key is not found, this will be the default value
+	 * @return string|null				returns the value, the default or null if no key is found and no default is set
+	 */
+	public function GetValueByKey(string $key, string $default=null): string|null {
 		$c = $this->GetByKey($key);
-		if(!$c) return null;
+		if(!$c) return $default;
 		return $c->GetValue();
 	}
 
+	/**
+	 * Exports data
+	 */
 	public function ExportData(): string {
 		$export = "";
 		$data = $this->GetAll();
@@ -81,7 +106,19 @@ class AppConfigControl extends MagratheaModelControl {
 		return $export;
 	}
 
-	public function ImportData(string $dataStr): bool {
+	/**
+	 * Imports data
+	 */
+	public function ImportData(string $dataStr, bool $echoProgress = false): bool {
+		$data = explode(">>;;\n", $dataStr);
+		foreach($data as $config) {
+			if(empty($config)) continue;
+			$config = explode("==|>>", $config);
+			$key = preg_replace('/^={2}/', '', $config[0]);
+			$value = str_replace(">>;;", "", $config[1]);
+			if($echoProgress) echo "updating: <b>".$key."</b> = ".$value."<br/>";
+			$this->Save($key, $value);
+		}
 		return true;
 	}
 

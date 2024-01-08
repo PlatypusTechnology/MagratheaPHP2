@@ -46,4 +46,12 @@ AdminElements::Instance()->Header("App Configuration");
 		</div>
 	</div>
 
+	<div class="row mt-2">
+		<div class="col-12">
+			<?
+			include(__DIR__."/example.php");
+			?>
+		</div>
+	</div>
+
 </div>
