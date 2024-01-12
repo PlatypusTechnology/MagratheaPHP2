@@ -40,21 +40,21 @@ function executeApi(apiId) {
 	debugAPI("\tcalling ("+method+")["+api+"]");
 	debugAPI("\t\t " + url + api);
 	if(payload) {
+		// try {
+		// 	payloadJson = payload;
+		// } catch(err) {
+		// 	console.error("payload error", err);
+		// 	showToast("Check debug for more info", "Bad Payload", true);
+		// 	debugAPI("\tpayload error: " + err);
+		// 	debugAPI("\n");
+		// 	return;
+		// }
 		debugAPI("\tpayload: ["+payload+"]");
-		try {
-			payloadJson = JSON.parse(payload);
-		} catch(err) {
-			console.error("payload error", err);
-			showToast("Check debug for more info", "Bad Payload", true);
-			debugAPI("\tpayload error: " + err);
-			debugAPI("\n");
-			return;
-		}
 	} else {
 		payloadJson = null;
 		debugAPI("\tno payload");
 	}
-	ajax(method, api, payloadJson, token, true)
+	ajax(method, api, payload, token, true)
 		.then(rs => {
 			let response = jsonAPIFormat(rs);
 			debugAPI("\nrs:");
