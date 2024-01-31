@@ -52,10 +52,10 @@ class MagratheaApiControl {
 	}
 
 	public function GetPhpInput() {
-		$json = file_get_contents('php://input', 'r');
+		$json = file_get_contents('php://input');
 		$jsonData = json_decode($json);
 		$data = [];
-		if(!$jsonData) return null;
+		if(!$jsonData) return;
 		foreach ($jsonData as $key => $value) {
 			$data[str_replace('amp;', '', $key)] = $value;
 		}
@@ -114,14 +114,13 @@ class MagratheaApiControl {
 
 	public function Update($params=false) {
 		$id = $params["id"];
-		if(empty($id))
-			throw new \Exception("no object id to update", 500);
 		$m = new $this->model($id);
 		$data = $this->GetPut();
+
 		if(!$data) throw new \Exception("Empty Data Sent", 500);
 		foreach ($data as $key => $value) {
 			if(property_exists($m, $key)) {
-				$m->Set($key, $value);
+				$m->$key = $value;
 			}
 		}
 		try {
