@@ -22,7 +22,7 @@ use Magrathea2\MagratheaModel;
 class AppConfig extends MagratheaModel implements iMagratheaModel { 
 
 	public $id;
-	public $name, $value;
+	public $name, $value, $is_system;
 	public $created_at, $updated_at;
 	protected $autoload = null;
 
@@ -59,7 +59,8 @@ class AppConfig extends MagratheaModel implements iMagratheaModel {
 		$this->dbValues = [
 			"id" => "int",
 			"name" => "string",
-			"value" => "string"
+			"value" => "string",
+			"is_system" => "boolean",
 		];
 		$this->dbAlias["key"] = "name";
 	}
@@ -72,7 +73,8 @@ class AppConfig extends MagratheaModel implements iMagratheaModel {
 	}
 
 	public function __toString() {
-		return "[MAGRATHEACONFIG (id: ".$this->id.")(key: ".$this->key.") = {".$this->value."}]";
+		$str_n = $this->is_system ? "MAGRATHEACONFIG-system" : "MAGRATHEACONFIG";
+		return "[".$str_n." (id: ".$this->id.")(key: ".$this->key.") = {".$this->value."}]";
 	}
 
 }

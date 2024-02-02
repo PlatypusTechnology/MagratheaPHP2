@@ -117,7 +117,6 @@ class Logger extends Singleton {
 	 * @throws  \Exception 				If path is not writablle
 	 */
 	public function Log($logThis) {
-		echo "logging ".$logThis;
 		if( Config::Instance()->GetEnvironment() == "test" ) return;
 		if( is_a($logThis, \Magrathea2\Exceptions\MagratheaConfigException::class) ) {
 			p_r($logThis);

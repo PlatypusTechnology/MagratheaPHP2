@@ -88,7 +88,6 @@ class ObjectsApi extends \Magrathea2\MagratheaApiControl {
 	public function CreateCode($params) {
 		$object = @$params["object"];
 		$type = @$params["type"];
-		$adminConfig = new AppConfigControl();
 		if(!$object) {
 			throw new MagratheaApiException("invalid object [".$object."]", 400, $params, false);
 		}

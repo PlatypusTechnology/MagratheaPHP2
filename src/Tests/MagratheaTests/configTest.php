@@ -1,6 +1,5 @@
 <?php
 
-use function Magrathea2\p_r;
 use Magrathea2\Tests\TestsHelper;
 use Magrathea2\Config;
 

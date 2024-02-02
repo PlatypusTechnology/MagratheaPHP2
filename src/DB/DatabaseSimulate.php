@@ -125,7 +125,7 @@ class DatabaseSimulate extends Singleton {
 	* Handle connection errors @todo
 	* @throws	MagratheaDbException
 	*/
-	private function ConnectionErrorHandle($msg="", $data){ 
+	private function ConnectionErrorHandle($msg="", $data=null){ 
 		throw new MagratheaDBException($msg);
 	}
 	/**

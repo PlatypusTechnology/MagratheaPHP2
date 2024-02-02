@@ -51,7 +51,12 @@ class TestsManager extends \Magrathea2\Singleton {
 			$pharCommand .= " --testdox";
 		}
 		$pharCommand .= " --bootstrap ".__DIR__."/phpUnitBootstrap.php";
+		$pharCommand .= $this->GetRunExtras();
 		return $pharCommand;
+	}
+
+	public function GetRunExtras(): string {
+		return " --display-deprecations --display-warnings --display-notices";
 	}
 
 	private function AddMagrathaTests() {
@@ -59,6 +64,9 @@ class TestsManager extends \Magrathea2\Singleton {
 		array_push($this->tests, [
 			'name' => "Magrathea Tests",
 			'folders' => [$thisFolder."/MagratheaTests"]
+		], [
+			'name' => "Magrathea Admin",
+			'folders' => [$thisFolder."/MagratheaAdminTests"]
 		]);
 	}
 
@@ -74,7 +82,6 @@ class TestsManager extends \Magrathea2\Singleton {
 	 * Run all the tests
 	 */
 	public function RunAllTests() {
-
 	}
 
 	/**

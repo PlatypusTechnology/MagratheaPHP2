@@ -1,0 +1,3 @@
+[2024-02-01 12:08:03] = Magrathea2\Exceptions\MagratheaException Catch: [2024-02-01_120803] = Could not find class [ClassLoader]
+[2024-02-01 12:08:03] = Magrathea2\Exceptions\MagratheaException Catch: [2024-02-01_120803] = Could not find class [ClassLoader]
+[2024-02-01 12:08:03] = Magrathea2\Exceptions\MagratheaException Catch: [2024-02-01_120803] = Could not find class [ClassLoader]

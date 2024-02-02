@@ -1,8 +1,6 @@
 <?php
 
-use Magrathea2\MagratheaPHP;
 use Magrathea2\Tests\TestsManager;
-use function Magrathea2\p_r;
 
 $testManager = TestsManager::Instance();
 

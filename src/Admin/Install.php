@@ -75,7 +75,7 @@ class Install {
 		$user->role_id = 1;
 		$user->Insert();
 		$this->LogUserCreated($user);
-		$this->SetAdminInstallDate();
+		$this->SetBasicConfigs();
 		return $user;
 	}
 
@@ -89,10 +89,13 @@ class Install {
 		);
 	}
 
-	public function SetAdminInstallDate(): void {
+	public function SetBasicConfigs(): void {
 		$configControl = new AppConfigControl();
-		$configControl->Save("admin_install_date", \Magrathea2\now(), false);
+		$configControl->SaveSystem("admin_install_date", \Magrathea2\now(), false);
 		$configControl->Save("app_name", "", false);
+		$configControl->SaveSystem("code_path", "", false);
+		$configControl->SaveSystem("code_structure", "feature", false);
+		$configControl->SaveSystem("code_namespace", "", false);
 	}
 
 	/**

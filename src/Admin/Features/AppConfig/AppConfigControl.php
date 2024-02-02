@@ -32,6 +32,17 @@ class AppConfigControl extends MagratheaModelControl {
 	}
 
 	/**
+	 * hides system config
+	 * @return 	array		array of AdminConfig
+	 */
+	public function GetOnlyApp() {
+		$query = Query::Select()
+			->Obj(new AppConfig())
+			->Where(['is_system' => 0]);
+		return self::Run($query);
+	}
+
+	/**
 	 * sets the value for a key
 	 * @param string $key
 	 * @param string $value
@@ -45,12 +56,22 @@ class AppConfigControl extends MagratheaModelControl {
 	}
 
 	/**
+	 * saves a system key (for Magrathea's internal use)
+	 * @param 	string 				$key
+	 * @param 	string|any 		$value
+	 */
+	public function SaveSystem(string $key, $value, $overwrite=true): AppConfig {
+		return $this->Save($key, $value, $overwrite, true);
+	}
+
+	/**
 	 * sets the value for a key
 	 * @param 	string 				$key
 	 * @param 	string|any 		$value
 	 * @param 	boolean 			$overwrite 		should overwrite value
+	 * @param		boolean				$system				is this a system var?
 	 */
-	public function Save(string $key, $value, bool $overwrite=true): AppConfig {
+	public function Save(string $key, $value, bool $overwrite=true, bool $system=false): AppConfig {
 		try {
 			$config = $this->GetByKey($key);
 			if(!$config) {
@@ -101,9 +122,34 @@ class AppConfigControl extends MagratheaModelControl {
 		$export = "";
 		$data = $this->GetAll();
 		foreach($data as $c) {
-			$export .= '=='.$c->key.'==|>>'.$c->GetValue().'>>;;\n';
+			$system = $c->is_system ? "[s]" : "[n]";
+			$export .= '=='.$system.$c->key.'==|>>'.$c->GetValue().'>>;;\n';
 		}
 		return $export;
+	}
+
+	/**
+	 * parses line
+	 * @param string 	$line		line
+	 * @return array 	[key, system, value]
+	 */
+	public function ParseLine(string $line): array {
+		$config = explode("==|>>", $line);
+		$key_regex = '/==\[(\w+)\](\w+)/';
+		preg_match($key_regex, $config[0], $matches);
+		if(empty($matches)) {
+			$system = false;
+			$key = preg_replace('/^={2}/', '', $config[0]);
+		} else {
+			$system = $matches[1] == 's';
+			$key = $matches[2];
+		}
+		$value = str_replace(">>;;", "", $config[1]);
+		return [
+			"key" => $key,
+			"system" => $system,
+			"value" => $value,
+		];
 	}
 
 	/**
@@ -113,11 +159,9 @@ class AppConfigControl extends MagratheaModelControl {
 		$data = explode(">>;;\n", $dataStr);
 		foreach($data as $config) {
 			if(empty($config)) continue;
-			$config = explode("==|>>", $config);
-			$key = preg_replace('/^={2}/', '', $config[0]);
-			$value = str_replace(">>;;", "", $config[1]);
-			if($echoProgress) echo "updating: <b>".$key."</b> = ".$value."<br/>";
-			$this->Save($key, $value);
+			$row = $this->ParseLine($config);
+			if($echoProgress) echo "updating: <b>".$row["key"]."</b> = ".$row["value"]."<br/>";
+			$this->Save($row["key"], $row["value"], true, $row["system"]);
 		}
 		return true;
 	}

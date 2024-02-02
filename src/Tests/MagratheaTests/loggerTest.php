@@ -26,8 +26,10 @@ class loggerTest extends \PHPUnit\Framework\TestCase {
 		$this->filePath = realpath($dumpFolder);
 	}
 	protected function tearDown(): void {
-		@unlink($this->GetLogFile());
-		rmdir($this->filePath);
+		system('rm -rf -- '.escapeshellarg($this->filePath), $retval);
+		if ($retval != 0) { // UNIX commands return zero on success
+			echo "error on teardown: ".$retval;
+		}
 		parent::tearDown();
 	}
 
