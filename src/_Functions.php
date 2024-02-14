@@ -96,7 +96,7 @@ spl_autoload_register(function ($class) {
 			return;
 		}
 	}
-	$ex = new MagratheaException("Could not find class [".$class_name."]", 500);
+	$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
 	$ex->SetData($folders);
 	throw $ex;
 });

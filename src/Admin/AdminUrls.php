@@ -50,6 +50,22 @@ class AdminUrls extends Singleton {
 		return "?".http_build_query($params);
 	}
 
+
+	/** 
+	 * Gets an url for a action's feature
+	 * @param		string		$feature			feature name
+	 * @param 	string 		$action				action
+	 * @param 	array 		$extraParams	other params
+	 * @return 	string		url
+	 */
+	public function GetFeatureActionUrl($feature, $action=null, $extraParams=[]) {
+		$params = [];
+		if ($feature) $params["magrathea_feature"] = $feature;
+		if ($action) $params["magrathea_feature_action"] = $action;
+		if (count($extraParams) > 0) $params = array_merge($params, $extraParams);
+		return "?".http_build_query($params);
+	}
+
 	public function GetLogoutUrl() {
 		return "?magrathea_logout=true";
 	}

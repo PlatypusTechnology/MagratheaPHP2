@@ -30,7 +30,6 @@ class TestsManager extends \Magrathea2\Singleton {
 
 	public function Initialize() {
 		MagratheaPHP::LoadVendor();
-		$this->AddMagrathaTests();
 	}
 
 	public static function TestFolderPrint($path) {
@@ -59,7 +58,7 @@ class TestsManager extends \Magrathea2\Singleton {
 		return " --display-deprecations --display-warnings --display-notices";
 	}
 
-	private function AddMagrathaTests() {
+	public function AddMagrathaTests() {
 		$thisFolder = __DIR__;
 		array_push($this->tests, [
 			'name' => "Magrathea Tests",
@@ -68,6 +67,24 @@ class TestsManager extends \Magrathea2\Singleton {
 			'name' => "Magrathea Admin",
 			'folders' => [$thisFolder."/MagratheaAdminTests"]
 		]);
+	}
+
+	/**
+	 * Add custom test
+	 * @param 	array		$folders 	folders
+	 * @param 	string 	$name			name
+	 * @return 	TestsManager  		itself
+	 */
+	public function AddTest(array $folders, $name=null): TestsManager {
+		if(empty($name)) {
+			$folderPieces = explode('/', $test);
+			$name = end($folderPieces);
+		}
+		array_push($this->tests, [
+			'name' => $name,
+			'folders' => $folders,
+		]);
+		return $this;
 	}
 
 	/**
@@ -96,7 +113,7 @@ class TestsManager extends \Magrathea2\Singleton {
 		if($debug) {
 //			$command .= " --debug";
 		}
-		array_push($response, ">> $ phpunit.phar .../".self::TestFolderPrint($folder));
+		array_push($response, ">> $ ".$command);
 		exec($command, $response);
 		return $response;
 	}
@@ -110,11 +127,7 @@ class TestsManager extends \Magrathea2\Singleton {
 	public function RunFile($file, $debug=true): array {
 		$response = [];
 		$command = $this->GetPhar($debug)." ".$file;
-		if ($debug) {
-			$debugCommand = ">> $ ".$command;
-		} else {
-			$debugCommand = ">> $ phpunit.phar .../".self::TestFolderPrint($file);
-		}
+		$debugCommand = ">> $ ".$command;
 		array_push($response, $debugCommand);
 		exec($command, $response);
 		return $response;

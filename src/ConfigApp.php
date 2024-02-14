@@ -36,6 +36,12 @@ class ConfigApp extends Singleton {
 	 * @return AppConfig			saved config
 	 */
 	public function Save($key, $value, $overwrite=true): AppConfig {
+		if($this->isMocked) {
+			$this->mockData[$key] = $value;
+			$r = new AppConfig();
+			$r->name = $key; $r->value = $value;
+			return $r;
+		}
 		return $this->GetControl()->Save($key, $value, $overwrite);
 	}
 
@@ -46,6 +52,7 @@ class ConfigApp extends Singleton {
 	 * @return string			key value
 	 */
 	public function Get(string $key, $default=null): ?string {
+		if($this->isMocked) { return @$this->mockData[$key]; }
 		$value = $this->GetControl()->GetValueByKey($key);
 		if($value == null) return $default;
 		return $value;
@@ -84,6 +91,28 @@ class ConfigApp extends Singleton {
 	public function GetFloat(string $key, float $default=0): float {
 		$val = $this->Get($key, $default);
 		return floatval($val);
+	}
+
+	private ?array $mockData = null;
+	private bool $isMocked = false;
+	/**
+	 * Mocks data
+	 * @param 	array 			$data		array for mocking in format ["key" => "value"]
+	 * @return 	ConfigApp		itself
+	 */
+	public function Mock($data): ConfigApp {
+		$this->isMocked = true;
+		$this->mockData = $data;
+		return $this;
+	}
+	/**
+	 * unmocks this
+	 * @return 	ConfigApp 	itself
+	 */
+	public function UnMock(): ConfigApp {
+		$this->mockData = null;
+		$this->isMocked = false;
+		return $this;
 	}
 
 }

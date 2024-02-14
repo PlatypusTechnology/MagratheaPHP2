@@ -3,6 +3,7 @@
 namespace Magrathea2\Admin;
 
 use Magrathea2\Admin\iAdmin;
+use Magrathea2\Tests\TestsManager;
 
 #######################################################################################
 ####
@@ -29,6 +30,7 @@ class Admin implements iAdmin {
 	}
 
 	public function Initialize() {
+		$this->AddTests();
 	}
 
 	/**
@@ -69,6 +71,11 @@ class Admin implements iAdmin {
 		return $this;
 	}
 
+
+	public function AddTests(): Admin {
+		TestsManager::Instance()->AddMagrathaTests();
+		return $this;
+	}
 
 
 	protected $adminFeatures = [];
