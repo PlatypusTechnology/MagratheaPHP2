@@ -99,8 +99,8 @@ class AdminManager extends Singleton {
 	/**
 	 * Log an action
 	 * @param string 	$action		action executed
-	 * @param array|object 	$victim		victim of action
-	 * @param array|object 	$data			data for log
+	 * @param array|object|string 	$victim		victim of action
+	 * @param array|object 					$data			data for log
 	 * @param int			$user_id  action user id
 	 * @return void
 	 */
@@ -110,7 +110,7 @@ class AdminManager extends Singleton {
 			if(!$user) $user_id = 0;
 			else $user_id = $user->id;
 		}
-		if (!isMagratheaModel($victim)) {
+		if (!isMagratheaModel($victim) && !is_string($victim)) {
 			$data = $victim;
 			$victim = null;
 		}

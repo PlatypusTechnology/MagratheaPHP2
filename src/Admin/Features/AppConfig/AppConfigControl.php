@@ -83,6 +83,9 @@ class AppConfigControl extends MagratheaModelControl {
 				}
 			}
 			$config->value = strval($value);
+			if($system) {
+				$config->is_system = 1;
+			}
 			$config->Save();
 			return $config;
 		} catch(Exception $ex) {

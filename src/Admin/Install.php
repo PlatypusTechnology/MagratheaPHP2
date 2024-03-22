@@ -93,7 +93,7 @@ class Install {
 		$configControl = new AppConfigControl();
 		$configControl->SaveSystem("admin_install_date", \Magrathea2\now(), false);
 		$configControl->Save("app_name", "", false);
-		$configControl->SaveSystem("code_path", "", false);
+		$configControl->SaveSystem("code_path", MagratheaPHP::Instance()->appRoot, false);
 		$configControl->SaveSystem("code_structure", "feature", false);
 		$configControl->SaveSystem("code_namespace", "", false);
 	}

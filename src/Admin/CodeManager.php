@@ -16,8 +16,6 @@ use Magrathea2\Exceptions\MagratheaException;
 use Exception;
 use Magrathea2\Admin\ObjectManager;
 
-use function Magrathea2\p_r;
-
 /**
  * Class for handling automatically generated files
  */
@@ -289,7 +287,8 @@ class CodeManager extends \Magrathea2\Singleton {
 		} 
 		if (!fwrite($handle, $content)) { 
 			return ["success" => false, "error" => "could not write file", "data" => $handle];
-		} 
+		}
+		AdminManager::Instance()->Log("code file written", $file);
 		fclose($handle); 
 		return ["success" => true, "overwrite" => $file_existed];
 	}

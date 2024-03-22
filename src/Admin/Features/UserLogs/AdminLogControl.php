@@ -14,11 +14,12 @@ class AdminLogControl extends MagratheaModelControl {
 	protected static $modelName = "AdminLog";
 	protected static $dbTable = "_magrathea_logs";
 
-	public function GetVictim(MagratheaModel $model) {
-		return $model->ModelName()." (".$model->GetID().")";
+	public function GetVictim(MagratheaModel|string $victim) {
+		if(is_string($victim)) return '"'.$victim.'"';
+		return $victim->ModelName()." (".$victim->GetID().")";
 	}
 
-	public function Log($user_id, $action, null|MagratheaModel $victim=null, $data=null): AdminLog {
+	public function Log($user_id, $action, null|MagratheaModel|string $victim=null, $data=null): AdminLog {
 		$log = new AdminLog();
 		$log->user_id = $user_id;
 		$log->action = $action;

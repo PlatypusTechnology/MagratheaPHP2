@@ -130,7 +130,8 @@ class AdminMenu {
 		array_push($rs,
 			$this->CreateTitle("Debugging"),
 			$this->GetItem("logs"),
-			$this->GetItem("tests")
+			$this->GetItem("tests"),
+			$this->GetItem("server"),
 		);
 		return $rs;
 	}

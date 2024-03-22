@@ -139,7 +139,6 @@ class Admin implements iAdmin {
 			->Add($this->adminFeatures["AdminFeatureAppConfig"]->GetMenuItem())
 			->Add($adminMenu->GetItem("structure"))
 			->Add($adminMenu->GetItem("htaccess"))
-			->Add($adminMenu->GetItem("server"))
 
 			->Add($adminMenu->GetDatabaseSection())
 			->Add($adminMenu->GetObjectSection())

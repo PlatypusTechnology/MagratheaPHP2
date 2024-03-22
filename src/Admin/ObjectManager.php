@@ -427,6 +427,7 @@ class ObjectManager extends \Magrathea2\Singleton {
 		$data = $this->GetFullObjectData();
 		$data[$objName] = $properties;
 		$this->objData = null;
+		AdminManager::Instance()->Log("object conf saved", $objName, $properties);
 		return $this->confObject->SetConfig($data)->Save();
 	}
 
