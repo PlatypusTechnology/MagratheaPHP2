@@ -1,10 +1,16 @@
 <?php
 
 use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\AdminElements;
 
+/** @var \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig $featureClass */
+$featureClass = AdminManager::Instance()->GetActiveFeature();
+
+$hideSystem = $featureClass->onlyApp;
+
 $control = new AppConfigControl();
-$exportStr = $control->ExportData();
+$exportStr = $control->ExportData($hideSystem);
 $exportStr = str_replace('\n', "\n", $exportStr);
 
 

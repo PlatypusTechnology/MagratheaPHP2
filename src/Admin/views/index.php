@@ -31,9 +31,11 @@ if(!empty($magrathea_subpage)) {
 			<!-- Page content wrapper-->
 			<div id="page-content-wrapper">
 				<?php
+					$gotSomething = false;
 					$page = @$_GET["magrathea_page"];
 					if($page) {
 						include("pages/".$page.".php");
+						$gotSomething = true;
 					} else {
 						$feature = @$_GET["magrathea_feature"];
 						if($feature) {
@@ -48,8 +50,12 @@ if(!empty($magrathea_subpage)) {
 								$subpage = @$_GET["magrathea_feature_subpage"];
 								if(!$subpage) $subpage = "GetPage";
 								$f->$subpage();
+								$gotSomething = true;
 							}
 						}
+					}
+					if(!$gotSomething) {
+						include("pages/home.php");
 					}
 				?>
 			</div>

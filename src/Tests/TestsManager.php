@@ -45,7 +45,7 @@ class TestsManager extends \Magrathea2\Singleton {
 	 */
 	private function GetPhar($debug=false): string {
 		$pharFolder = realpath(__DIR__."/../../");
-		$pharCommand = "php ".$pharFolder."/phpunit.phar";
+		$pharCommand = "php -d display_errors=on ".$pharFolder."/phpunit.phar";
 		if($debug) {
 			$pharCommand .= " --testdox";
 		}
@@ -54,8 +54,13 @@ class TestsManager extends \Magrathea2\Singleton {
 		return $pharCommand;
 	}
 
+	public function GetCacheDestination(): string {
+		$destination = realpath(__DIR__."/../../../cache/")."/.phpunit.result.cache";
+		return "--cache-result-file=".$destination;
+	}
+
 	public function GetRunExtras(): string {
-		return " --display-deprecations --display-warnings --display-notices";
+		return " --display-deprecations --display-warnings --display-notices --display-errors ".$this->GetCacheDestination();
 	}
 
 	public function AddMagrathaTests() {

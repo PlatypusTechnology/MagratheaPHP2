@@ -62,6 +62,12 @@ class Admin implements iAdmin {
 		return $this;
 	}
 	/**
+	 * Defines admin logo (alias)
+	 * @param string $logo		logo address
+	 * @return 	Admin			itself
+	 */
+	public function SetLogo(string $logo): Admin { return $this->SetAdminLogo($logo); }
+	/**
 	 * Defines admin logo
 	 * @param string $logo		logo address
 	 * @return 	Admin			itself
@@ -95,6 +101,9 @@ class Admin implements iAdmin {
 			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
 			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
 			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
+	}
+	public function AddMagratheaFeatures() {
+		
 	}
 	public function GetFeatures() {
 		return $this->adminFeatures;
@@ -133,6 +142,21 @@ class Admin implements iAdmin {
 
 	public function BuildMenu(): AdminMenu{
 		$adminMenu = new AdminMenu();
+		$this->AddMagratheaMenu($adminMenu);
+
+		if(count($this->extraMenu) > 0) {
+			foreach($this->extraMenu as $i) {
+				$adminMenu->Add($i);
+			}
+		}
+
+		$adminMenu
+			->Add($adminMenu->GetHelpSection())
+			->Add($adminMenu->GetLogoutMenuItem());
+		return $adminMenu;
+	}
+
+	public function AddMagratheaMenu(AdminMenu &$adminMenu): AdminMenu {
 		$adminMenu
 			->Add("Setup")
 			->Add($adminMenu->GetItem("conf-file"))
@@ -151,16 +175,6 @@ class Admin implements iAdmin {
 
 			->Add("Tools")
 			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem());
-
-		if(count($this->extraMenu) > 0) {
-			foreach($this->extraMenu as $i) {
-				$adminMenu->Add($i);
-			}
-		}
-
-		$adminMenu
-			->Add($adminMenu->GetHelpSection())
-			->Add($adminMenu->GetLogoutMenuItem());
 		return $adminMenu;
 	}
 

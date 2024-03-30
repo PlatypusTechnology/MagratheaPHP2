@@ -90,6 +90,7 @@ register_shutdown_function(function(){
 spl_autoload_register(function ($class) {
 	$folders = MagratheaPHP::Instance()->codeFolder;
 	$class_name = getClassNameOfClass($class);
+	if($class_name == "ClassLoader") return;
 	foreach ($folders as $dir) {
 		if (file_exists($dir."/".$class_name.'.php')) {
 			require_once ($dir."/".$class_name.'.php');

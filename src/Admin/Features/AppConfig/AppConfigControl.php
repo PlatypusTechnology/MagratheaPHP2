@@ -121,10 +121,16 @@ class AppConfigControl extends MagratheaModelControl {
 	/**
 	 * Exports data
 	 */
-	public function ExportData(): string {
+	public function ExportData(bool $hideSystem = false): string {
 		$export = "";
-		$data = $this->GetAll();
+		if($hideSystem) {
+			$data = $this->GetOnlyApp();
+		} else {
+			$data = $this->GetAll();
+		}
+
 		foreach($data as $c) {
+			if($c->key == "admin_install_date") continue;
 			$system = $c->is_system ? "[s]" : "[n]";
 			$export .= '=='.$system.$c->key.'==|>>'.$c->GetValue().'>>;;\n';
 		}

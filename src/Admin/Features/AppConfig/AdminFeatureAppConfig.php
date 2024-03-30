@@ -24,7 +24,6 @@ class AdminFeatureAppConfig extends AdminFeature implements iAdminFeature {
 	public string $featureName = "App Configuration";
 	public string $featureId = "AdminFeatureAppConfig";
 	public bool $onlyApp = false;
-	public string $test = "test";
 
 	public function __construct(bool $hideSystem=false) {
 		parent::__construct();

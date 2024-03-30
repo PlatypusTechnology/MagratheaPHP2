@@ -4,6 +4,7 @@ use Magrathea2\Admin\AdminUrls;
 
 https://startbootstrap.github.io/startbootstrap-simple-sidebar/
 
+/** @var \Magrathea2\Admin\AdminManager $manager */
 $manager = Magrathea2\Admin\AdminManager::Instance();
 $env = Magrathea2\Config::Instance()->GetEnvironment();
 
