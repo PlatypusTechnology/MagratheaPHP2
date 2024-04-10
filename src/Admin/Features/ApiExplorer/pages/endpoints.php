@@ -22,8 +22,8 @@ $url = $feature->apiUrl;
 }
 .api-name {
 	border-bottom: 1px solid var(--primary);
-	padding-top: 10px;
-	margin-top: 5px;
+	padding-top: 5px;
+	margin-top: 10px;
 	display: flex;
 	cursor: default;
 }
@@ -87,14 +87,15 @@ $url = $feature->apiUrl;
 				<div class="col-2">
 					<?
 					$elements->Input("hidden", "api-original-".$apiId, false, $end["url"]);
-					$elements->Input("text", "api-params-".$apiId, false, "", ["w-100", "mb-2"], null, "Query Params");
 					foreach($end["params"] as $param) {
 						$attr = [
-							"onchange" => "updateApiUrl(".$apiId.", '".$param."', this)"
+							"onkeyup" => "updateApiUrl(".$apiId.")"
 						];
-						$elements->Input("text", "api-".$apiId."-".$param, false, null, null, null, $param, $attr);
-						echo "<br/>";
+						$elements->Input("text", "api-".$apiId."-".$param, false, null, ["w-100", "mb-1", "query-var"], null, $param, $attr);
 					}
+					echo "<br/>";
+					$elements->Input("text", "api-params-".$apiId, false, "", ["w-100", "mb-2"], null, "Query Params");
+					echo "<br/>";
 					if ($end["method"] == "POST" || $end["method"] == "PUT") {
 						$elements->Textarea("api-payload-".$apiId, "Payload", null, ["w-100", "payload-text"]);
 					}

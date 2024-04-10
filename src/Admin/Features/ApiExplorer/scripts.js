@@ -34,8 +34,10 @@ function executeApi(apiId) {
 	let api = $("#api-endpoint-"+apiId).html();
 	let method = $("#api-method-"+apiId).html();
 	let payload = $("#api-payload-"+apiId).val();
+	let params = $("#api-params-"+apiId).val();
 	let token = $("#token").val();
 	let url = $("#api-url").val();
+	if(params) { api += "?" + params; }
 	debugAPI("new call ==["+now()+"]========> ");
 	debugAPI("\tcalling ("+method+")["+api+"]");
 	debugAPI("\t\t " + url + api);
@@ -54,7 +56,7 @@ function executeApi(apiId) {
 		payloadJson = null;
 		debugAPI("\tno payload");
 	}
-	ajax(method, api, payloadJson, token, true)
+	ajaxApi(method, api, payloadJson, token, true)
 		.then(rs => {
 			let response = jsonAPIFormat(rs);
 			debugAPI("\nrs:");
@@ -72,14 +74,24 @@ function executeApi(apiId) {
 				return err.error;
 			}
 		})
-		.then(rs => showOn("#api-rs-" + apiId, rs));
+		.then(rs => {
+//			console.error(rs);
+			showOn("#api-rs-" + apiId, rs);
+		});
 }
 
-function updateApiUrl(apiId, param, el) {
-	let apiOriginal = $("#api-original-"+apiId).val();
+function updateApiUrl(apiId) {
+	let url = $("#api-original-"+apiId).val();
 	let apiName = $("#api-endpoint-"+apiId);
-	let val = $(el).val();
-	let url = apiOriginal.replace(':'+param, val);
+	let queryVars = $("#call-api-"+apiId+" .query-var");
+	queryVars.each((index, element) => {
+		let el = $(element);
+		let val = el.val();
+		if(!val) return;
+		let param = el.attr("placeholder");
+		console.info("setting " + param + ": " + val);
+		url = url.replace(':'+param, val);
+	});
 	apiName.html(url);
 }
 

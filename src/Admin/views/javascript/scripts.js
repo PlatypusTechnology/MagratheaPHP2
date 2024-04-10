@@ -78,10 +78,18 @@ function ajax(method, url, payload, authorization, debug=false) {
 	return new Promise(function(resolve, reject) {
 		switch(method.toUpperCase()) {
 			case "POST":
-				$.post(url, payload, (rs) => {
-					hideLoading(); resolve(rs);
+				console.info("auth: ", authorization);
+				$.post(url, payload, (rs) => resolve(rs))
+				.fail(err => {
+					console.error("error", err);
+					reject({ 
+						error: err.statusText,
+						data: err.responseJSON
+					});
 				})
+				.always(() => hideLoading());
 				break;
+			default:
 			case "GET":
 				if(payload != null) {
 					let queryString = Object.entries(payload)
@@ -89,44 +97,60 @@ function ajax(method, url, payload, authorization, debug=false) {
 					.join('&');
 					url = url + '&' + queryString;
 				}
-			default:
-				let ajaxData = {
-					url: url,
-					method,
-					type: method,
-					data: payload,
-					processData: false,
-					success: function(response) {
-						hideLoading();
-						resolve(response);
-					},
-					error: function(jqXHR, textStatus, errorThrown) {
-						let err = {
-							"status": textStatus,
-							"error": errorThrown,
-						};
-						if(jqXHR && jqXHR.responseJSON) {
-							err["data"] = jqXHR.responseJSON;
-						}
-						hideLoading();
-						console.error("error!" , err);
-						reject(err);
-					}
-				};
-				if(authorization) {
-					ajaxData["beforeSend"] = (xhr) => { 
-						xhr.setRequestHeader('Authorization', "Basic " + authorization);
-					};
-				}
-				if(debug) console.info("ajaxData:", ajaxData);
-				$.ajax(ajaxData);
+				$.get(url, (rs) => resolve(rs))
+				.fail(err => {
+					console.error("error", err);
+					reject({ 
+						error: err.statusText,
+						data: err.responseJSON
+					});
+				})
+				.always(() => hideLoading());
 		}
   });
 }
 
+function ajaxApi(method, url, payload, authorization, debug=false) {
+	showLoading();
+	if(debug) console.info("Calling api ["+method+"]"+url+" with payload", payload);
+	return new Promise(function(resolve, reject) {
+		let ajaxData = {
+			url: url,
+			method,
+			type: method,
+			data: payload,
+			dataType: 'json',
+			success: function(response) {
+				hideLoading();
+				resolve(response);
+			},
+			error: function(jqXHR, textStatus, errorThrown) {
+				console.error("error on ajax post", errorThrown);
+				let err = {
+					"status": textStatus,
+					"error": errorThrown,
+				};
+				if(jqXHR && jqXHR.responseJSON) {
+					err["data"] = jqXHR.responseJSON;
+				}
+				hideLoading();
+				console.error("error!" , err);
+				reject(err);
+			}
+		};
+		if(authorization) {
+			ajaxData["beforeSend"] = (xhr) => { 
+				xhr.setRequestHeader('Authorization', "Basic " + authorization);
+			};
+		}
+		if(debug) console.info("ajaxData:", ajaxData);
+		$.ajax(ajaxData);
+	});
+}
+
 function callAction(action, method="GET", data=null) {
 	let url = "/"+getCurrentPage()+"?magrathea_subpage="+action;
-	return ajax(method, url, data);
+	return ajax(method, url, data, null, true);
 }
 
 function callApi(object, fn, params=null) {

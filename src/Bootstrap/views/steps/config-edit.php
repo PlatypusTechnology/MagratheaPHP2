@@ -29,7 +29,7 @@
 	printField("db_pass", "Database Password");
 	printField("logs_path", "Logs path", $appPath."/logs");
 	printField("app_url", "Application URL");
-	printField("jwt_key", "Random Hash", Magrathea2\Helper::RandomString(20));
+	printField("jwt_key", "Random Hash", Magrathea2\MagratheaHelper::RandomString(20));
 	
 	?>
 	</form>

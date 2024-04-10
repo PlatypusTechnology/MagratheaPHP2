@@ -48,7 +48,7 @@ class Admin implements iAdmin {
 	 * @return 	Admin			itself
 	 */
 	public function SetPrimaryColor($color): Admin {
-		$helper = new \Magrathea2\Helper();
+		$helper = new \Magrathea2\MagratheaHelper();
 		$dec = $helper->HexToRgb($color);
 		return $this->SetPrimaryColorDecimal(implode(',', $dec));
 	}

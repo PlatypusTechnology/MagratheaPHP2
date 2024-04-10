@@ -11,7 +11,7 @@ namespace Magrathea2;
 ####    Helper created: 2022-11 by Paulo Martins
 ####
 #######################################################################################
-class Helper {
+class MagratheaHelper {
 
 	/**
 	*	Generates a random string

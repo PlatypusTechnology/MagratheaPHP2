@@ -49,7 +49,7 @@ class MagratheaApi {
 	 * @return 	MagratheaApi	itself
 	 */
 	public function SetAddress($addr): MagratheaApi {
-		$this->apiAddress = Helper::EnsureTrailingSlash($addr);
+		$this->apiAddress = MagratheaHelper::EnsureTrailingSlash($addr);
 		return $this;
 	}
 	/**
@@ -158,8 +158,8 @@ class MagratheaApi {
 	 * includes header to allow all
 	 * @param 	string	 		$method				method for custom URL
 	 * @param 	string	 		$url 					custom URL
-	 * @param 	object	 		$control 			control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	string			$function			function to be called from control
+	 * @param 	object|null	$control 			control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	string|any	$function			function to be called from control
 	 * @param 	string|bool	$auth					function that returns authorization for execution. "false" for public API
 	 * @param 	string 			$description	description of function, for documentation (optional)
 	 * @return  MagratheaApi
@@ -231,7 +231,7 @@ class MagratheaApi {
 		$endpoints = [];
 		foreach ($this->endpoints as $method => $functions) {
 			foreach ($functions as $url => $fn) {
-				$baseClass = get_class($fn["control"]);
+				$baseClass = $fn["control"] == null ? null : get_class($fn["control"]);
 				if(!@$endpoints[$url]) $endpoints[$url] = array();
 				$urlPieces = explode("/", $url);
 				$params = [];
@@ -361,15 +361,11 @@ class MagratheaApi {
 		}
 		$params = $this->GetParamsFromRoute($route, $url);
 
-		if(!method_exists($control, $fn)) {
+		if($control != null && !method_exists($control, $fn)) {
 			return $this->ReturnError(500, "Function (".$fn.") does not exists in class ".get_class($control));
 		}
 		try {
-			if($params) {
-				$data = $control->$fn($params);
-			} else {
-				$data = $control->$fn(null);
-			}
+			$data = $this->GetData($control, $fn, $params);
 			return $this->ReturnSuccess($data);
 		} catch(MagratheaApiException $ex) {
 			return $this->ReturnApiException($ex);
@@ -380,6 +376,16 @@ class MagratheaApi {
 				return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 			}
 		}
+	}
+
+	private function GetData($control, $fn, $params=null) {
+		if($control == null){
+			if(!is_callable($fn)) {
+				throw new MagratheaApiException("no callable function found for endpoint");
+			}
+			return call_user_func($fn, $params);
+		}
+		return $control->$fn($params);
 	}
 
 	/**

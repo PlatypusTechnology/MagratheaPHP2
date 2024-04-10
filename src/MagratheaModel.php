@@ -41,7 +41,15 @@ abstract class MagratheaModel{
 	protected $relations = array();
 	protected $dbPk;
 	protected $dirtyValues = array();
-	
+
+	/**
+	 * Checks if the object exists (id not null)
+	 * @return 	bool		does it?
+	 */
+	public function IsEmpty(): bool {
+		$pk = $this->GetPkName();
+		return ($this->$pk != null);
+	}
 	/**
 	 * Gets table related to model
 	 * @return 	string 		model's table

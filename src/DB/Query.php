@@ -156,7 +156,7 @@ class Query{
 	/**
 	 * Set table
 	 * @param 	string 		$t 		Table to be selected from
-	 * @return  Query
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function Table($t){
 		$this->tables = $t;
@@ -166,7 +166,7 @@ class Query{
 	/**
 	 * Alias for Obj
 	 * @param 	string or object 	$obj 	Object to query
-	 * @return  Query
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function Object($obj){
 		return $this->Obj($obj);
@@ -174,7 +174,7 @@ class Query{
 	/**
 	 * Set object for getting information in query
 	 * @param 	object|string 	$obj 		object or string to be selected
-	 * @return  Query
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function Obj($obj){
 		$obj = $this->GiveMeThisObjectCorrect($obj);
@@ -372,7 +372,7 @@ class Query{
 	 * 	Is possible to send a string or an array, where the keys of the array will be the name of the fields which the query will be done
 	 * @param 	string|array 	$whereSql  		String or array for building the query with
 	 * @param 	string 				$condition 		glue condition ("AND" or "OR")
-	 * @return  Query
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function Where(string|array $whereSql, $condition="AND"){
 		if(is_array($whereSql)){
@@ -382,11 +382,19 @@ class Query{
 		return $this;
 	}
 	/**
+	 * Builds where for object's id!
+	 * @param 	any 				$id 		object id to get
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
+	 */
+	public function WhereId($id) {
+		return $this->WhereArray(["id" => $id]);
+	}
+	/**
 	 * Builds where
 	 * 	Same as *Where*, but accepting only array
 	 * @param 	array 		$arr       	Array for building the query
 	 * @param 	string 		$condition 	glue condition ("AND" or "OR")
-	 * @return  Query
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function WhereArray($arr, $condition = "AND"){
 		$newWhere = $this->BuildWhere($arr, $condition);
@@ -398,6 +406,7 @@ class Query{
 	 * @param 	string 		$where     		column
 	 * @param 	string 		$field     		value for column sent
 	 * @param 	string 		$condition 		glue condition ("AND" or "OR")
+	 * @return  Query|QueryDelete|QueryInsert|QueryUpdate
 	 */
 	public function W($where, $field, $condition = "AND"){
 		$newWhere = $this->BuildWhere(array($where => $field), $condition);

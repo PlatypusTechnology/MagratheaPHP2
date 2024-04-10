@@ -22,6 +22,7 @@ use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 class ConfigApp extends Singleton {
 
 	private ?AppConfigControl $control = null;
+	private $cache = [];
 
 	private function GetControl(): AppConfigControl {
 		if($this->control == null) $this->control = new AppConfigControl();
@@ -36,6 +37,7 @@ class ConfigApp extends Singleton {
 	 * @return AppConfig			saved config
 	 */
 	public function Save($key, $value, $overwrite=true): AppConfig {
+		$this->cache[$key] = $value;
 		if($this->isMocked) {
 			$this->mockData[$key] = $value;
 			$r = new AppConfig();
@@ -53,8 +55,10 @@ class ConfigApp extends Singleton {
 	 */
 	public function Get(string $key, $default=null): ?string {
 		if($this->isMocked) { return @$this->mockData[$key]; }
+		if(@$this->cache[$key]) return $this->cache[$key];
 		$value = $this->GetControl()->GetValueByKey($key);
 		if($value == null) return $default;
+		$this->cache[$key] = $value;
 		return $value;
 	}
 
