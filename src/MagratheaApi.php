@@ -207,7 +207,11 @@ class MagratheaApi {
 			foreach ($functions as $url => $fn) {
 				$params = array();
 				$urlPieces = explode("/", $url);
-				$base = get_class($fn["control"]);
+				if($fn["control"] == null) {
+					$base = "anonymous";
+				} else {
+					$base = get_class($fn["control"]);
+				}
 				if(!@$baseUrls[$base]) $baseUrls[$base] = array();
 				if(!@$baseUrls[$base][$method]) $baseUrls[$base][$method] = array();
 				foreach ($urlPieces as $piece) {
@@ -317,7 +321,6 @@ class MagratheaApi {
 	 * @return 		string|null
 	 */
 	public function Run($returnRaw = false) {
-		Debugger::Instance()->SetType(0);
 		$urlCtrl = @$_GET["magrathea_control"];
 		$action = @$_GET["magrathea_action"];
 		$params = @$_GET["magrathea_params"];

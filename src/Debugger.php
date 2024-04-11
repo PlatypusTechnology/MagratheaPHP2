@@ -47,6 +47,7 @@ class Debugger extends Singleton {
 	* @return  	Debugger
 	*/
 	public function SetType($type){
+//		echo "setting type: ".$type; var_dump(debug_backtrace());
 		$this->debugType = $type;
 		return $this;
 	}
@@ -201,7 +202,8 @@ class Debugger extends Singleton {
 	* @param 	string 	$values 	values to be added to the query
 	*/
 	public function AddQuery($sql, $values){
-		if($this->debugType == self::NONE || !$this->queries) return;
+		if($this->debugType == self::NONE) return;
+		if(!$this->queries) return;
 		$logThis = "query run: [".$sql."]";
 		if(!is_null($values)){
 			$values = print_r($values, true);
