@@ -64,7 +64,7 @@ class AdminMenu {
 
 	/**
 	 * Create a title menu item
-	 * @param string $t		item title
+	 * @param string $t		item title [ title, type ] (type = main|sub|empty|link)
 	 * @return array			item object with title
 	 */
 	public function CreateTitle($t): array {

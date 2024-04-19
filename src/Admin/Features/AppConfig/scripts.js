@@ -1,11 +1,15 @@
+function getAppConfigAdminFeatureId() {
+	return $("#AppConfigAdminFeatureId").val();
+}
+
 function editConfig(configId) {
-	callFeature("AdminFeatureAppConfig", "View", "GET", {"id": configId})
+	callFeature(getAppConfigAdminFeatureId(), "View", "GET", {"id": configId})
 		.then(rs => showOn("#config-data-form", rs));
 }
 newConfig = () => editConfig("new");
 
 function updateAppConfigList() {
-	callFeature("AdminFeatureAppConfig", "List")
+	callFeature(getAppConfigAdminFeatureId(), "List")
 		.then(rs => showOn("#app-config-list", rs, true));
 }
 
@@ -24,6 +28,6 @@ function copyExport() {
 function importAppConfig() {
 	let importData = $("#config-import").val();
 	console.info("importing", importData);
-	callFeature("AdminFeatureAppConfig", "Import", "POST", { "data": importData })
+	callFeature(getAppConfigAdminFeatureId(), "Import", "POST", { "data": importData })
 		.then(rs => showOn("#migration-rs", rs, true));
 }

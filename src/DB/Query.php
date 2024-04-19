@@ -532,7 +532,7 @@ class Query{
 		if(trim($sqlWhere)!=""){
 			$sqlCount .= " WHERE ".$sqlWhere;
 		}
-		if(trim($this->group)!=""){
+		if($this->group != null && trim($this->group)!=""){
 			$sqlCount .= " GROUP BY ".$this->group;
 		}
 		return $sqlCount;

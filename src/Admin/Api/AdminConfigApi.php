@@ -31,5 +31,4 @@ class AdminConfigApi extends \Magrathea2\MagratheaApiControl {
 		return CodeManager::Instance()->GetCodeCreationData();
 	}
 
-
 }

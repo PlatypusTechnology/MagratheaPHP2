@@ -224,7 +224,6 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 		$columns = $this->Columns();
 		array_push($columns, $this->GetEditColumn());
 		$list = $this->control->GetListPage();
-
 		include(__DIR__."/list.php");
 	}
 

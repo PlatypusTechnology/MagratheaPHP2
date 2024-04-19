@@ -8,6 +8,10 @@ https://startbootstrap.github.io/startbootstrap-simple-sidebar/
 $manager = Magrathea2\Admin\AdminManager::Instance();
 $env = Magrathea2\Config::Instance()->GetEnvironment();
 
+function getMainTitle($item) {
+	return '<span class="title main">'.$item['title'].'</span>';
+}
+
 function getTitle($item) {
 	return '<span class="title">'.$item['title'].'</span>';
 }
@@ -50,11 +54,15 @@ function getItem($item) {
 	<div class="list-group list-group-flush">
 		<ul class="p-0">
 		<?php
-			$menuItems = $manager->GetMenu()->GetMenu();
-			foreach($menuItems as $item) {
+			/** @var  \Magrathea2\Admin\AdminManager::GetMenu */
+			$menuItems = $manager->GetMenu();
+			foreach($menuItems->GetMenu() as $item) {
 				echo '<li class="list-group-item list-group-item-action list-group-item-light '.(@$item['active'] ? 'active' : '').'">';
 				$type = @strtolower($item['type']);
 				switch($type) {
+					case "main":
+						echo getMainTitle($item);
+						break;
 					case "sub":
 						echo getTitle($item);
 						break;

@@ -1,10 +1,17 @@
 <?php
 
 use Magrathea2\Admin\AdminElements;
+use Magrathea2\Admin\AdminManager;
 
 AdminElements::Instance()->Header("App Configuration");
 
+/** @var \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig $featureClass */
+$featureClass = AdminManager::Instance()->GetActiveFeature();
+$featureId = $featureClass->featureId;
+
 ?>
+
+<input type="hidden" value="<?=$featureId?>" id="AppConfigAdminFeatureId" />
 
 <div class="container">
 

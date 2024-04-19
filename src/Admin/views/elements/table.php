@@ -28,6 +28,7 @@
 					}
 				} else if (is_a($row, "\Magrathea2\MagratheaModel")) {
 					$value = $row->$key;
+
 				}
 				echo '<td '.($i === 0 ? 'scope="row"' : '').'>';
 				echo $value.'</td>';
