@@ -2,6 +2,8 @@
 
 namespace Magrathea2;
 
+use Magrathea2\Errors\ErrorManager;
+
 #######################################################################################
 ####
 ####    MAGRATHEA PHP2
@@ -153,7 +155,7 @@ class Debugger extends Singleton {
 			case self::LOG:
 				if($debug instanceof \Magrathea2\Exceptions\MagratheaConfigException) {
 					if($debug->killerError) {
-						die("Fatal Error: ".$debug);
+						ErrorManager::Instance()->DisplayException($debug);
 					}
 				} else if($debug instanceof \Exception) {
 					Logger::Instance()->LogError($debug);
