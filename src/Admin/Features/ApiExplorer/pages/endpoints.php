@@ -8,6 +8,7 @@ use function Magrathea2\p_r;
 
 $elements = AdminElements::Instance();
 
+/** @var $feature \Magrathea2\Admin\AdminFeature */
 $feature = AdminManager::Instance()->GetActiveFeature();
 $api = $feature->apiName;
 $url = $feature->apiUrl;

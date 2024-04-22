@@ -16,10 +16,13 @@ use Magrathea2\Singleton;
 #######################################################################################
 
 /**
-* This class will provide you the quickest access possible to the magrathea.conf config file.
+* This class will print errors in beautiful pages
 */
 class ErrorManager extends Singleton {
 
+	/**
+	 * Displays an exception
+	 */
 	public function DisplayException(Exception $ex) {
 		$errorMessage = $ex->getMessage();
 		include(__DIR__."/view-exception.php");
