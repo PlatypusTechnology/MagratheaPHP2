@@ -57,12 +57,9 @@
 									include("steps/db-run.php");
 									break;
 								case 6:
-									include("steps/code-generate.php");
-									break;
-								case 7:
 									include("steps/install-admin.php");
 									break;
-								case 8:
+								case 7:
 									include("steps/develop.php");
 									break;
 								}

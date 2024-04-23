@@ -76,8 +76,13 @@
 }
 .side-menu a.menu-logout::before {
   content: "\00d7"; /* This is the HTML entity for the close symbol */
-  margin-right: 5px; /* Optional - add some space between the close symbol and the link */
+  margin-right: 5px;
 	border: 1px solid #636464;
 	padding: 0 4px;
+}
+.side-menu a.menu-link::before {
+  content: "\1F517"; /* This is the HTML entity for the close symbol */
+  margin-right: 5px;
+	padding: 0 2px;
 }
 

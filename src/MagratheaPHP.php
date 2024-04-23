@@ -178,11 +178,19 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Return link to Magrathea's documentation
+	 * @return		string 		link
+	 */
+	public static function GetDocumentationLink(): string {
+		return "https://www.platypusweb.com.br/magratheaphp2";
+	}
+
+	/**
 	* Gets Magrathea Version
 	* @return   string    version
 	*/
 	public static function Version(): string { 
-		return "0.1";
+		return "2.0.0";
 	}
 
 	/**

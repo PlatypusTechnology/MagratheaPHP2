@@ -57,10 +57,6 @@ function linkStepTo($step) {
 		</li>
 		<?php $s++; ?>
 		<li class="StepProgress-item <?=getClass($s)?>">
-			<a href="<?=linkStepTo($s)?>">Basic Code Generation</a>
-		</li>
-		<?php $s++; ?>
-		<li class="StepProgress-item <?=getClass($s)?>">
 			<a href="<?=linkStepTo($s)?>">Install Magrathea Admin</a>
 		</li>
 		<?php $s++; ?>

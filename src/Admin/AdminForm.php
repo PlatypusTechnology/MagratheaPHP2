@@ -127,6 +127,7 @@ class AdminForm {
 					}
 					$rs = $obj->Save();
 					$this->printAlert("Item saved", 'success');
+					AdminManager::Instance()->Log("CRUD Save ".$objType, $obj);
 					return [
 						"success" => true,
 						"action" => "save",
@@ -137,6 +138,7 @@ class AdminForm {
 					unset($_POST["id"]);
 					$rs = $obj->Delete();
 					$this->printAlert("Item removed", 'danger');
+					AdminManager::Instance()->Log("CRUD Delete ".$objType, $obj);
 					return [
 						"success" => true,
 						"action" => "delete",

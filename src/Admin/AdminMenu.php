@@ -2,6 +2,7 @@
 
 namespace Magrathea2\Admin;
 
+use Magrathea2\MagratheaPHP;
 use Magrathea2\Singleton;
 
 
@@ -140,9 +141,8 @@ class AdminMenu {
 	 * @return array		items
 	 */
 	public function GetHelpSection(): array {
-		$rs = [];
+		$rs = $this->GetMagratheaLinks();
 		array_push($rs,
-			$this->CreateTitle("Help"),
 			$this->GetItem("help-admin-demos"),
 			$this->GetItem("help-admin-scripts")
 		);
@@ -162,6 +162,32 @@ class AdminMenu {
 			if(@$f) array_push($rs, $f->GetMenuItem());
 		}
 		return $rs;
+	}
+
+	/**
+	 * Gets an array with valuable links for development
+	 * @return		array
+	 */
+	public function GetMagratheaLinks() {
+		$documentationLink = [
+			'title' => 'Reference',
+			'class' => 'menu-link',
+			'link' => MagratheaPHP::GetDocumentationLink(),
+		];
+		$repoLink = [
+			'title' => "Github repo",
+			'class' => 'menu-link',
+			'link' => "https://github.com/PlatypusTechnology/MagratheaPHP2",
+		];
+		$platypusLink = [
+			'title' => 'Platypus Web (author)',
+			'class' => 'menu-link',
+			'link' => "https://www.platypusweb.com.br/",
+		];
+		return [
+			$this->CreateTitle("Documentation"),
+			$documentationLink, $repoLink, $platypusLink
+		];
 	}
 
 	/**

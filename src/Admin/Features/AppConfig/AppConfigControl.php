@@ -3,6 +3,7 @@
 namespace Magrathea2\Admin\Features\AppConfig;
 
 use Exception;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\MagratheaModelControl;
 use Magrathea2\DB\Query;
 
@@ -134,6 +135,7 @@ class AppConfigControl extends MagratheaModelControl {
 			$system = $c->is_system ? "[s]" : "[n]";
 			$export .= '=='.$system.$c->key.'==|>>'.$c->GetValue().'>>;;\n';
 		}
+		AdminManager::Instance()->Log("Exporting Config Data", "config", $export);
 		return $export;
 	}
 
@@ -172,6 +174,7 @@ class AppConfigControl extends MagratheaModelControl {
 			if($echoProgress) echo "updating: <b>".$row["key"]."</b> = ".$row["value"]."<br/>";
 			$this->Save($row["key"], $row["value"], true, $row["system"]);
 		}
+		AdminManager::Instance()->Log("Importing Config Data", "config", $dataStr);
 		return true;
 	}
 

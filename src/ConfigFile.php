@@ -1,6 +1,9 @@
 <?php
 
 namespace Magrathea2;
+
+use Magrathea2\Admin\Admin;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Exceptions\MagratheaConfigException;
 
 /**
@@ -166,8 +169,8 @@ class ConfigFile {
 		if (!fwrite($handle, $content)) { 
 			throw new MagratheaConfigException("Oh noes! Could not save File: ".$file);
 		} 
-		fclose($handle); 
-		return true; 
+		fclose($handle);
+		return true;
 	}	
 }
 

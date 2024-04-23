@@ -11,6 +11,7 @@
 	$magDb = Database::Instance();
 
 	$query = "SHOW TABLES";
+	echo $query;
 	$rs = $magDb->QueryAll($query);
 
 function getColumnsOf($table) {

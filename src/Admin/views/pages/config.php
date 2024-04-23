@@ -5,6 +5,7 @@ use Magrathea2\ConfigFile;
 
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminForm;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\AdminUrls;
 
 use function Magrathea2\p_r;
@@ -45,16 +46,11 @@ if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 	$mconfig->setConfig($config);
 	try{
 		$success = $mconfig->Save(true);
+		AdminManager::Instance()->Log("config file saved", "magrathea.conf", $config);
 	} catch(Exception $ex) {
 		\Magrathea2\Debugger::Instance()->Error($ex);
 		$saveError = $ex->getMessage();
 		$success = false;
-	}
-
-	if ($success) {
-		AdminElements::Instance()->Alert("Config saved", "success");
-	} else {
-		AdminElements::Instance()->Alert($saveError, "danger");
 	}
 
 }
@@ -62,6 +58,13 @@ if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 ?>
 
 <div class="container">
+	<?php
+	if ($success) {
+		AdminElements::Instance()->Alert("Config saved", "success");
+	} else {
+		AdminElements::Instance()->Alert($saveError, "danger");
+	}
+	?>
 
 	<div class="card">
 		<div class="card-header">

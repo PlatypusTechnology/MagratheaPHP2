@@ -25,7 +25,10 @@ class ErrorManager extends Singleton {
 	 */
 	public function DisplayException(Exception $ex) {
 		$errorMessage = $ex->getMessage();
-		include(__DIR__."/view-exception.php");
+		if($ex->getCode() == 424041) {
+			$extraMessagePage = "error-magratheaconf.php";
+		}
+		include(__DIR__."/views/view-exception.php");
 		die;
 	}
 

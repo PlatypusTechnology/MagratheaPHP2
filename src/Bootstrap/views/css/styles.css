@@ -79,6 +79,9 @@ pre.rs-success {
 pre.rs-error {
 	border: 1px solid var(--error);
 }
+pre.inline { 
+	display: inline !important;
+}
 
 .close-bt {
 	width: 30px;

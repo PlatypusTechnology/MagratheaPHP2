@@ -151,7 +151,6 @@ class Admin implements iAdmin {
 		}
 
 		$adminMenu
-			->Add($adminMenu->GetHelpSection())
 			->Add($adminMenu->GetLogoutMenuItem());
 		return $adminMenu;
 	}
@@ -174,7 +173,8 @@ class Admin implements iAdmin {
 			], "Users"))
 
 			->Add("Tools")
-			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem());
+			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem())
+			->Add($adminMenu->GetHelpSection());
 		return $adminMenu;
 	}
 

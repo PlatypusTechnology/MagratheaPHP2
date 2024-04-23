@@ -32,7 +32,7 @@ class Config extends Singleton {
 			if(!$this->path) {
 				throw new MagratheaConfigException("Invalid path", $this->path."/".$this->configFile);
 			}
-			throw new MagratheaConfigException("File could not be found: ".$this->path."/".$this->configFile, $this->path."/".$this->configFile);
+			throw new MagratheaConfigException("File could not be found: ".$this->path."/".$this->configFile, $this->path."/".$this->configFile, 424041);
 		}
 		return $filePath;
 	}
@@ -49,7 +49,7 @@ class Config extends Singleton {
 		}
 		$this->configs = @parse_ini_file($this->GetFilePath(), true);
 		if( !$this->configs ){
-			throw new MagratheaConfigException("There was an error trying to load the config file. File: [".$this->path."/".$this->configFile."]");
+			throw new MagratheaConfigException("There was an error trying to load the config file. File: [".$this->path."/".$this->configFile."]", null, 424041);
 		}
 		return $this;
 	}
