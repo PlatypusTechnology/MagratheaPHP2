@@ -10,5 +10,6 @@ Version 2 of acclaimed Magrathea PHP Framework
 	- or, directly, from: https://phpdoc.org/phpDocumentor.phar
 - Run:
 ```
+php phpDocumentor.phar run -d ./src
 php phpDocumentor.phar run -d ./src -t ./docs
 ```

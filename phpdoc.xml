@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor
+	configVersion="3"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="https://www.phpdoc.org"
+>
+	<title>Magrathea PHP 2</title>
+	<paths>
+		<output>./docs/</output>
+		<cache>./docs-cache/</cache>
+	</paths>
+	<setting name="template.color" value="deep-orange"/>
+
+</phpdocumentor>
