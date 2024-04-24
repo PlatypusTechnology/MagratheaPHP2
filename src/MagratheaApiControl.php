@@ -140,5 +140,11 @@ class MagratheaApiControl {
 			throw $ex;
 		}
 	}
-}
 
+	public function Cache($name, $data=null) {
+		MagratheaCache::Instance()
+			->Type("json")
+			->Cache($name, $data);
+	}
+
+}

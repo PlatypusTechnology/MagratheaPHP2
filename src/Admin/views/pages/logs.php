@@ -32,6 +32,7 @@ $dirData = scandir($logPath);
 $files = array();
 foreach ($dirData as $d) {
 	if ($d === '.' or $d === '..') continue;
+	if ($d == ".gitkeep") continue;
 	array_push($files, $d);
 }
 

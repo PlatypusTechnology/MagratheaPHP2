@@ -53,18 +53,21 @@ if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 		$success = false;
 	}
 
+	$elements = AdminElements::Instance();
+	$elements->Buffer();
+	if (@$success) {
+		$elements->Alert("Config saved", "success");
+	} else {
+		$elements->Alert(@$saveError, "danger");
+	}
+	$alertBox = $elements->Get();
+
 }
 
 ?>
 
 <div class="container">
-	<?php
-	if ($success) {
-		AdminElements::Instance()->Alert("Config saved", "success");
-	} else {
-		AdminElements::Instance()->Alert($saveError, "danger");
-	}
-	?>
+	<?php if(@$alertBox) { echo $alertBox; } ?>
 
 	<div class="card">
 		<div class="card-header">

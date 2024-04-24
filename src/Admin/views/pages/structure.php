@@ -5,6 +5,7 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminUrls;
 use Magrathea2\Config;
 use Magrathea2\Logger;
+use Magrathea2\MagratheaCache;
 use Magrathea2\MagratheaPHP;
 
 $pageTitle = "Structure";
@@ -47,6 +48,12 @@ $table = [
 		"name" => "Database backups",
 		"value" => AdminDatabase::Instance()->GetBackupFolder(),
 		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("backups")."'>Backups</a>",
+		"check" => function($r) { return checkPathIsOk($r["value"]); }
+	],
+	[
+		"name" => "Cache",
+		"value" => MagratheaCache::Instance()->GetCachePath(),
+		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("cache")."'>Cache</a>",
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[

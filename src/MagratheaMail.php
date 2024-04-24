@@ -7,7 +7,7 @@ namespace Magrathea2;
  * 	function that manages e-mail sends, building headers and sending e-mails
  */
 class MagratheaMail {
-	
+
 	public $to;
 	public $from;
 	public $replyTo;

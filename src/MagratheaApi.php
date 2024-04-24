@@ -270,7 +270,6 @@ class MagratheaApi {
 	}
 
 	private function CompareRoute($route, $url) {
-//		echo "comparing; "; p_r($route); p_r($url);
 		if($route == $url) return true;
 		if(count($route) != count($url)) return false;
 		if($route[0] != $url[0]) return false;
@@ -284,7 +283,6 @@ class MagratheaApi {
 		return true;
 	}
 	private function FindRoute($url, $apiUrls) {
-//		echo "searching route: "; p_r($url); p_r($apiUrls);
 		if(!$apiUrls) return false;
 		foreach ($apiUrls as $apiUrl => $value) {
 			$route = explode("/", $apiUrl);
@@ -474,11 +472,18 @@ class MagratheaApi {
 	 * @param 	object 			$data 			response data
 	 */
 	public function ReturnSuccess($data) {
-		return $this->Json(array(
+		$rs = array(
 			"success" => true,
 			"data" => $data
-		));
+		);
+		$this->Cache($rs);
+		return $this->Json($rs);
 	}
+
+	/**
+	 * returns an error json response
+	 * @param 	object 			$data 			response data
+	 */
 	public function ReturnFail($data) {
 		if(is_a($data, MagratheaApiException::class)) {
 			$rs = [
@@ -497,5 +502,9 @@ class MagratheaApi {
 			"success" => false,
 			"data" => $rs
 		));
+	}
+
+	public function Cache($data) {
+		MagratheaCache::Instance()->HandleApiCache($data);
 	}
 }
