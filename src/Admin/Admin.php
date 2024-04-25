@@ -98,12 +98,10 @@ class Admin implements iAdmin {
 	public function SetFeatures() {
 		$this
 			->AddFeature(new \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig())
+			->AddFeature(new \Magrathea2\Admin\Features\Cache\AdminFeatureCache())
 			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
 			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
 			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
-	}
-	public function AddMagratheaFeatures() {
-		
 	}
 	public function GetFeatures() {
 		return $this->adminFeatures;
@@ -131,7 +129,7 @@ class Admin implements iAdmin {
 	}
 
 	/**
-	 * Adds a menu item (before logout)
+	 * Adds a menu item
 	 * @param array $item			menu item ["title", "link"]
 	 * @return itself
 	 */
@@ -165,6 +163,10 @@ class Admin implements iAdmin {
 
 			->Add($adminMenu->GetDatabaseSection())
 			->Add($adminMenu->GetObjectSection())
+
+			->Add("Cache")
+			->Add($this->adminFeatures["AdminFeatureCache"]->GetMenuItem())
+
 			->Add($adminMenu->GetDebugSection())
 
 			->Add($adminMenu->GetMenuFeatures([

@@ -47,17 +47,34 @@ class MagratheaCache extends Singleton {
 		return $this->cachePath;
 	}
 
+	private function CreateHandle(string $name, $data=null) {
+		if(is_object($data)) {
+			throw new MagratheaException("cache handle cannot be an object!");
+		}
+		if(!empty($data)) { $name = $name."-".$data; }
+		$this->cacheName = $name;
+	}
+
+	/**
+	 * Clears cache for given cache name
+	 * @param		$name		cached name
+	 * @param		$data		(optional) reference to identify cached data
+	 */
+	public function Clear(string $name, $data=null) {
+		$this->CreateHandle($name, $data);
+		$file = $this->GetCacheFile();
+		return unlink($file);
+	}
+
 	/**
 	 * Initiates the cache and displays the cached data if already available (killing the execution)
 	 * @param		$name		cached name
 	 * @param		$data		(optional) reference to identify cached data
 	 */
 	public function Cache(string $name, $data=null) {
-		if(is_object($data)) {
-			throw new MagratheaException("cache handle cannot be an object!");
-		}
-		if(!empty($data)) { $name = $name."-".$data; }
-		$this->cacheName = $name;
+		$cacheActive = Config::Instance()->Get("no_cache");
+		if(!empty($cacheActive) && $cacheActive == true) return false;
+		$this->CreateHandle($name, $data);
 		$this->LookForFile();
 	}
 	/**
@@ -96,7 +113,38 @@ class MagratheaCache extends Singleton {
 	 * @param 		string 		info to cache
 	 */
 	public function SaveFile(string $data) {
-		return file_put_contents($this->GetCacheFile(), $data);
+		$filePath = $this->GetCacheFile();
+		$f=fopen($filePath,'w');
+		$success = fwrite($f,$data);
+		fclose($f);
+		return $success;
+	}
+	/**
+	 * Deletes a file from cache
+	 * @param 	string		file name
+	 */
+	public function DeleteFile(string $file) {
+		$path = $this->GetCachePath();
+		$filePath = MagratheaHelper::EnsureTrailingSlash($path).$file;
+		return unlink($filePath);
+	}
+
+	/**
+	 * deletes all files from cached path
+	 * @return 	array		deleted files
+	 */
+	public function RemoveAllCache() {
+		$path = $this->GetCachePath();
+		$cachePath = MagratheaHelper::EnsureTrailingSlash($path)."*";
+		$files = glob($cachePath); // get all file names
+		$removed = [];
+		foreach($files as $file){
+			if(is_file($file)) {
+				array_push($removed, $file);
+				unlink($file); // delete file
+			}
+		}
+		return $removed;
 	}
 
 	/**

@@ -122,6 +122,13 @@ class AdminMenu {
 		);
 		return $rs;
 	}
+	public function GetCacheSection(): array {
+		$rs = [];
+		array_push($rs,
+			$this->CreateTitle("Cache"),
+		);
+		return $rs;
+	}
 	/**
 	 * Get debug items array
 	 * @return array		items
@@ -209,6 +216,16 @@ class AdminMenu {
 	 */
 	public function GetItem($item): array|null {
 		return @$this->menuItems[$item];
+	}
+	/**
+	 * Adds an item to menuItems
+	 * @param		string 	$index		item key
+	 * @param		array		menu item
+	 * @return 	AdminMenu		itself
+	 */
+	public function AddItem($index, $item): AdminMenu {
+		$this->menuItems[$index] = $item;
+		return $this;
 	}
 
 	/**

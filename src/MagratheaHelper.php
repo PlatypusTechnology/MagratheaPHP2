@@ -58,4 +58,26 @@ class MagratheaHelper {
 		return $str;
 	}
 
+	public static function FormatSize(int $bytes, int $decimals = 2): string{
+		if (!$bytes) {
+			return '0 bytes';
+		}
+		$k = 1024;
+		$dm = $decimals < 0 ? 0 : $decimals;
+		$sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+		$i = floor(log($bytes, $k));
+
+		return sprintf("%.{$dm}f %s", $bytes / pow($k, $i), $sizes[$i]);
+	}
+
+	// public static function FormatSize($size): string {
+	// 	if(empty($size)) return "-";
+	// 	$kb = $size / 1024;
+	// 	if($kb < 1024) return round($kb, 2, PHP_ROUND_HALF_UP)." KB";
+	// 	$mb = $kb / 1024;
+	// 	if($mb < 1024) return round($mb, 2, PHP_ROUND_HALF_UP)." MB";
+	// 	$gb = $mb / 1024;
+	// 	return round($gb, 2, PHP_ROUND_HALF_UP)." GB";
+	// }
+
 }

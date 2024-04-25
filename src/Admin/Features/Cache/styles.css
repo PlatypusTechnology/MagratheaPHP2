@@ -1,0 +1,17 @@
+.cache-view {
+	background-color: rgba(0, 0, 0, 0.9);
+	color: rgb(5, 212, 85);
+	font-family: monospace;
+	padding: 10px 0 10px 20px;
+	border-radius: 0 10px 10px 10px;
+	white-space: pre-wrap;
+}
+
+.action {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.cache-txt {
+	height: 300px;
+}
