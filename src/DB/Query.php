@@ -29,7 +29,7 @@ enum QueryType {
 /**
  * Creates queries making use of objects and tables
  */
-class Query{
+class Query {
 
 	protected $type = QueryType::Unknown;
 

@@ -48,5 +48,10 @@ class AdminLog extends MagratheaModel implements iMagratheaModel {
 		$this->dbAlias["data"] = "info";
 	}
 
+	public function Simple() {
+		unset($this->info);
+		return $this;
+	}
+
 }
 

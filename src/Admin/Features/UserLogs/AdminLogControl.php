@@ -42,9 +42,29 @@ class AdminLogControl extends MagratheaModelControl {
 	 * @param int $count		how much (default: 20)
 	 * @return array				array of AdminLog
 	 */
-	public function GetLatest($count=10): array {
-		$q = Query::Select();
-		$q->Obj(new AdminLog())->Limit($count)->Order("created_at DESC");
+	public function GetLatest($count=10, $page=0): array {
+		$q = Query::Select()
+			->Obj(new AdminLog())
+			->Limit($count)
+			->Page($page)
+			->Order("created_at DESC");
+		return self::Run($q);
+	}
+
+	public function GetByUser($user_id, $count=10, $page=0): array {
+		return $this->GetBy(["user_id" => $user_id], $count, $page);
+	}
+	public function GetByVictim($victim, $count=10, $page=0): array {
+		return $this->GetBy(["victim" => $victim], $count, $page);
+	}
+
+	public function GetBy($condition, $count, $page): array {
+		$q = Query::Select()
+			->Obj(new AdminLog())
+			->Where($condition)
+			->Limit($count)
+			->Page($page)
+			->Order("created_at DESC");
 		return self::Run($q);
 	}
 

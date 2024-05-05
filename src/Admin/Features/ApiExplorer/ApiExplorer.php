@@ -17,6 +17,7 @@ class ApiExplorer extends AdminFeature implements iAdminFeature {
 		parent::__construct();
 		$this->SetClassPath(__DIR__);
 		$this->AddJs(__DIR__."/scripts.js");
+		$this->AddCSS(__DIR__."/styles.css");
 	}
 
 	/**
