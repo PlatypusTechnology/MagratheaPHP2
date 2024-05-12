@@ -98,7 +98,7 @@ class AdminUserControl extends MagratheaModelControl {
 		$user = new AdminUser();
 		$roles = $user->GetRoles();
 		return array_map( function($i) use ($roles) {
-			$role = $roles[$i->role_id];
+			$role = @$roles[$i->role_id];
 			return [
 				"id" => $i->id,
 				"name" => $i->email." (".$role.") "
