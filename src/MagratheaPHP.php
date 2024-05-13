@@ -4,6 +4,7 @@ namespace Magrathea2;
 
 use Exception;
 use Magrathea2\DB\Database;
+use Magrathea2\Errors\ErrorManager;
 use Magrathea2\Exceptions\MagratheaConfigException;
 
 #######################################################################################
@@ -119,9 +120,15 @@ class MagratheaPHP extends Singleton {
 	public function Load() {
 		$configPath = $this->getConfigRoot();
 		if(!$configPath) throw new MagratheaConfigException("magrathea path is empty");
-		Config::Instance()->SetPath($configPath);
-		$timezone = Config::Instance()->Get("timezone");
-		if($timezone) date_default_timezone_set($timezone);
+		try {
+			Config::Instance()->SetPath($configPath);
+			$timezone = Config::Instance()->Get("timezone");
+			if($timezone) date_default_timezone_set($timezone);
+		} catch(MagratheaConfigException $ex) {
+			ErrorManager::Instance()->DisplayException($ex);
+		} catch(\Exception $ex) {
+			throw $ex;
+		}
 		return $this;
 	}
 
@@ -190,7 +197,17 @@ class MagratheaPHP extends Singleton {
 	* @return   string    version
 	*/
 	public static function Version(): string { 
-		return "2.0.0";
+		return file_get_contents(__DIR__."/version");
+	}
+
+	/**
+	 * Gets the version of the app (inside the src folder)
+	 * @return	string 		app version
+	 */
+	public function AppVersion(): string {
+		$file = MagratheaHelper::EnsureTrailingSlash($this->magRoot)."version";
+		if(!file_exists($file)) return "???";
+		return file_get_contents($file);
 	}
 
 	/**

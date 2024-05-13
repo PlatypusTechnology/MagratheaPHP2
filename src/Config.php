@@ -165,6 +165,7 @@ class Config extends Singleton {
 		}
 		if(!$this->environment)
 			$this->environment = $this->configs["general"]["use_environment"];
+		if(!@$this->configs[$this->environment]) throw new  MagratheaConfigException("Could not find environment [".$this->environment."] in magrathea.conf");
 		if(array_key_exists($config_name, $this->configs[$this->environment])){
 			return $this->configs[$this->environment][$config_name];
 		} else {
@@ -185,7 +186,7 @@ class Config extends Singleton {
 	public function GetConfigSection($section_name){
 		$allConfig = $this->GetConfig();
 		if(empty($allConfig[$section_name])) {
-			throw new MagratheaConfigException("Conig [".$section_name."] not available in magrathea.conf", 1);
+			throw new MagratheaConfigException("Config [".$section_name."] not available in magrathea.conf", 1);
 		}
 		return $allConfig[$section_name];
 	}
