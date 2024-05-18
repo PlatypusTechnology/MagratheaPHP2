@@ -4,7 +4,13 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\MagratheaCache;
 use Magrathea2\MagratheaHelper;
 
+$elements = AdminElements::Instance();
+
 $path = MagratheaCache::Instance()->GetCachePath();
+if(!$path) {
+	$elements->Alert("cache_path is empty", "danger");
+	die;
+}
 $path = MagratheaHelper::EnsureTrailingSlash($path);
 $dirData = scandir($path);
 $files = array();
@@ -46,16 +52,19 @@ $titles = [
 	</div>
 	<div class="card-body">
 		<div class="row">
-			<div class="col-12 right">
+			<div class="col-8">
+				<?=$path?>
+			</div>
+			<div class="col-4 right">
 				<?
-					AdminElements::Instance()->Button("clear cache", "clearCache()", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
+					$elements->Button("clear cache", "clearCache()", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
 				?>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-12">
 				<?
-					AdminElements::Instance()->Table(
+					$elements->Table(
 						$tableData,
 						$titles,
 					);
