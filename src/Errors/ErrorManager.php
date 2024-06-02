@@ -32,4 +32,13 @@ class ErrorManager extends Singleton {
 		die;
 	}
 
+	/**
+	 * Displays a message
+	 */
+	public function DisplayMesage(string $errorMessage) {
+		include(__DIR__."/views/view-exception.php");
+		die;
+	}
+
+
 }

@@ -102,7 +102,7 @@ abstract class MagratheaModelControl{
 	 * @param 	Query  	$magQuery  		MagratheaQuery query
 	 * @return  array<object> 		List of objects
 	 */
-	public static function RunMagQuery(Query $magQuery){ 
+	public static function RunMagQuery($magQuery){ 
 		return self::Run($magQuery); 
 	}
 
@@ -115,7 +115,7 @@ abstract class MagratheaModelControl{
 	 * @param 	integer 			$limit    		quantity per page (20 = default)
 	 * @return  array<object> 		List of objects
 	 */
-	public static function RunPagination(Query $magQuery, &$total, $page=0, $limit=20){
+	public static function RunPagination($magQuery, &$total, $page=0, $limit=20){
 		$total = self::QueryOne($magQuery->Count());
 		$magQuery->Limit($limit)->Page($page);
 		return self::Run($magQuery);
@@ -126,7 +126,7 @@ abstract class MagratheaModelControl{
 	 * @param 	boolean 			$onlyFirst 		returns all of it or only first row?
 	 * @return  array<object> 		List of objects
 	 */
-	public static function Run(Query $magQuery, $onlyFirst=false){
+	public static function Run($magQuery, $onlyFirst=false){
 		$array_joins = $magQuery->GetJoins();
 		$arrayObjs = array();
 
@@ -184,7 +184,7 @@ abstract class MagratheaModelControl{
 	 */
 	public static function GetListPage(int $limit=20, int $page=0) {
 		$offset = $page * $limit;
-		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at ASC LIMIT ".$offset.",".$limit;
+		$sql = "SELECT * FROM ".static::$dbTable." ORDER BY created_at DESC LIMIT ".$offset.",".$limit;
 		return static::RunQuery($sql);
 	}
 

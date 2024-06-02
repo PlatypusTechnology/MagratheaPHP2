@@ -15,3 +15,8 @@
 .cache-txt {
 	height: 300px;
 }
+
+.cache-table {
+	height: 500px;
+	overflow-y: scroll;
+}

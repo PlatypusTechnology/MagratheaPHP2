@@ -88,7 +88,7 @@ class ConfigFile {
 			return $this->configs;
 		} else {
 			$c_split = explode("/", $config_name);
-			return ( count($c_split) == 1 ? $this->configs[$config_name] : $this->configs[$c_split[0]][$c_split[1]] );
+			return ( count($c_split) == 1 ? @$this->configs[$config_name] : @$this->configs[$c_split[0]][$c_split[1]] );
 		}
 	}
 	/**

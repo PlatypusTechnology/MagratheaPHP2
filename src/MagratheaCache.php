@@ -29,9 +29,9 @@ class MagratheaCache extends Singleton {
 		} catch(\Exception $ex) {
 			throw $ex;
 		}
-		$this->cachePath = @realpath($path);
+		$this->cachePath = realpath($path);
 		if(!$this->cachePath) {
-			throw new MagratheaException("cache_path is invalid");
+			throw new MagratheaException("cache path is invalid");
 		}
 		return $this;
 	}
@@ -134,8 +134,16 @@ class MagratheaCache extends Singleton {
 	 * @return 	array		deleted files
 	 */
 	public function RemoveAllCache() {
+		return $this->RemovePattern('*');
+	}
+
+	/**
+	 * deletes files with pattern
+	 * @return 	array		deleted files
+	 */
+	public function RemovePattern(string $pattern) {
 		$path = $this->GetCachePath();
-		$cachePath = MagratheaHelper::EnsureTrailingSlash($path)."*";
+		$cachePath = MagratheaHelper::EnsureTrailingSlash($path).$pattern;
 		$files = glob($cachePath); // get all file names
 		$removed = [];
 		foreach($files as $file){

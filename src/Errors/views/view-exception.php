@@ -25,14 +25,16 @@
 			<div class="mt-4">
 				<div class="row">
 					<div class="col-sm-12">
-						There was a fatal error!
+						There was a fatal error:
 					</div>
 					<div class="col-sm-12">
 						<?=$errorMessage?>
 					</div>
+					<? if(@$ex) { ?>
 					<div class="col-sm-12">
 						<pre class="log-response" style="max-height: 500px;"><?php print_r($ex); ?></pre>
 					</div>
+					<? } ?>
 				</div>
 			</div>
 			<hr/>
