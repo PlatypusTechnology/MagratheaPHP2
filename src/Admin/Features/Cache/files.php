@@ -1,10 +1,14 @@
 <?php
 
 use Magrathea2\Admin\AdminElements;
+use Magrathea2\Errors\ErrorManager;
 use Magrathea2\MagratheaCache;
 use Magrathea2\MagratheaHelper;
 
 $path = MagratheaCache::Instance()->GetCachePath();
+if(!$path) {
+	ErrorManager::Instance()->DisplayMesage("no cache path defined");
+}
 $path = MagratheaHelper::EnsureTrailingSlash($path);
 $dirData = scandir($path);
 $files = array();

@@ -2,6 +2,7 @@
 
 namespace Magrathea2\Admin;
 
+use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 use Magrathea2\Admin\iAdmin;
 use Magrathea2\Tests\TestsManager;
 
@@ -85,6 +86,7 @@ class Admin implements iAdmin {
 
 
 	protected $adminFeatures = [];
+	protected $crudFeatures = [];
 	/**
 	 * sets admin feature
 	 * @param AdminFeature $feature		feature class to be added
@@ -93,6 +95,17 @@ class Admin implements iAdmin {
 	protected function AddFeature(AdminFeature $feature): Admin {
 		$id = $feature->featureId;
 		$this->adminFeatures[$id] = $feature;
+		return $this;
+	}
+	/**
+	 * adds a crud admin feature
+	 * @param AdminCrudOobject 	$feature		feature class to be added
+	 * @return Admin						itself
+	 */
+	protected function AddCrudFeature(AdminCrudObject $admin) {
+		$key = $admin->featureId;
+		$this->adminFeatures[$key] = $admin;
+		array_push($this->crudFeatures, $key);
 		return $this;
 	}
 	public function SetFeatures() {
@@ -168,6 +181,7 @@ class Admin implements iAdmin {
 			->Add($this->adminFeatures["AdminFeatureCache"]->GetMenuItem())
 
 			->Add($adminMenu->GetDebugSection())
+			->Add($adminMenu->GetItem("version"))
 
 			->Add($adminMenu->GetMenuFeatures([
 				$this->adminFeatures["AdminFeatureUser"],
@@ -177,6 +191,13 @@ class Admin implements iAdmin {
 			->Add("Tools")
 			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem())
 			->Add($adminMenu->GetHelpSection());
+		return $adminMenu;
+	}
+	public function AddFeaturesMenu(AdminMenu &$adminMenu): AdminMenu {
+		$adminMenu->Add($adminMenu->CreateTitle("Features"));
+		foreach($this->crudFeatures as $fkey) {
+			$adminMenu->Add($this->adminFeatures[$fkey]->GetMenuItem());
+		}
 		return $adminMenu;
 	}
 

@@ -3,16 +3,24 @@
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminUrls;
 use Magrathea2\Config;
+use Magrathea2\Errors\ErrorManager;
 use Magrathea2\MagratheaCache;
 
 $elements = AdminElements::Instance();
 
 $configUrl = AdminUrls::Instance()->GetConfigUrl();
 $cacheActive = Config::Instance()->Get("no_cache");
+
+try {
+	$cachePath = MagratheaCache::Instance()->GetCachePath();
+} catch(\Exception $ex) {
+	ErrorManager::Instance()->DisplayException($ex);
+}
+
 $cacheDetails = array(
 	[
 		"Path",
-		MagratheaCache::Instance()->GetCachePath(),
+		$cachePath,
 		'from <a href="'.$configUrl.'">config file</a>'
 	],
 	[

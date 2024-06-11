@@ -21,9 +21,9 @@
 	"require": {
 		"components/jquery": "^3.6",
 		"scssphp/scssphp": "^1.12.0",
-		"firebase/php-jwt": "6.1",
 		"phpmailer/phpmailer": "^6.9.1",
 		"twbs/bootstrap": "5.2.3",
-		"tedivm/jshrink": "~1.0"
+		"tedivm/jshrink": "~1.0",
+		"firebase/php-jwt": "^6.10"
 	}
 }

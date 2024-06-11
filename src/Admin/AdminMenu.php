@@ -257,6 +257,7 @@ class AdminMenu {
 		$this->menuItems = [
 			"app-conf" => $this->SimpleItem("App Configuration","config-data"),
 			"conf-file" => $this->SimpleItem("Configuration File", "config"),
+			"version" => $this->SimpleItem("Version", "version"),
 			"htaccess" => $this->SimpleItem(".htaccess", "htaccess"),
 			"tests" => $this->SimpleItem("Tests", "tests"),
 			"query" => $this->SimpleItem("Queries", "db-query"),

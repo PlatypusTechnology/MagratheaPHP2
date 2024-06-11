@@ -4,6 +4,7 @@ namespace Magrathea2;
 
 use Magrathea2\Admin\Admin;
 use Magrathea2\Admin\AdminManager;
+use Magrathea2\Errors\ErrorManager;
 use Magrathea2\Exceptions\MagratheaConfigException;
 
 /**
@@ -69,7 +70,13 @@ class ConfigFile {
 	public function CreateFileIfNotExists(){
 		$file = $this->GetPath();
 		if(!file_exists($file)){
-			return file_put_contents($file, '') === false;
+			$create = @file_put_contents($file, '');
+			if(!$create) {
+				$error = error_get_last();
+				ErrorManager::Instance()->DisplayMesage($error["message"]);
+				return false;
+			}
+			return true;
 		} else return true;
 	}
 	/**

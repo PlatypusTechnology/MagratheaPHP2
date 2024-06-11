@@ -8,6 +8,7 @@ use Magrathea2\Admin\Features\UserLogs\AdminLog;
 use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
 use Magrathea2\Admin\Features\User\AdminUser;
 use Magrathea2\DB\Database;
+use Magrathea2\Errors\ErrorManager;
 use Magrathea2\MagratheaPHP;
 
 #######################################################################################
@@ -59,9 +60,9 @@ class Install {
 	 */
 	public function CreateAdminEntranceFile(): bool {
 		$adminFile = $this->getAdminFileEntrance();
-		$file = fopen($adminFile, "w");
+		$file = @fopen($adminFile, "w");
 		if (!$file) {
-			throw new Exception("Could not write file [".$adminFile."]");
+			ErrorManager::Instance()->DisplayMesage("Could not write file [".$adminFile."]");
 		}
 		fwrite($file, $this->GetAdminCode());
 		fclose($file);

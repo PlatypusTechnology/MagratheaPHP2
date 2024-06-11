@@ -21,8 +21,12 @@ $elements = AdminElements::Instance();
 							$value = $values->$key;
 						}
 					}
-					if(is_callable($value)) {
-						$value = $value($el);
+					if(!is_string($value) && is_callable($value)) {
+						try {
+							$value = $value($el);
+						} catch(\Exception $ex) {
+							$value = "invalid call";
+						}
 					}
 				} else { $value = ""; }
 			} else { $value = ""; }

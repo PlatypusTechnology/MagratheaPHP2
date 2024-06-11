@@ -29,9 +29,12 @@ class MagratheaCache extends Singleton {
 		} catch(\Exception $ex) {
 			throw $ex;
 		}
-		$this->cachePath = realpath($path);
+		if(!$path) {
+			throw new MagratheaException("[cache_path] is empty");
+		}
+		$this->cachePath = @realpath($path);
 		if(!$this->cachePath) {
-			throw new MagratheaException("cache path is invalid");
+			throw new MagratheaException("cache path is invalid: ".$path);
 		}
 		return $this;
 	}
