@@ -1,6 +1,8 @@
 <?php
 
 namespace Magrathea2\Exceptions;
+
+use Exception;
 use Magrathea2\Exceptions\MagratheaException;
 
 /**
@@ -38,4 +40,13 @@ class MagratheaApiException extends MagratheaException {
 		$rs .= "\nMessage: ".$this->message;
 		return $rs;
 	}
+
+	public static function FromException(Exception $ex, $code=null, $data=null) {
+		return new MagratheaApiException(
+			$ex->getMessage(),
+			$code ? $code : $ex->getCode(),
+			$data ? $data : $ex
+		);
+	}
+
 }

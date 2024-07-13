@@ -432,6 +432,20 @@ class ObjectManager extends \Magrathea2\Singleton {
 	}
 
 	/**
+	 * Removes an object from objects conf
+	 * @param	string	$objName		name of object
+	 * @return 	bool		success of the operation
+	 */
+	function RemoveObject($objName): bool {
+		$objName = strtolower($objName);
+		$data = $this->GetFullObjectData();
+		if(!@$data[$objName]) return false;
+		unset($data[$objName]);
+		AdminManager::Instance()->Log("object removed from conf: ".$objName, $objName);
+		return $this->confObject->SetConfig($data)->Save();
+	}
+
+	/**
 	 * Gets the automatically generated methods
 	 * @return array		public methods in format ["name", "description"]
 	 */

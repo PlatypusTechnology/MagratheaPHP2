@@ -30,6 +30,11 @@ if($closeFn) {
 			<div class="col-sm-12 col-md-6 mt-xs-4">
 				<? include(__DIR__."/object-relations.php"); ?>
 			</div>
+			<div class="col-4 offset-8">
+				<?
+				$adminElements->Button("Delete Object", "deleteObject('".$objectName."')", ["btn-danger", "w-100"], null);
+				?>
+			</div>
 		</div>
 	</div>
 </div>

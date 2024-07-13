@@ -2,6 +2,8 @@
 
 namespace Magrathea2;
 use Magrathea2\Exceptions\MagratheaApiException;
+use \Firebase\JWT\JWT;
+use \Firebase\JWT\Key;
 
 #######################################################################################
 ####
@@ -21,6 +23,8 @@ class MagratheaApiControl {
 
 	protected $model = null;
 	protected $service = null;
+	public $userInfo = null;
+	public $jwtEncodeType = "HS256";
 
 	public function GetAllHeaders() {
 		$headers = [];
@@ -50,6 +54,77 @@ class MagratheaApiControl {
 		}
 		return $token;
 	}
+
+	/**
+	 * Get token data
+	 * @param 	string 		$token
+	 * @return 	any				token data
+	 */
+	public function GetTokenInfo($token=false) {
+		if(!$token) {
+			$token = $this->getTokenByType("Bearer");
+		}
+		if(!$token) {
+			$token = $this->getTokenByType("Basic");
+		}
+		if(!$token) return false;
+		$this->userInfo = $this->jwtDecode($token);
+		return $this->userInfo;
+	}
+
+	public function GetSecret(): string {
+		return Config::Instance()->Get("jwt_key");
+	}
+
+	public function jwtDecode($token) {
+		return JWT::decode($token, new Key(strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType));
+	}
+	public function jwtEncode($payload) {
+		return JWT::encode($payload, strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType);
+	}
+
+	/**
+	* get access token from header
+	*	@param string $type			can be 'Bearer' (for Berarer token) or 'Basic' (for Basic token)
+	*	@return string|null			token
+	* */
+	public function getTokenByType($type): string|null {
+		$headers = $this->getAuthorizationHeader();
+		// HEADER: Get the access token from the header
+		if (!empty($headers)) {
+			if (preg_match('/'.$type.'\s(\S+)/', $headers, $matches)) {
+				return $matches[1];
+			}
+		}
+		return null;
+	}
+
+	/**
+	* Get header Authorization
+	* */
+	public function getAuthorizationHeader(){
+		$headers = null;
+		if (isset($_SERVER['Authorization'])) {
+			$headers = trim($_SERVER["Authorization"]);
+		} else if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
+			$headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
+		} elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) { // htaccess rules
+			$headers = trim($_SERVER["REDIRECT_HTTP_AUTHORIZATION"]);
+		} elseif (function_exists('apache_request_headers')) {
+			$requestHeaders = apache_request_headers();
+			// Server-side fix for bug in old Android versions (a nice side-effect of this fix means we don't care about capitalization for Authorization)
+			$requestHeaders = array_combine(array_map('ucwords', array_keys($requestHeaders)), array_values($requestHeaders));
+			//print_r($requestHeaders);
+			if (isset($requestHeaders['Authorization'])) {
+				$headers = trim($requestHeaders['Authorization']);
+			}
+		}
+		return $headers;
+	}
+
+
+
+
 
 	public function GetPhpInput() {
 		$json = file_get_contents('php://input');
@@ -94,9 +169,9 @@ class MagratheaApiControl {
 		}
 	}
 
-	public function Create() {
+	public function Create($data=false) {
+		if(!$data) $data = $this->GetPost();
 		$m = new $this->model();
-		$data = $this->GetPost();
 		if(@$data["id"]) unset($data["id"]);
 		foreach ($data as $key => $value) {
 			if(property_exists($m, $key)) {
@@ -112,10 +187,10 @@ class MagratheaApiControl {
 		}
 	}
 
-	public function Update($params=false) {
-		$id = $params["id"];
+	public function Update($data=false) {
+		if(!$data) $data = $this->GetPut();
+		$id = @$data["id"];
 		$m = new $this->model($id);
-		$data = $this->GetPut();
 
 		if(!$data) throw new \Exception("Empty Data Sent", 500);
 		foreach ($data as $key => $value) {

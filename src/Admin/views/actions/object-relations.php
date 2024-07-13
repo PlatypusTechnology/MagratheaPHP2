@@ -1,7 +1,6 @@
 <?php
 
 use Magrathea2\Admin\AdminElements;
-use Magrathea2\Admin\ObjectManager;
 
 ?>
 

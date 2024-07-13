@@ -32,6 +32,7 @@ class MagratheaApi {
 	public $baseAuth = false;
 
 	private $endpoints = array();
+	private $fallback = null;
 
 	/**
 	 * Constructor...
@@ -184,6 +185,15 @@ class MagratheaApi {
 			"description" => $description,
 		];
 		$this->endpoints[$method][$url] = $endpoint;
+		return $this;
+	}
+
+	/**
+	 * @param			function 			$fn		function to be executed on fallback
+	 * @return 		MagratheaApi
+	 */
+	public function Fallback($fn): MagratheaApi {
+		$this->fallback = $fn;
 		return $this;
 	}
 
@@ -348,6 +358,11 @@ class MagratheaApi {
 		$url = explode("/", $fullUrl);
 		$url = array_filter($url);
 
+		if(count($url) == 0) {
+			if(is_callable($this->fallback)) {
+				return call_user_func($this->fallback);
+			}
+		}
 		$endpoints = @$this->endpoints[$method];
 		$route = $this->FindRoute($url, $endpoints);
 

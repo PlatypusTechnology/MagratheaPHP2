@@ -15,7 +15,7 @@
 		$i = 0;
 		foreach($magratheaKeys as $key) {
 			try {
-				if(is_callable($key)) {
+				if(is_callable($key) && !is_string($key)) {
 					$value = $key($row);
 				} else if (is_array($row)) {
 					if(isset($row[$key])) $value = @$row[$key];

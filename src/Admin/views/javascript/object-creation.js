@@ -109,3 +109,11 @@ function saveObjectInfo(el) {
 	callAction("object-creation-save", "POST", data)
 		.then(rs => showOn(container, rs, true));
 }
+
+function deleteObject(object) {
+	if(!confirm("Do you wish to remove object [ "+object+" ]?")) return;
+	callAction("object-remove&object="+object)
+		.then(rs => {
+			$("#obj-responses").prepend(rs);
+		});
+}
