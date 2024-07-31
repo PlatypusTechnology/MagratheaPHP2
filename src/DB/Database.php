@@ -228,7 +228,7 @@ class Database extends Singleton {
 	* @param 	string 		$sql 		Query to be executed
 	* @return 	object 		$result 	Result of the query
 	*/
-	public function Query($sql){
+	public function Query(string $sql){
 		$this->LogControl($sql);
 		$this->OpenConnectionPlease();
 		$result = $this->mysqli->query($sql);
@@ -243,7 +243,7 @@ class Database extends Singleton {
 	* @param 	string 		$sql 		Query to be executed
 	* @return 	array 		$result 	Result of the query (one row for line result)
 	*/
-	public function QueryAll($sql){
+	public function QueryAll(string $sql){
 		$arrRetorno = array();
 		$this->LogControl($sql);
 		$this->OpenConnectionPlease();
@@ -266,7 +266,7 @@ class Database extends Singleton {
 	* @param 	  array|object|string 		$sql 		Query to be executed
 	* @return 	array 		      				$result 	First line of the query
 	*/
-	public function QueryRow($sql) : array | object {
+	public function QueryRow(string $sql) : array | object {
 		$arrRetorno = array();
 		$this->LogControl($sql);
 		$this->OpenConnectionPlease();

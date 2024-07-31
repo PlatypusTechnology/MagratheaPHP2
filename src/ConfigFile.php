@@ -147,7 +147,7 @@ class ConfigFile {
 				foreach ($elem as $key2=>$elem2) { 
 					if(is_array($elem2)) { 
 						for($i=0;$i<count($elem2);$i++) { 
-							if(!$elem2[$i]) continue;
+							if(!@$elem2[$i]) continue;
 							$content .= "\t".$key2."[] = ".$this->SaveValueOnConfig($elem2[$i])."\n";
 						} 
 					} else if($elem2=="") $content .= "\t".$key2." = \n";

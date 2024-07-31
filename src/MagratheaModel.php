@@ -323,6 +323,9 @@ abstract class MagratheaModel{
 	 * @throws 	MagratheaModelException 	if property does not exists into object
 	 */
 	public function Get($key, $supressException=false) {
+		if( property_exists($this,$key) ) {
+			return $this->$key;
+		}
 		if( array_key_exists($key, $this->dbAlias) ){
 			$real_key = $this->dbAlias[$key];
 			return $this->$real_key;
@@ -355,7 +358,6 @@ abstract class MagratheaModel{
 	 * @param  	string 		$key 			property
 	 * @param  	mixed 		$value 		value
 	 * @param		boolean		$supressException			if set to true, function will not throw Exception if property does not exist
-	 * @return 	object|null     	property value
 	 * @throws 	MagratheaModelException 	if property does not exists into object
 	 */
 	public function Set($key, $value, $supressException=false){
@@ -374,6 +376,16 @@ abstract class MagratheaModel{
 			if($supressException) { return; }
 			throw new MagratheaModelException("Property ".$key." does not exists in ".get_class($this)."!");
 		}
+	}
+	/**
+	 * Sets PK
+	 * @param  	mixed 		$value 		pk value
+	 */
+	public function SetPK($value) {
+		$this->Set($this->GetPkName(), $value);
+	}
+	public function GetPK() {
+		return $this->Get($this->GetPkName());
 	}
 	/**
 	 * MAGIC FUNCTION: updates required property
@@ -428,8 +440,13 @@ abstract class MagratheaModel{
 
 	public function ToArray() {
 		$arr = [];
-		foreach( $this->dbValues as $field => $type ){
+		foreach($this->dbValues as $field => $type){
 			$arr[$field] = $this->$field;
+		}
+		if(@$this->relations && $this->relations["properties"]) {
+			foreach($this->relations["properties"] as $prop => $value) {
+				$arr[$prop] = $value;
+			}
 		}
 		return $arr;
 	}

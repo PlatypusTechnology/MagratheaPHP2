@@ -12,6 +12,7 @@ use Magrathea2\Exceptions\MagratheaException;
 class MagratheaCache extends Singleton {
 
 	public $cacheName;
+	public bool $saveCache = false;
 	private $cachePath;
 	private $extension = "txt";
 
@@ -55,6 +56,8 @@ class MagratheaCache extends Singleton {
 			throw new MagratheaException("cache handle cannot be an object!");
 		}
 		if(!empty($data)) { $name = $name."-".$data; }
+		$name = str_replace('/', '|', $name);
+		$name = str_replace('\\', '|', $name);
 		$this->cacheName = $name;
 	}
 
@@ -66,6 +69,7 @@ class MagratheaCache extends Singleton {
 	public function Clear(string $name, $data=null) {
 		$this->CreateHandle($name, $data);
 		$file = $this->GetCacheFile();
+		if(!file_exists($file)) return true;
 		return unlink($file);
 	}
 
@@ -78,6 +82,7 @@ class MagratheaCache extends Singleton {
 		$cacheActive = Config::Instance()->Get("no_cache");
 		if(!empty($cacheActive) && $cacheActive == true) return false;
 		$this->CreateHandle($name, $data);
+		$this->saveCache = true;
 		$this->LookForFile();
 	}
 	/**
@@ -162,6 +167,7 @@ class MagratheaCache extends Singleton {
 	 * Handles data from the API to save it on cache and displays it, killing the execution
 	 */
 	public function HandleApiCache(array $data) {
+		if(!$this->saveCache) return false;
 		if(empty($this->cacheName)) return false;
 		$data["cached"] = true;
 		$data["cached_time"] = now();

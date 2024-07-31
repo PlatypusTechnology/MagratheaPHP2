@@ -123,18 +123,24 @@ class MagratheaApiControl {
 	}
 
 
-
-
-
 	public function GetPhpInput() {
-		$json = file_get_contents('php://input');
-		$jsonData = json_decode($json);
-		$data = [];
-		if(!$jsonData) return;
-		foreach ($jsonData as $key => $value) {
-			$data[str_replace('amp;', '', $key)] = $value;
-		}
-		return $data;
+		$putfp = fopen('php://input', 'r');
+		$putData = '';
+		while($data = fread($putfp, 1024))
+			$putData .= $data;
+		fclose($putfp);
+		$contentType = @$_SERVER["CONTENT_TYPE"];
+		$isJson = substr($contentType, -4) == "json";
+		if($isJson) return json_decode($putData, true);
+		parse_str($putData, $rs);
+		return $rs;
+		// $jsonData = json_decode($json);
+		// $data = [];
+		// if(!$jsonData) return;
+		// foreach ($jsonData as $key => $value) {
+		// 	$data[str_replace('amp;', '', $key)] = $value;
+		// }
+		// return $data;
 	}
 
 	public function GetPut() {
@@ -187,11 +193,16 @@ class MagratheaApiControl {
 		}
 	}
 
-	public function Update($data=false) {
-		if(!$data) $data = $this->GetPut();
-		$id = @$data["id"];
-		$m = new $this->model($id);
-
+	public function Update($params) {
+		$put = $this->GetPut();
+		$data = @$params["data"] ? $params["data"] : $this->GetPut();
+		$id = @$params["id"] ? $params["id"] : $data["id"];
+		if(!$id) {
+			throw new \Exception("Invalid Id for update", 500);
+		}
+		$m = new $this->model();
+		$m->SetPK($id);
+		$m->Assign($data);
 		if(!$data) throw new \Exception("Empty Data Sent", 500);
 		foreach ($data as $key => $value) {
 			if(property_exists($m, $key)) {
@@ -216,10 +227,27 @@ class MagratheaApiControl {
 		}
 	}
 
+	/**
+	 * Cache request
+	 * @param		string		$name 		cache name
+	 * @param		string		$data			specific cache identifier
+	 */
 	public function Cache($name, $data=null) {
+		$caller = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT|DEBUG_BACKTRACE_IGNORE_ARGS,2)[1]['function'];
+		Logger::Instance()->Log("adding cache for [".$name."/".$data."] from (".@$_REQUEST["REQUEST_URI"]." ->".$caller.")");
 		MagratheaCache::Instance()
 			->Type("json")
 			->Cache($name, $data);
+	}
+	/**
+	 * Removes a cache request
+	 * @param		string		$name 		cache name
+	 * @param		string		$data			specific cache identifier
+	 */
+	public function CacheClear($name, $data=null) {
+		MagratheaCache::Instance()
+			->Type("json")
+			->Clear($name, $data);
 	}
 
 }

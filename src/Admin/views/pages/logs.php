@@ -75,6 +75,11 @@ foreach ($dirData as $d) {
 						}
 					?>
 					</ul>
+					<div class="delete-log" id="btn-delete-log" style="display: none;">
+						<?php
+						$adminElements->Button("delete-log", "deleteLog()", "btn-danger w-100");
+						?>
+					</div>
 				</div>
 				<div class="col-10">
 					<div id="file-view" class="file-window" style="display: none;"></div>
@@ -117,9 +122,14 @@ foreach ($dirData as $d) {
 </div>
 
 <script type="text/javascript">
+var currentFile = null;
 function viewFile(fileAddress) {
+	currentFile = fileAddress;
 	callAction("file-view", "POST", { file: fileAddress })
-		.then( rs => showOn('#file-view', rs) );
+		.then( rs => {
+			showOn('#file-view', rs);
+			$("#btn-delete-log").show();
+		});
 }
 function tailRun() {
 	console.info("tail running");
@@ -140,5 +150,13 @@ function pause() {
 	clearInterval(tailInterval);
 	$("#tail-stop").hide();
 	$("#tail-start").show();
+}
+function deleteLog() {
+	callAction("log-delete", "POST", { log: currentFile })
+	.then( rs => {
+			showOn('#file-view', rs);
+			$("#btn-delete-log").hide();
+			window.setTimeout(() => window.location.reload(), 1000);
+		});
 }
 </script>

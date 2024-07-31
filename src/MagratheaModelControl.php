@@ -131,7 +131,7 @@ abstract class MagratheaModelControl{
 		$arrayObjs = array();
 
 		if(count($array_joins) > 0){
-			$objects = array();
+			$objects = [];
 			$result = static::QueryResult($magQuery->SQL());
 			foreach ($result as $r) {
 				$splitResult = Query::SplitArrayResult($r);
@@ -144,7 +144,8 @@ abstract class MagratheaModelControl{
 					$obj = $join["obj"];
 					if(empty($obj)) continue;
 					$obj->LoadObjectFromTableRow($splitResult[$obj->GetDbTable()]);
-					$objname = get_class($obj);
+					if(empty($obj->GetPK())) continue;
+					$objname = $obj->ModelName();
 					if($join["type"] == "has_many"){
 						$objnameField = $objname."s";
 						if( empty($arrayObjs[$new_object->GetID()]) )
@@ -159,11 +160,11 @@ abstract class MagratheaModelControl{
 					}
 					unset($obj);
 				}
-				array_push($objects, clone $new_object);
+				$objects[$new_object->GetPK()] = clone $new_object;
 			}
 			if($onlyFirst){
 				if(count($objects) > 0) return $objects[0];
-			} else return $objects;
+			} else return array_values($objects);
 		} else {
 			return $onlyFirst ? self::RunRow($magQuery->SQL()) : self::RunQuery($magQuery->SQL());
 		}

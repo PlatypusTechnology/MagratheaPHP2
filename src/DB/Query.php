@@ -280,7 +280,7 @@ class Query {
 			if(!$this->obj_base) throw new MagratheaModelException("Object Base is not an object");
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
-			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
+			$joinGlue = " LEFT JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'HasMany' must be used with MagratheaModels => ".$ex->getMessage());
 		}
@@ -326,6 +326,21 @@ class Query {
 		return $this;
 	}
 	/**
+	 * Includes left join
+	 * @param 	string 		$table 		Table for inner join
+	 * @param 	string 		$clause		Clause for where in the join
+	 * @return  Query
+	 */	
+	public function Left($table, $clause){
+		try{
+			$joinGlue = " LEFT JOIN ".$table." ON ".$clause;
+		} catch(\Exception $ex){
+			throw new MagratheaModelException("MagratheaQuery Exception => ".$ex->getMessage());
+		}
+		array_push($this->joinArr, $joinGlue);
+		return $this;
+	}
+	/**
 	 * Includes inner join with Object
 	 * @param 	MagratheaModel 		$object 	object for inner join
 	 * @return  Query
@@ -358,9 +373,9 @@ class Query {
 		$joins = array();
 		foreach ($this->joinArr as $key => $join) {
 			$j = array( 
-				"type" => $this->joinType[$key], 
-				"obj" => $this->obj_array[$key],
-				"glue" => $this->joinArr[$key]
+				"type" => @$this->joinType[$key], 
+				"obj" => @$this->obj_array[$key],
+				"glue" => @$this->joinArr[$key]
 			);
 			array_push($joins, $j);
 		}

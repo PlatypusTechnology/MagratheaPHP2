@@ -55,10 +55,12 @@ class AdminManager extends Singleton {
 	 */
 	public function PrintLogo($logoSize): void {
 		$logoFile = $this->admin->adminLogo;
-		$ext = substr($logoFile, -3);
+		$ext = pathinfo($logoFile, PATHINFO_EXTENSION);
 		switch($ext) {
 			case "svg": include($logoFile); break;
-			case "png": include(__DIR__."/views/sections/logo.php"); break;
+			case "jpeg": case "jpg":
+			case "png":
+				include(__DIR__."/views/sections/logo.php"); break;
 			default: echo "[logo]";
 		}
 	}
