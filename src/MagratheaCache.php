@@ -131,8 +131,9 @@ class MagratheaCache extends Singleton {
 	 * Deletes a file from cache
 	 * @param 	string		file name
 	 */
-	public function DeleteFile(string $file) {
+	public function DeleteFile(string $file, bool $addExtension = true) {
 		$path = $this->GetCachePath();
+		if($addExtension) $file = $file.".".$this->extension;
 		$filePath = MagratheaHelper::EnsureTrailingSlash($path).$file;
 		return unlink($filePath);
 	}

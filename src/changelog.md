@@ -1,5 +1,10 @@
 # 2024/july
 
+### 2.1.6
+by Paulo Martins
+	- changing `MagratheaCache->DeleteFile` with new parameter `$addExtension`, default to `true`
+	- changelog moved to inside `src` for easier deploy
+
 ### 2.1.5
 by Paulo Martins
 dromedario.etc update
