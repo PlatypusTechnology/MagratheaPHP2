@@ -2,6 +2,7 @@
 
 namespace Magrathea2;
 
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Exceptions\MagratheaConfigException;
 use Magrathea2\Exceptions\MagratheaException;
 
@@ -14,7 +15,7 @@ class MagratheaCache extends Singleton {
 	public $cacheName;
 	public bool $saveCache = false;
 	private $cachePath;
-	private $extension = "txt";
+	private $extension = "json";
 
 	function Initialize() {
 		$this->cacheName = null;
@@ -135,7 +136,9 @@ class MagratheaCache extends Singleton {
 		$path = $this->GetCachePath();
 		if($addExtension) $file = $file.".".$this->extension;
 		$filePath = MagratheaHelper::EnsureTrailingSlash($path).$file;
-		return unlink($filePath);
+		AdminManager::Instance()->Log("deleting cache", $file, ["path" => $filePath]);
+		Logger::Instance()->Log("cache deleting: [".$filePath."]");
+		return @unlink($filePath);
 	}
 
 	/**

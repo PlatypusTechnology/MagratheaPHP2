@@ -47,6 +47,7 @@ if(!empty($magrathea_subpage)) {
 									true
 								);
 							} else {
+								$f->Initialize();
 								$subpage = @$_GET["magrathea_feature_subpage"];
 								if(!$subpage) $subpage = "GetPage";
 								$f->$subpage();

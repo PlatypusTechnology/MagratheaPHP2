@@ -6,6 +6,7 @@ use Exception;
 use Magrathea2\Admin\AdminManager;
 use Magrathea2\MagratheaModelControl;
 use Magrathea2\DB\Query;
+use Magrathea2\MagratheaCache;
 
 #######################################################################################
 ####

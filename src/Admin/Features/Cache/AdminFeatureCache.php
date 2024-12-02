@@ -4,8 +4,11 @@ namespace Magrathea2\Admin\Features\Cache;
 
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminFeature;
+use Magrathea2\Admin\Features\UserLogs\AdminLog;
+use Magrathea2\Admin\Features\UserLogs\AdminLogControl;
 use Magrathea2\Admin\iAdminFeature;
 use Magrathea2\Exceptions\MagratheaException;
+use Magrathea2\Logger;
 use Magrathea2\MagratheaCache;
 use Magrathea2\MagratheaHelper;
 
@@ -78,6 +81,7 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 		if($success) {
 			$elements->Alert("File deleted [".$file."]", "success");
 		} else {
+			Logger::Instance()->LogLastError();
 			$elements->Alert("Error removing file", "danger");
 		}
 	}

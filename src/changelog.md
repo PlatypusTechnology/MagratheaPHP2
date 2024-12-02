@@ -1,9 +1,17 @@
 # 2024/july
 
-### 2.1.6
-by Paulo Martins
-	- changing `MagratheaCache->DeleteFile` with new parameter `$addExtension`, default to `true`
-	- changelog moved to inside `src` for easier deploy
+### 2.1.7
+2024-12-02
+post PNC Update
+	- **fix:** deleting cache of settings when updating settings
+	- **fix:** changing `MagratheaCache->DeleteFile` with new parameter `$addExtension`, default to `true`
+	- **fix:** Calling Admin `Initialize` on load
+	- **change:** changelog moved to inside `src` for easier deploy
+	- **improvement:** log cache delete 
+	- **new:** `LogLastError` function on `Logger`
+	- **new:** reloading cache button
+	- **new:** function `MinVersion` on `MagratheaPHP`
+	- **new:** `CacheClearPattern` function on `MagratheaApiControl`
 
 ### 2.1.5
 by Paulo Martins

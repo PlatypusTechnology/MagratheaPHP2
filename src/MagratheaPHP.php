@@ -6,6 +6,7 @@ use Exception;
 use Magrathea2\DB\Database;
 use Magrathea2\Errors\ErrorManager;
 use Magrathea2\Exceptions\MagratheaConfigException;
+use Magrathea2\Exceptions\MagratheaException;
 
 #######################################################################################
 ####
@@ -28,15 +29,34 @@ class MagratheaPHP extends Singleton {
 		// Root of Magrathea Structure
 	public $magRoot = "";
 	public $codeFolder = [];
+	public $versionRequired = null;
 
 	/**
 	* Sets App Root Path
 	* @param    string  $path   Root path of project
-	* @return MagratheaPHP
+	* @return 	MagratheaPHP
 	*/
 	public function AppPath($path) {
 		$this->appRoot = $path;
 		$this->magRoot = realpath($path."/../");
+		return $this;
+	}
+
+	/**
+	 * Check if current Magrathea Version is acceptable
+	 * @param		string	$version		min version for Magrathea
+	 * @param		boolean	$throwEx		if true, throws a 206 Magrathea Exception if version is under (default: false)
+	 * @return 	MagratheaPHP
+	 * @throws	MagratheaException		code 206: incompatible version
+	 */
+	public function MinVersion(string $version, bool $throwEx = false) {
+		$this->versionRequired = $version;
+		$magVersion = $this->Version();
+		if(!version_compare($magVersion, $version, ">=")) {
+			$errorMessage = "Magrathea version outdated [current: ".$magVersion." / required: ".$version."]";
+			if($throwEx) throw new MagratheaException($errorMessage, 206);
+			ErrorManager::Instance()->DisplayMesage($errorMessage);
+		}
 		return $this;
 	}
 

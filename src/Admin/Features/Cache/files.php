@@ -52,6 +52,7 @@ $titles = [
 		<div class="row">
 			<div class="col-12 right">
 				<?
+					AdminElements::Instance()->Button("reload", "reloadFiles()", ["btn-primary", "label-margin", "mt-0", "mb-1", "mx-4"]);
 					AdminElements::Instance()->Button("clear cache", "clearCache()", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
 				?>
 			</div>

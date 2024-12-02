@@ -249,5 +249,12 @@ class MagratheaApiControl {
 			->Type("json")
 			->Clear($name, $data);
 	}
+	/**
+	 * Removes a cache request
+	 * @param		string		$pattern 		cache pattern
+	 */
+	public function CacheClearPattern($pattern) {
+		MagratheaCache::Instance()->RemovePattern($pattern);
+	}
 
 }

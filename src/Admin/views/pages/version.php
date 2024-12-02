@@ -12,4 +12,5 @@ $vApp = $magPhp->AppVersion();
 echo "<div class='container'>";
 echo "<br/>App Version: ".$vApp;
 echo "<br/>Magrathea Version: ".$vMagrathea;
+echo "<br/>Minimum Magrathea Version required: ".@$magPhp->versionRequired;
 echo "</div>";

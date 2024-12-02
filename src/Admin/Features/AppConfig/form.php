@@ -3,6 +3,7 @@
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminForm;
 use Magrathea2\Admin\Features\AppConfig\AppConfig;
+use Magrathea2\MagratheaCache;
 
 $adminForm = new AdminForm();
 $adminForm->SetName("data-form");
@@ -15,6 +16,8 @@ if(!$crud["success"]) {
 			AdminElements::Instance()->Alert($ex->getMessage(), 'danger');
 		}
 	}
+} else {
+	MagratheaCache::Instance()->DeleteFile("settings");
 }
 
 if(!empty($crud["action"])) {

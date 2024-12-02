@@ -89,7 +89,6 @@ function updateApiUrl(apiId) {
 		let val = el.val();
 		if(!val) return;
 		let param = el.attr("placeholder");
-		console.info("setting " + param + ": " + val);
 		url = url.replace(':'+param, val);
 	});
 	apiName.html(url);

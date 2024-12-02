@@ -36,6 +36,11 @@ class AdminFeature {
 	}
 
 	/**
+	 * Initialize function for AdminFeature
+	 */
+	public function Initialize() { }
+
+	/**
 	 * Add a JS file to admin
 	 * @param string $file		absolute path of tile
 	 * @return AdminFeature		itself

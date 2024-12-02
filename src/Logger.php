@@ -150,6 +150,13 @@ class Logger extends Singleton {
 		}
 		return $this->Log($line);
 	}
+
+	/**
+	 * Logs the last error from PHP
+	 */
+	public function LogLastError() {
+		return $this->LogError(error_get_last());
+	}
 }
 
 ?>
