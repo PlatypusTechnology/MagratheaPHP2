@@ -1,5 +1,9 @@
 # 2024/july
 
+### 2.1.8
+2024-12-03
+	- **fix:** deleting filed cache fixed
+
 ### 2.1.7
 2024-12-02
 post PNC Update

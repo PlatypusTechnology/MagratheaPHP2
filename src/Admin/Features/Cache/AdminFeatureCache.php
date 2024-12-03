@@ -76,7 +76,7 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 
 	public function Remove() {
 		$file = $_POST["file"];
-		$success = MagratheaCache::Instance()->DeleteFile($file);
+		$success = MagratheaCache::Instance()->DeleteFile($file, false);
 		$elements = AdminElements::Instance();
 		if($success) {
 			$elements->Alert("File deleted [".$file."]", "success");
