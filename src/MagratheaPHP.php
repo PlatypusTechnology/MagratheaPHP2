@@ -25,9 +25,9 @@ use Magrathea2\Exceptions\MagratheaException;
 class MagratheaPHP extends Singleton {
 
 		// Root of application
-	public $appRoot = "";
+	public string $appRoot = "";
 		// Root of Magrathea Structure
-	public $magRoot = "";
+	public string $magRoot = "";
 	public $codeFolder = [];
 	public $versionRequired = null;
 
@@ -36,10 +36,18 @@ class MagratheaPHP extends Singleton {
 	* @param    string  $path   Root path of project
 	* @return 	MagratheaPHP
 	*/
-	public function AppPath($path) {
+	public function AppPath($path): MagratheaPHP {
 		$this->appRoot = $path;
 		$this->magRoot = realpath($path."/../");
 		return $this;
+	}
+
+	/**
+	 * Returns the root path (app) of project
+	 * @return 	string	app path
+	 */
+	public function GetAppRoot(): string {
+		return $this->appRoot;
 	}
 
 	/**

@@ -222,17 +222,13 @@ abstract class MagratheaModel{
 		else
 			return $this->Update();
 	}
-	/**
-	 * Inserts the object in database
-	 * @return 	int 		id of inserted object
-	 * @todo  	create query to UPDATE in case of id already exists... (or deal with it with an exception)
-	 */
-	public function Insert(){
+
+	private function CreateInsertQuery(bool $autoIncrement=true) {
 		$arr_Types = array();
 		$arr_Fields = array();
 		$arr_Values = array();
 		foreach( $this->dbValues as $field => $type ){
-			if( $field == $this->dbPk ) continue;
+			if( $autoIncrement && $field == $this->dbPk ) continue;
 			if( !isset($this->$field) ) continue;
 			array_push($arr_Types, $this->GetDataTypeFromField($type));
 			array_push($arr_Fields, $field);
@@ -249,16 +245,44 @@ abstract class MagratheaModel{
 		// old query, for pear mdb2 driver
 		// $query_run = "INSERT INTO ".$this->dbTable." (".implode(",", $arr_Fields).") VALUES (:".implode(",:", $arr_Fields).") ";
 		$query_run = "INSERT INTO ".$this->dbTable." (`".implode("`,`", $arr_Fields)."`) VALUES (".implode(", ", array_fill(0, count($arr_Fields), "?")).") ";
+		$this->created_at = now();
+		$this->updated_at = now();
+		return [
+			"query" => $query_run,
+			"types" => $arr_Types,
+			"values" => $arr_Values,
+		];
+	}
+	/**
+	 * Inserts the object in database
+	 * @return 	int 		id of inserted object
+	 * @todo  	create query to UPDATE in case of id already exists... (or deal with it with an exception)
+	 */
+	public function Insert() {
+		$query = $this->CreateInsertQuery(false);
 		try {
-			$lastId = Database::Instance()->PrepareAndExecute($query_run, $arr_Types, $arr_Values);
+			$lastId = Database::Instance()->PrepareAndExecute(
+				$query["query"], $query["types"], $query["values"]);
 		} catch(\Exception $ex) {
 			throw $ex;
 		}
 		$pk = $this->dbPk;
-		$this->$pk = $lastId;
-		$this->created_at = now();
-		$this->updated_at = now();
+		$this->$pk = $lastId;	
 		return $lastId;
+	}
+	/**
+	 * Inserts the object, but the object alredy has the PK
+	 * @return 	bool 		success?
+	 */
+	public function InsertWithPk(): bool {
+		$query = $this->CreateInsertQuery(false);
+		try {
+			Database::Instance()->PrepareAndExecute(
+				$query["query"], $query["types"], $query["values"]);
+		} catch(\Exception $ex) {
+			throw $ex;
+		}
+		return true;
 	}
 	/**
 	 * Updates the object in database

@@ -130,7 +130,7 @@ class MagratheaApiControl {
 			$putData .= $data;
 		fclose($putfp);
 		$contentType = @$_SERVER["CONTENT_TYPE"];
-		$isJson = substr($contentType, -4) == "json";
+		$isJson = @substr($contentType, -4) == "json";
 		if($isJson) return json_decode($putData, true);
 		parse_str($putData, $rs);
 		return $rs;

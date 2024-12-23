@@ -1,5 +1,9 @@
 # 2024/july
 
+### 2.1.9
+2024-12-11
+	- **improvement:** `GetAppRoot` function on `MagratheaPHP`
+
 ### 2.1.8
 2024-12-03
 	- **fix:** deleting filed cache fixed
