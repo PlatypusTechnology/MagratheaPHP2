@@ -1,5 +1,10 @@
 # 2024/july
 
+### 2.1.10
+2024-12-11
+pomodore update
+	- **fix:** bug on Model update with integer equals zero
+
 ### 2.1.9
 2024-12-11
 	- **improvement:** `GetAppRoot` function on `MagratheaPHP`
