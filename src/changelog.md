@@ -1,5 +1,10 @@
 # 2024/july
 
+### 2.1.11
+2025-01-01
+	- **improvement:** admin improvements
+	- **improvement:** improving insert query generator
+
 ### 2.1.9
 2024-12-11
 	- **improvement:** `GetAppRoot` function on `MagratheaPHP`

@@ -260,7 +260,7 @@ class Query {
 			if(!$this->obj_base) throw new MagratheaModelException("Object Base is not an object");
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
-			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$this->obj_base->GetDbTable().".".$field." = ".$object->GetDbTable().".".$object->GetPkName();
+			$joinGlue = " INNER JOIN `".$object->GetDbTable()."` ON `".$this->obj_base->GetDbTable()."`.`".$field."` = `".$object->GetDbTable()."`.`".$object->GetPkName()."`";
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'HasOne' must be used with MagratheaModels => ".$ex->getMessage());
 		}
@@ -280,7 +280,7 @@ class Query {
 			if(!$this->obj_base) throw new MagratheaModelException("Object Base is not an object");
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
-			$joinGlue = " LEFT JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
+			$joinGlue = " LEFT JOIN `".$object->GetDbTable()."` ON `".$object->GetDbTable()."`.`".$field."` = `".$this->obj_base->GetDbTable()."`.`".$this->obj_base->GetPkName()."`";
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'HasMany' must be used with MagratheaModels => ".$ex->getMessage());
 		}
@@ -301,7 +301,7 @@ class Query {
 			if(!$this->obj_base) throw new MagratheaModelException("Object Base is not an object");
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
-			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$object->GetDbTable().".".$field." = ".$this->obj_base->GetDbTable().".".$this->obj_base->GetPkName();
+			$joinGlue = " INNER JOIN `".$object->GetDbTable()."` ON `".$object->GetDbTable()."`.`".$field."` = `".$this->obj_base->GetDbTable()."`.`".$this->obj_base->GetPkName()."`";
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery 'BelongsTo' must be used with MagratheaModels => ".$ex->getMessage());
 		}
@@ -333,7 +333,7 @@ class Query {
 	 */	
 	public function Left($table, $clause){
 		try{
-			$joinGlue = " LEFT JOIN ".$table." ON ".$clause;
+			$joinGlue = " LEFT JOIN `".$table."` ON ".$clause;
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery Exception => ".$ex->getMessage());
 		}
@@ -349,7 +349,7 @@ class Query {
 		try{
 			$object = $this->GiveMeThisObjectCorrect($object);
 			$this->SelectObj($object);
-			$joinGlue = " INNER JOIN ".$object->GetDbTable()." ON ".$clause;
+			$joinGlue = " INNER JOIN `".$object->GetDbTable()."` ON ".$clause;
 		} catch(\Exception $ex){
 			throw new MagratheaModelException("MagratheaQuery Exception => ".$ex->getMessage());
 		}
@@ -503,7 +503,7 @@ class Query {
 		if(count($this->selectExtra) > 0){
 			$sqlSelect .= ", ".implode(', ', $this->selectExtra);
 		}
-		$this->sql = $sqlSelect." FROM ".$this->tables;
+		$this->sql = $sqlSelect." FROM `".$this->tables."`";
 		if(count($this->joinArr) > 0){
 			$this->sql .= " ".implode(' ', $this->joinArr)." ";
 		}
@@ -536,7 +536,7 @@ class Query {
 	 */
 	public function Count(){
 		$sqlCount = "SELECT COUNT(1) AS ok ";
-		$sqlCount .= " FROM ".$this->tables;
+		$sqlCount .= " FROM `".$this->tables."`";
 		if(count($this->joinArr) > 0){
 			$sqlCount .= " ".implode(' ', $this->joinArr)." ";
 		}
@@ -613,6 +613,18 @@ class Query {
 	 */
 	public function __toString(){
 		return $this->SQL();
+	}
+
+	/**
+	 * debug
+	 * @return 		array		Query data
+	 */
+	public function Debug(): array {
+		return [
+			"select" => $this->select,
+			"table" => $this->tables,
+			"where" => $this->where,
+		];
 	}
 
 }
