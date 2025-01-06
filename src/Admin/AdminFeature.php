@@ -33,6 +33,7 @@ class AdminFeature {
 		if(empty($this->featureId)) {
 			$this->featureId = basename(str_replace('\\', '/', $className));
 		}
+		$this->Initialize();
 	}
 
 	/**

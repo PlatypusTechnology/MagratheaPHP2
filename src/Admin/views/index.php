@@ -47,7 +47,9 @@ if(!empty($magrathea_subpage)) {
 									true
 								);
 							} else {
-								$f->Initialize();
+								// Initialize() removed from here because was already initialized in contructor
+								// 	change made on 2024-12
+								// $f->Initialize();
 								$subpage = @$_GET["magrathea_feature_subpage"];
 								if(!$subpage) $subpage = "GetPage";
 								$f->$subpage();

@@ -55,8 +55,8 @@ class QueryInsert extends Query {
 	 * @return  	string 		Query!!!
 	 */
 	public function SQL(){
-		$this->sql = "INSERT INTO ".$this->tables;
-		$this->sql .= " (".implode(', ', $this->fieldNames).") ";
+		$this->sql = "INSERT INTO `".$this->tables."`";
+		$this->sql .= " (`".implode('`, `', $this->fieldNames)."`) ";
 		$this->sql .= " VALUES ";
 		$this->sql .= " ('".implode('\', \'', $this->arrValues)."') ";
 		return $this->sql;

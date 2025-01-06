@@ -304,12 +304,9 @@ abstract class MagratheaModel{
 			if( $field == "created_at" ) continue;
 
 			$t = $this->GetDataTypeFromField($type);
-			$value = @$this->dirtyValues[$field] ?? $this->$field;
-			if ($t == "integer") {
-				if ($value === null) continue;
-				$value = intval($value);
-			}
+			if ($t == "integer" && empty($this->$field)) continue;
 
+			$value = @$this->dirtyValues[$field] ?? $this->$field;
 			if( is_a($value, "MagratheaModel") ) {
 				$arr_Values[$field] = $this->GetRelationId($value);
 			} else {

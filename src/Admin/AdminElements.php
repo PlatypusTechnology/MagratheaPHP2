@@ -62,6 +62,10 @@ class AdminElements extends Singleton {
 		}, $rows);
 
 		if($cols === null) {
+			if(!@$magratheaRows[0]) {
+				$this->ErrorCard("table should work with an array of arrays");
+				return;
+			}
 			$magratheaKeys = array_keys($magratheaRows[0]);
 			$magratheaTableTitles = $magratheaKeys;
 		} else {

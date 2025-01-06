@@ -89,12 +89,14 @@ class Admin implements iAdmin {
 	protected $crudFeatures = [];
 	/**
 	 * sets admin feature
-	 * @param AdminFeature $feature		feature class to be added
+	 * @param AdminFeature 	$feature		feature class to be added
+	 * @param string				$key				key for the feature
 	 * @return Admin						itself
 	 */
-	protected function AddFeature(AdminFeature $feature): Admin {
-		$id = $feature->featureId;
-		$this->adminFeatures[$id] = $feature;
+	protected function AddFeature(AdminFeature $feature, string $key=null): Admin {
+		if(!$key) $key = $feature->featureId;
+		else $feature->featureId = $key;
+		$this->adminFeatures[$key] = $feature;
 		return $this;
 	}
 	/**
@@ -149,6 +151,21 @@ class Admin implements iAdmin {
 	public function AddMenuItem(array ...$item): Admin {
 		array_push($this->extraMenu, ...$item);
 		return $this;
+	}
+	/**
+	 * Gets the menu item
+	 * @param		string 	$key		key of the feature
+	 * @return 	array		menu item
+	 */
+	public function GetMenuItem(string $key): array {
+		if(!array_key_exists($key, $this->adminFeatures)) {
+			return [
+				"title" => "!! invalid key [".$key."]",
+				"active" => false,
+				"icon" => "fa fa-alert"
+			];
+		}
+		return $this->adminFeatures[$key]->GetMenuItem();
 	}
 
 	public function BuildMenu(): AdminMenu{

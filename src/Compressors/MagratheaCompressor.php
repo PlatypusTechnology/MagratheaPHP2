@@ -39,7 +39,7 @@ class MagratheaCompressor {
 	 * @return string	code
 	 */
 	public function GetCode(): string {
-		return $this->GetMinCode();
+		return $this->GetRawCode();
 	}
 
 	/**

@@ -192,7 +192,7 @@ class AdminManager extends Singleton {
 	 * @return AdminManager	itself
 	 */
 	public function Start(Admin $admin): AdminManager {
-		$admin->Initialize();
+		$admin->Initialize(); 
 		$admin->SetFeatures();
 		$this->admin = $admin;
 		Start::Instance()->StartDb()->Load();
