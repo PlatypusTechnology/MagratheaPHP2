@@ -75,7 +75,7 @@ class AdminUserControl extends MagratheaModelControl {
 	}
 
 	public function SetNewPassword($user, $pwd) {
-		Debugger::Instance()->SetDev();
+		// Debugger::Instance()->SetDev();
 		if(strlen($pwd) < 8) {
 			return ["success" => false, "error" => "Password must be at least 8 chars long"];
 		}

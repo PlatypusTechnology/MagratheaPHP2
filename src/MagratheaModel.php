@@ -259,7 +259,7 @@ abstract class MagratheaModel{
 	 * @todo  	create query to UPDATE in case of id already exists... (or deal with it with an exception)
 	 */
 	public function Insert() {
-		$query = $this->CreateInsertQuery(false);
+		$query = $this->CreateInsertQuery();
 		try {
 			$lastId = Database::Instance()->PrepareAndExecute(
 				$query["query"], $query["types"], $query["values"]);

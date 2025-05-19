@@ -1,5 +1,14 @@
 # 2024/july
 
+### 2.1.16
+2025-05-19
+	- **fix:** Create new Admin User with md5 password
+	- **fix:** Update Admin User with md5 password
+
+### 2.1.13
+2025-02-11
+	- **fix:** ConfigApp saving
+
 ### 2.1.11
 2025-01-01
 	- **improvement:** admin improvements

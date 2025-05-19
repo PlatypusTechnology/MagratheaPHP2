@@ -17,9 +17,19 @@ class AdminUserApi extends \Magrathea2\MagratheaApiControl {
 		return $user->GetRoles();
 	}
 
+	public function Create($data=false) {
+		$data = $this->GetPost();
+		$user = new AdminUser();
+		$user->Assign($data);
+		$user->SetPassword($data["password"]);
+		$user->Insert();
+		return $user;
+	}
+
 	public function ChangePassword($params) {
 		$user_id = $params["id"];
-		$new_pwd = $params["new_password"];
+		$post = $this->GetPost();
+		$new_pwd = $post["new_password"];
 		$user = new AdminUser($user_id);
 		return $this->service->SetNewPassword($user, $new_pwd);
 	}
