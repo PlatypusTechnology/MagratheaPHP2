@@ -209,7 +209,11 @@ class MagratheaApi {
 				echo "<h5>(".$method.")</h5>";
 				echo "<ul>";
 				foreach ($api as $url => $data) {
-					echo "<li>/".$url." => ".$data["control"]."->".$data["action"].$data["args"]."; –– –– –– ".($data["auth"] ? "Authentication: (".$data["auth"].")" : "PUBLIC")."</li>";
+					$action = $data["action"];
+					if($action instanceof \Closure) {
+						$action = "[closure function]";
+					}
+					echo "<li>/".$url." => ".$data["control"]."->".$action.$data["args"]."; –– –– –– ".($data["auth"] ? "Authentication: (".$data["auth"].")" : "PUBLIC")."</li>";
 				}
 				echo "</ul>";
 			}

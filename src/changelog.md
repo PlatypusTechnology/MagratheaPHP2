@@ -1,4 +1,8 @@
-# 2024/july
+# 2025/july
+
+### 2.1.17
+2025-06-18
+	- **fix:** Magrathea API debugger fixing closure functions
 
 ### 2.1.16
 2025-05-19
