@@ -93,7 +93,7 @@ class Admin implements iAdmin {
 	 * @param string				$key				key for the feature
 	 * @return Admin						itself
 	 */
-	protected function AddFeature(AdminFeature $feature, string $key=null): Admin {
+	protected function AddFeature(AdminFeature $feature, ?string $key=null): Admin {
 		if(!$key) $key = $feature->featureId;
 		else $feature->featureId = $key;
 		$this->adminFeatures[$key] = $feature;

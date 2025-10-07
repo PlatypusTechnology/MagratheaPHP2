@@ -148,7 +148,7 @@ class MagratheaApi {
 	 * @param 	string				$auth					function that returns authorization for execution. "false" for public API
 	 * @return  MagratheaApi
 	 */
-	public function Crud($url, $control, $auth=null): MagratheaApi {
+	public function Crud($url, $control, ?string $auth=null): MagratheaApi {
 		if(is_array($url)) {
 			$singular = $url[0];
 			$plural = $url[1];
@@ -176,7 +176,7 @@ class MagratheaApi {
 	 * @param 	string 			$description	description of function, for documentation (optional)
 	 * @return  MagratheaApi
 	 */
-	public function Add($method, $url, $control, $function, $auth=true, string $description=null): MagratheaApi {
+	public function Add($method, $url, $control, $function, $auth=true, ?string $description=null): MagratheaApi {
 		$method = strtoupper($method);
 		$endpoint = [
 			"control" => $control,

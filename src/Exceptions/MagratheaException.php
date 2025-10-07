@@ -20,7 +20,7 @@ use Magrathea2\Debugger;
 #######################################################################################
 
 class MagratheaException extends \Exception {
-	public function __construct($message, $code = 0, \Exception $previous = null) {
+	public function __construct($message, $code = 0, ?\Exception $previous = null) {
 		if(is_a($message, "MagratheaException")) {
 			$this->msg = ((object)$message)->GetMessage();
 		} else {

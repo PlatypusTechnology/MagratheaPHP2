@@ -8,7 +8,7 @@
 
 <h3>[<?=$env?>] database connection</h3>
 <div class="row">
-  <div class="col-4 right label">Database:</div>
+  <div class="col-4 right label">Database Host:</div>
   <div class="col-8"><?=$config->Get("db_host")?></div>
 </div>
 <div class="row">

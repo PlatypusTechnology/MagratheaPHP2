@@ -71,6 +71,20 @@ if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 
 	<div class="card">
 		<div class="card-header">
+			Since v.2.1.18:
+			<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
+		</div>
+		<div class="card-body config-form">
+			<div class="row">
+				<div class="col-12">
+					Now you can use environment variables in your config files, starting with `$=`.
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-header">
 			Environments:
 		</div>
 		<div class="card-body config-form">

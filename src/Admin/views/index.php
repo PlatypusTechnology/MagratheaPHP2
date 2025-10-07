@@ -22,6 +22,12 @@ if(!empty($magrathea_subpage)) {
 		<script type="text/javascript">
 			<?php include("javascript/pre-load-scripts.js"); ?>
 		</script>
+		<?
+			$svgIcon = file_get_contents(__DIR__.'/magrathea_logo.svg');
+			$encodedIcon = 'data:image/svg+xml;base64,' . base64_encode($svgIcon);
+		?>
+		<link rel="icon" href="<?=$encodedIcon?>" type="image/svg+xml" />
+
 	<body>
 
 		<div class="d-flex" id="wrapper">

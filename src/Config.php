@@ -128,6 +128,7 @@ class Config extends Singleton {
 	* If the slash is not used, the function will return the property only if it's on the root.
 	* If `$config_name` is a section name, the function will return the full section as an Array.
 	* If `$config_name` is empty, the function will return the full config as an Array (**not recommended!**).
+	* If config variable name starts with $=, it will be interpreted as an environment variable and its value will be returned.
 	* @param 	string 		$config_name 	Item to be returned from the `magrathea.conf`.
 	* @return 	array|string
 	* @todo 	exception 704 on key does not exists
@@ -140,7 +141,15 @@ class Config extends Singleton {
 			return $this->configs;
 		} else {
 			$c_split = explode("/", $config_name);
-			return ( count($c_split) == 1 ? $this->configs[$config_name] : $this->configs[$c_split[0]][$c_split[1]] );
+			$value = count($c_split) == 1 ?
+				$this->configs[$config_name] :
+				$this->configs[$c_split[0]][$c_split[1]];
+			if (is_string($value) && strpos($value, '$=') === 0) {
+				$envVar = substr($value, 2);
+				$envValue = getenv($envVar);
+				return $envValue !== false ? $envValue : null;
+			}
+			return $value;
 		}
 	}
 
@@ -167,7 +176,13 @@ class Config extends Singleton {
 			$this->environment = $this->configs["general"]["use_environment"];
 		if(!@$this->configs[$this->environment]) throw new  MagratheaConfigException("Could not find environment [".$this->environment."] in magrathea.conf");
 		if(array_key_exists($config_name, $this->configs[$this->environment])){
-			return $this->configs[$this->environment][$config_name];
+			$value = $this->configs[$this->environment][$config_name];
+			if (is_string($value) && strpos($value, '$=') === 0) {
+				$envVar = substr($value, 2);
+				$envValue = getenv($envVar);
+				return $envValue !== false ? $envValue : null;
+			}
+			return $value;
 		} else {
 			if ($throwable) {
 				throw new MagratheaConfigException("Key ".$config_name." does not exist in magratheaconf!", 704);
@@ -191,5 +206,3 @@ class Config extends Singleton {
 		return $allConfig[$section_name];
 	}
 }
-
-

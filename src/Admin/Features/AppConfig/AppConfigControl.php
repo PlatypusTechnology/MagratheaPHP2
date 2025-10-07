@@ -114,7 +114,7 @@ class AppConfigControl extends MagratheaModelControl {
 	 * @param string 	$default		if key is not found, this will be the default value
 	 * @return string|null				returns the value, the default or null if no key is found and no default is set
 	 */
-	public function GetValueByKey(string $key, string $default=null): string|null {
+	public function GetValueByKey(string $key, ?string $default=null): string|null {
 		$c = $this->GetByKey($key);
 		if(!$c) return $default;
 		return $c->GetValue();

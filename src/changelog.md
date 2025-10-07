@@ -1,5 +1,10 @@
 # 2025/july
 
+### 2.1.18
+2025-09-30
+	- **new:** config now getting environment variables when starting with `$=`
+	- **improvement:** PHP 8.4: dealing with some deprecations...
+
 ### 2.1.17
 2025-06-18
 	- **fix:** Magrathea API debugger fixing closure functions
