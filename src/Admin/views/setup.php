@@ -11,11 +11,13 @@ $title = AdminManager::Instance()->GetTitle();
 
 <!DOCTYPE html>
 <html lang="en">
+	<head>
 	<?
 		$pageTitle = $title." - First setup";
 		$cssStyleFiles = ["login", "cards"];
 		include("sections/meta.php");
 	?>
+	</head>
 	<body>
 
 		<?php

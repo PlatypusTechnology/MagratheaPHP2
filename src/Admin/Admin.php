@@ -21,15 +21,32 @@ use Magrathea2\Tests\TestsManager;
  */
 class Admin implements iAdmin {
 
+	/** @var string Title for the admin panel. */
 	public $title = "Magrathea Admin";
+	/** @var string Primary color for the admin panel in RGB decimal format. */
 	public $primaryColor = "203, 128, 8";
+	/** @var string Path to the admin logo file. */
 	public $adminLogo = __DIR__."/views/logo.svg";
+	public $favicon = __DIR__."/views/magrathea_logo.svg";
+
+	/** @var array Extra items to be added to the menu. */
 	public $extraMenu = [];
 
+	/** @var array Holds all registered admin features. */
+	protected $adminFeatures = [];
+	/** @var array Holds keys of all registered CRUD features. */
+	protected $crudFeatures = [];
+
+	/**
+	 * Constructor. Adds the base javascript file for the admin panel.
+	 */
 	public function __construct() {
 		$this->AddJs(__DIR__."/views/javascript/scripts.js");
 	}
 
+	/**
+	 * Initializes the admin, adding Magrathea tests.
+	 */
 	public function Initialize() {
 		$this->AddTests();
 	}
@@ -44,7 +61,7 @@ class Admin implements iAdmin {
 		return $this;
 	}
 	/**
-	 * Sets color as decimal value
+	 * Sets the primary color from a hexadecimal value.
 	 * @param string $color		Color as hexaRGB
 	 * @return 	Admin			itself
 	 */
@@ -54,7 +71,7 @@ class Admin implements iAdmin {
 		return $this->SetPrimaryColorDecimal(implode(',', $dec));
 	}
 	/**
-	 * Sets color as decimal value
+	 * Sets the primary color from a decimal RGB string.
 	 * @param string $color		Color as Decimal RGB
 	 * @return 	Admin			itself
 	 */
@@ -67,7 +84,9 @@ class Admin implements iAdmin {
 	 * @param string $logo		logo address
 	 * @return 	Admin			itself
 	 */
-	public function SetLogo(string $logo): Admin { return $this->SetAdminLogo($logo); }
+	public function SetLogo(string $logo): Admin {
+		return $this->SetAdminLogo($logo);
+	}
 	/**
 	 * Defines admin logo
 	 * @param string $logo		logo address
@@ -75,23 +94,25 @@ class Admin implements iAdmin {
 	 */
 	public function SetAdminLogo($logo): Admin {
 		$this->adminLogo = $logo;
+		$ext = pathinfo($logo, PATHINFO_EXTENSION);
+		if($ext == "svg") $this->favicon = $logo;
 		return $this;
 	}
 
-
+	/**
+	 * Adds Magrathea's built-in tests to the test manager.
+	 * @return Admin	itself
+	 */
 	public function AddTests(): Admin {
 		TestsManager::Instance()->AddMagrathaTests();
 		return $this;
 	}
 
-
-	protected $adminFeatures = [];
-	protected $crudFeatures = [];
 	/**
-	 * sets admin feature
+	 * Adds an admin feature.
 	 * @param AdminFeature 	$feature		feature class to be added
-	 * @param string				$key				key for the feature
-	 * @return Admin						itself
+	 * @param string|null	$key			(optional) key for the feature. If not provided, featureId will be used.
+	 * @return Admin		itself
 	 */
 	protected function AddFeature(AdminFeature $feature, ?string $key=null): Admin {
 		if(!$key) $key = $feature->featureId;
@@ -100,9 +121,9 @@ class Admin implements iAdmin {
 		return $this;
 	}
 	/**
-	 * adds a crud admin feature
-	 * @param AdminCrudOobject 	$feature		feature class to be added
-	 * @return Admin						itself
+	 * Adds a CRUD admin feature.
+	 * @param AdminCrudObject 	$admin		feature class to be added
+	 * @return Admin			itself
 	 */
 	protected function AddCrudFeature(AdminCrudObject $admin) {
 		$key = $admin->featureId;
@@ -110,19 +131,52 @@ class Admin implements iAdmin {
 		array_push($this->crudFeatures, $key);
 		return $this;
 	}
+
+	/**
+	 * Sets the default features for the admin panel.
+	 */
 	public function SetFeatures() {
-		$this
-			->AddFeature(new \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig())
-			->AddFeature(new \Magrathea2\Admin\Features\Cache\AdminFeatureCache())
-			->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser())
-			->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog())
-			->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
+		$this->LoadAppConfig();
+		$this->LoadCache();
+		$this->LoadUser();
+		$this->LoadFileEditor();
+	}	
+
+	/**
+	 * Loads the AppConfig feature.
+	 */
+	protected function LoadAppConfig() {
+		$this->AddFeature(new \Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig());
 	}
+	/**
+	 * Loads the Cache feature.
+	 */
+	protected function LoadCache() {
+		$this->AddFeature(new \Magrathea2\Admin\Features\Cache\AdminFeatureCache());
+	}
+	/**
+	 * Loads User and UserLog features.
+	 */
+	protected function LoadUser() {
+		$this->AddFeature(new \Magrathea2\Admin\Features\User\AdminFeatureUser());
+		$this->AddFeature(new \Magrathea2\Admin\Features\UserLogs\AdminFeatureUserLog());
+	}
+	/**
+	 * Loads the File Editor feature.
+	 */
+	protected function LoadFileEditor() {
+		$this->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());
+	}
+
+	/**
+	 * Gets all registered admin features.
+	 * @return array
+	 */
 	public function GetFeatures() {
 		return $this->adminFeatures;
 	}
 	/**
-	 * inserts an array of features
+	 * Inserts an array of features.
 	 * @param array $arrFeatures		array of features
 	 * @return Admin		itself
 	 */
@@ -134,7 +188,7 @@ class Admin implements iAdmin {
 	}
 
 	/**
-	 * Add a JS file
+	 * Add a JS file to the admin panel.
 	 * @param string 	$filePath		path of js file
 	 * @return Admin	itself
 	 */
@@ -144,7 +198,7 @@ class Admin implements iAdmin {
 	}
 
 	/**
-	 * Adds a menu item
+	 * Adds one or more menu items to the extra menu.
 	 * @param array $item			menu item ["title", "link"]
 	 * @return itself
 	 */
@@ -153,7 +207,7 @@ class Admin implements iAdmin {
 		return $this;
 	}
 	/**
-	 * Gets the menu item
+	 * Gets the menu item for a specific feature.
 	 * @param		string 	$key		key of the feature
 	 * @return 	array		menu item
 	 */
@@ -168,6 +222,10 @@ class Admin implements iAdmin {
 		return $this->adminFeatures[$key]->GetMenuItem();
 	}
 
+	/**
+	 * Builds the admin menu.
+	 * @return AdminMenu
+	 */
 	public function BuildMenu(): AdminMenu{
 		$adminMenu = new AdminMenu();
 		$this->AddMagratheaMenu($adminMenu);
@@ -183,33 +241,55 @@ class Admin implements iAdmin {
 		return $adminMenu;
 	}
 
+	/**
+	 * Adds the default Magrathea menu sections to the menu.
+	 * @param AdminMenu $adminMenu
+	 * @return AdminMenu
+	 */
 	public function AddMagratheaMenu(AdminMenu &$adminMenu): AdminMenu {
 		$adminMenu
 			->Add("Setup")
-			->Add($adminMenu->GetItem("conf-file"))
-			->Add($this->adminFeatures["AdminFeatureAppConfig"]->GetMenuItem())
+			->Add($adminMenu->GetItem("conf-file"));
+
+		if(@$this->adminFeatures["AdminFeatureAppConfig"])
+			$adminMenu->Add($this->adminFeatures["AdminFeatureAppConfig"]->GetMenuItem());
+		$adminMenu
 			->Add($adminMenu->GetItem("structure"))
 			->Add($adminMenu->GetItem("htaccess"))
 
 			->Add($adminMenu->GetDatabaseSection())
-			->Add($adminMenu->GetObjectSection())
+			->Add($adminMenu->GetObjectSection());
 
-			->Add("Cache")
-			->Add($this->adminFeatures["AdminFeatureCache"]->GetMenuItem())
+		if(@$this->adminFeatures["AdminFeatureCache"])
+			$adminMenu
+				->Add("Cache")
+				->Add($this->adminFeatures["AdminFeatureCache"]->GetMenuItem());
 
+		$adminMenu
 			->Add($adminMenu->GetDebugSection())
-			->Add($adminMenu->GetItem("version"))
+			->Add($adminMenu->GetItem("version"));
 
-			->Add($adminMenu->GetMenuFeatures([
-				$this->adminFeatures["AdminFeatureUser"],
-				$this->adminFeatures["AdminFeatureUserLog"],
-			], "Users"))
+		if(@$this->adminFeatures["AdminFeatureUser"] && @$this->adminFeatures["AdminFeatureUserLog"])
+			$adminMenu
+				->Add($adminMenu->GetMenuFeatures([
+					$this->adminFeatures["AdminFeatureUser"],
+					$this->adminFeatures["AdminFeatureUserLog"],
+				], "Users"));
 
-			->Add("Tools")
-			->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem())
-			->Add($adminMenu->GetHelpSection());
+		if(@$this->adminFeatures["AdminFeatureFileEditor"])
+			$adminMenu
+				->Add("Tools")
+				->Add($this->adminFeatures["AdminFeatureFileEditor"]->GetMenuItem());
+		
+		$adminMenu->Add($adminMenu->GetHelpSection());
 		return $adminMenu;
 	}
+
+	/**
+	 * Adds menu items for all registered CRUD features.
+	 * @param AdminMenu $adminMenu
+	 * @return AdminMenu
+	 */
 	public function AddFeaturesMenu(AdminMenu &$adminMenu): AdminMenu {
 		$adminMenu->Add($adminMenu->CreateTitle("Features"));
 		foreach($this->crudFeatures as $fkey) {
@@ -218,8 +298,12 @@ class Admin implements iAdmin {
 		return $adminMenu;
 	}
 
+	/**
+	 * Checks if a user has authorization to access the admin.
+	 * @param \Magrathea2\Admin\Features\User\AdminUser $user
+	 * @return bool
+	 */
 	public function Auth($user): bool {
 		return $user->IsAdmin();
 	}
 }
-

@@ -15,23 +15,27 @@ class MagratheaApiAuth extends MagratheaApiControl {
 		return $this->getAuthorizationHeader();
 	}
 
-	public function ResponseLogin(AdminUser $user): array {
+	public function ResponseUserPayload(array $user): array {
 		$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + '.$this->tokenExpire));
-		$payload = [
-			"id" => intval(@$user->id),
-			"email" => @$user->email,
-			"role" => intval($user->role_id),
-			"roleName" => $user ? $user->GetRoleName() : "-",
-		];
-		$jwtRefresh = $this->jwtEncode($payload);
+		$jwtRefresh = $this->jwtEncode($user);
 		$payload["refresh"] = $jwtRefresh;
 		$payload["expire"] = $expire;
 		$jwt = $this->jwtEncode($payload);
 		return [
 			"refresh_token" => $jwtRefresh,
 			"token" => $jwt,
-			"user" => $user
+			"user" => $user,
 		];
+	}
+
+	public function ResponseLogin(AdminUser $user): array {
+		$payload = [
+			"id" => intval(@$user->id),
+			"email" => @$user->email,
+			"role" => intval($user->role_id),
+			"roleName" => $user ? $user->GetRoleName() : "-",
+		];
+		return $this->ResponseUserPayload($payload);
 	}
 
 	public function ResponsePayload($payload): array {

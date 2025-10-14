@@ -1,6 +1,8 @@
 <?php
 
 namespace Magrathea2;
+
+use Magrathea2\Authorization\AuthApi;
 use Magrathea2\Exceptions\MagratheaApiException;
 
 #######################################################################################
@@ -28,8 +30,8 @@ class MagratheaApi {
 	protected static $inst = null;
 
 	// authorization
-	public $authClass = false;
-	public $baseAuth = false;
+	public ?MagratheaApiControl $authClass = null;
+	public ?string $baseAuth = null;
 
 	private $endpoints = array();
 	private $fallback = null;
@@ -62,6 +64,7 @@ class MagratheaApi {
 	}
 
 	/**
+	 * @deprecated
 	 * Start the server, getting base calls
 	 * @return 	MagratheaApi	itself
 	 */
@@ -99,15 +102,27 @@ class MagratheaApi {
 	}
 
 	/**
-	 * includes header to allow all
+	 * includes header to allow origins
 	 * @param 	array 	$condition 	condition for header
 	 * @return  MagratheaApi
 	 */
-	public function Allow($allowedOrigins): MagratheaApi{
+	public function Allow(array $allowedOrigins): MagratheaApi{
 		if (in_array(@$_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
 			header('Access-Control-Allow-Origin: '.$_SERVER["HTTP_ORIGIN"]);
 		}
+		header('Access-Control-Allow-Credentials: true');
 		return $this;
+	}
+
+	private array $acceptControlAllowHeaders = ["Authorization", "Content-Type"];
+	public function AddAcceptHeaders($accept) {
+		$this->acceptControlAllowHeaders = $accept;
+	}
+	public function AcceptHeaders(?array $headers = null) {
+		if($headers != null) {
+			array_push($this->acceptControlAllowHeaders, ...$headers);
+		}
+		header('Access-Control-Allow-Headers: '.implode(",", $this->acceptControlAllowHeaders));
 	}
 
 	/**
@@ -125,7 +140,7 @@ class MagratheaApi {
 	 * @param 	string 		$function 	basic authorization function name
 	 * @return  MagratheaApi
 	 */
-	public function BaseAuthorization($authClass, $function): MagratheaApi {
+	public function BaseAuthorization(MagratheaApiControl $authClass, ?string $function): MagratheaApi {
 		$this->authClass = $authClass;
 		$this->baseAuth = $function;
 		return $this;
@@ -143,12 +158,16 @@ class MagratheaApi {
 
 	/**
 	 * includes header to allow all
-	 * @param 	string				$url					url for Crud
-	 * @param 	object				$control			control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	string				$auth					function that returns authorization for execution. "false" for public API
+	 * @param 	string|array					$url					url for Crud. array for plural and singular endpoints
+	 * @param 	MagratheaApiControl		$control			control where crud function will be. They are: Create, Read, Update and Delete
+	 * @param 	string								$auth					function that returns authorization for execution. "false" for public API
 	 * @return  MagratheaApi
 	 */
-	public function Crud($url, $control, ?string $auth=null): MagratheaApi {
+	public function Crud(
+		string|array $url,
+		MagratheaApiControl $control,
+		string|bool $auth=false,
+	): MagratheaApi {
 		if(is_array($url)) {
 			$singular = $url[0];
 			$plural = $url[1];
@@ -176,7 +195,14 @@ class MagratheaApi {
 	 * @param 	string 			$description	description of function, for documentation (optional)
 	 * @return  MagratheaApi
 	 */
-	public function Add($method, $url, $control, $function, $auth=true, ?string $description=null): MagratheaApi {
+	public function Add(
+		string $method,
+		string $url,
+		?MagratheaApiControl $control,
+		string|callable $function,
+		string|bool $auth=false,
+		?string $description=null
+	): MagratheaApi {
 		$method = strtoupper($method);
 		$endpoint = [
 			"control" => $control,
@@ -318,14 +344,6 @@ class MagratheaApi {
 		return $params;
 	}
 
-	private $acceptControlAllowHeaders = ["Authorization", "Content-Type"];
-	public function AddAcceptHeaders($accept) {
-		$this->acceptControlAllowHeaders = $accept;
-	}
-	public function AcceptHeaders() {
-		header('Access-Control-Allow-Headers: '.implode(",", $this->acceptControlAllowHeaders));
-	}
-
 	private function getMethod() {
 		$method = $_SERVER['REQUEST_METHOD'];
 		if($method == "OPTIONS") {
@@ -422,9 +440,9 @@ class MagratheaApi {
 	/**
 	 * returns the sent parameters in JSON format - and ends the execution with "die";
 	 * @param 	array|object 		$response 		parameter to be printed in json
-	 * @param 	number			 		$code 				code response (default: 200)
+	 * @param 	int			 				$code 				code response (default: 200)
 	 */
-	public function Json($response, $code=200){
+	public function Json($response, int $code=200){
 		if($this->returnRaw) return $response;
 		header('Content-Type: application/json');
 		if($code != 200) {
@@ -526,4 +544,17 @@ class MagratheaApi {
 	public function Cache($data) {
 		MagratheaCache::Instance()->HandleApiCache($data);
 	}
+
+	/**
+	 * creates a Health Check API
+	 */
+	public function HealthCheck() {
+		$this->Add("GET", "health-check", null, function() {
+			return [
+				"health" => "ok",
+				"time" => now(),
+			];
+		}, false);
+	}
+
 }

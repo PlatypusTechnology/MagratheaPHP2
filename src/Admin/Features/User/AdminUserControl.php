@@ -6,10 +6,6 @@ use Exception;
 use Magrathea2\Admin\AdminManager;
 use Magrathea2\MagratheaModelControl;
 use Magrathea2\DB\Query;
-use Magrathea2\DB\Select;
-use Magrathea2\Debugger;
-
-use function Magrathea2\p_r;
 
 class AdminUserControl extends MagratheaModelControl { 
 
@@ -17,7 +13,13 @@ class AdminUserControl extends MagratheaModelControl {
 	protected static $modelName = "AdminUser";
 	protected static $dbTable = "_magrathea_users";
 
-	public function GetByEmail($email): AdminUser|null {
+	/**
+	 * Gets a user by e-mail
+	 * @param 	string 			$email	user e-mail
+	 * @return 	AdminUser|null	user or null if not found
+	 * @throws 	\Magrathea2\Exceptions\MagratheaDBException
+	 */
+	public function GetByEmail(string $email): AdminUser|null {
 		$user = $this->GetWhere(["email" => $email]);
 		if(count($user) == 0) return null;
 		return $user[0];
@@ -25,14 +27,14 @@ class AdminUserControl extends MagratheaModelControl {
 
 	/**
 	 * Logs in
-	 * @param string $user			user e-mail
+	 * @param string $email			user e-mail
 	 * @param string $password	user password
 	 * @return array		returns array with [ success, user, message ]
 	 */
-	public function Login($user, $password): array {
+	public function Login(string $email, string $password): array {
 		try {
 			$query = Query::Select()
-				->Where(["email" => $user])
+				->Where(["email" => $email])
 				->Obj(new AdminUser());
 			$user = self::RunRow($query);
 			if ($user == null) {
@@ -49,7 +51,13 @@ class AdminUserControl extends MagratheaModelControl {
 		}
 	}
 
-	public function SetLoginAsNow($user) {
+	/**
+	 * Sets last_login for a user as now
+	 * @param 	AdminUser 	$user 	user to be updated
+	 * @return 	mixed 			query result
+	 * @throws 	\Magrathea2\Exceptions\MagratheaDBException
+	 */
+	public function SetLoginAsNow(AdminUser $user) {
 		try {
 			$query = Query::Update();
 			$query->Table(static::$dbTable);
@@ -62,6 +70,11 @@ class AdminUserControl extends MagratheaModelControl {
 		}
 	}
 
+	/**
+	 * Counts how many users are in the database
+	 * @return 	int 		amount of users
+	 * @throws 	\Magrathea2\Exceptions\MagratheaDBException
+	 */
 	public function CountUsers(): int {
 		try {
 			$query = Query::Select()
@@ -74,7 +87,13 @@ class AdminUserControl extends MagratheaModelControl {
 		}
 	}
 
-	public function SetNewPassword($user, $pwd) {
+	/**
+	 * Sets a new password for a user
+	 * @param 	AdminUser 	$user 	user to be updated
+	 * @param 	string 			$pwd 	new password
+	 * @return 	array 			["success" => bool, "error" => string]
+	 */
+	public function SetNewPassword(AdminUser $user, string $pwd) {
 		// Debugger::Instance()->SetDev();
 		if(strlen($pwd) < 8) {
 			return ["success" => false, "error" => "Password must be at least 8 chars long"];
@@ -85,6 +104,11 @@ class AdminUserControl extends MagratheaModelControl {
 		return [ "success" => ($saved === true) ];
 	}
 
+	/**
+	 * Gets an array of users for using in a select
+	 * @return 	array 	users as `["id" => id, "name" => email]`
+	 * @throws 	\Magrathea2\Exceptions\MagratheaDBException
+	 */
 	public function GetSelect() {
 		return array_map(function($i) {
 			return [
@@ -94,6 +118,11 @@ class AdminUserControl extends MagratheaModelControl {
 		}, $this->GetAll());
 	}
 
+	/**
+	 * Gets an array of users with their roles for using in a select
+	 * @return 	array 	users as `["id" => id, "name" => "email (role)"]`
+	 * @throws 	\Magrathea2\Exceptions\MagratheaDBException
+	 */
 	public function  GetSelectWithRoles() {
 		$user = new AdminUser();
 		$roles = $user->GetRoles();

@@ -12,8 +12,8 @@ if(!empty($magrathea_subpage)) {
 
 <!DOCTYPE html>
 <html lang="en-uk">
-<?
-		$pageTitle = AdminManager::Instance()->GetTitle();
+	<head>
+	<?
 		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast", "pre"];
 		include("sections/meta.php");
 	?>
@@ -22,12 +22,7 @@ if(!empty($magrathea_subpage)) {
 		<script type="text/javascript">
 			<?php include("javascript/pre-load-scripts.js"); ?>
 		</script>
-		<?
-			$svgIcon = file_get_contents(__DIR__.'/magrathea_logo.svg');
-			$encodedIcon = 'data:image/svg+xml;base64,' . base64_encode($svgIcon);
-		?>
-		<link rel="icon" href="<?=$encodedIcon?>" type="image/svg+xml" />
-
+	</head>
 	<body>
 
 		<div class="d-flex" id="wrapper">

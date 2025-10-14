@@ -1,4 +1,8 @@
-# 2025/july
+### 2.1.19
+2025-10
+	- **improvement:** improving functions for Magrathea Admin
+	- **improvement:** improving CORS
+	- **improvement:** improving MagratheaApi function and documentation
 
 ### 2.1.18
 2025-09-30

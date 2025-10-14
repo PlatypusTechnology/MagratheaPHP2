@@ -21,7 +21,7 @@ $magPhp = MagratheaPHP::Instance();
 			<b>App Version: <?=$magPhp->AppVersion();?></b> <br/><br/>
 
 			Magrathea PHP Version: <?=$magPhp->version()?> <br/>
-			Minimum Magrathea PHP Version Required: <?=@$magPhp->versionRequired?> <br/><br/>
+			Minimum Magrathea PHP Version Required: <?=@$magPhp->versionRequired ?? "00"?> <br/><br/>
 			PHP Version: <?=phpversion()?> <br/>
 		</div>
 	</div>

@@ -40,11 +40,14 @@ if(count($_POST) > 0) {
 
 <!DOCTYPE html>
 <html lang="en">
+	<head>
 	<?
 		$pageTitle = $admin->GetTitle()." - Login";
 		$cssStyleFiles = ["login"];
 		include("sections/meta.php");
 	?>
+	
+	</head>
 	<body>
 
 		<?php

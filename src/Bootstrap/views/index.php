@@ -38,6 +38,7 @@
 					<div class="col-8">
 						<div class="card">
 							<?php
+							$showCommands = true;
 							switch($stepActive) {
 								default:
 								case 1:
@@ -62,9 +63,14 @@
 								case 7:
 									include("steps/develop.php");
 									break;
+								case -1:
+									$showCommands = false;
+									include("tools.php");
+									break;
 								}
 							?>
 						</div>
+						<?php if($showCommands) { ?>
 						<div class="actions">
 							<?php if ($stepActive > 1) { ?>
 								<button class="btn btn-primary left" onclick="window.location.href='<?=linkTo($stepActive-1)?>'">Back</button>
@@ -75,6 +81,7 @@
 								<button class="btn btn-success" onclick="window.location.href='<?=linkTo($stepActive+1)?>'">Next</button>
 							<?php } ?>
 						</div>
+						<?php } ?>
 					</div>
 				</div>
 

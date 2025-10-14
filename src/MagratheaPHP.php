@@ -19,43 +19,47 @@ use Magrathea2\Exceptions\MagratheaException;
 #######################################################################################
 
 /**
-* Base class for Magrathea project
-* 
-*/
+ * Base class for a Magrathea project.
+ * It handles paths, configurations, database connections, and environments.
+ */
 class MagratheaPHP extends Singleton {
 
-		// Root of application
+	/** @var string Root of the application. */
 	public string $appRoot = "";
-		// Root of Magrathea Structure
+	/** @var string Root of the Magrathea Structure (usually one level above appRoot). */
 	public string $magRoot = "";
-	public $codeFolder = [];
-	public $versionRequired = null;
+	/** @var array<string> Folders to be included in the autoloader. */
+	public array $codeFolder = [];
+	/** @var string|null Minimum version of Magrathea required. */
+	public ?string $versionRequired = null;
 
 	/**
-	* Sets App Root Path
-	* @param    string  $path   Root path of project
-	* @return 	MagratheaPHP
-	*/
-	public function AppPath($path): MagratheaPHP {
+	 * Sets the application's root path.
+	 * Also defines the `magRoot` as the parent directory.
+	 * @param string $path Root path of the project.
+	 * @return MagratheaPHP
+	 */
+	public function AppPath(string $path): MagratheaPHP {
 		$this->appRoot = $path;
 		$this->magRoot = realpath($path."/../");
 		return $this;
 	}
 
 	/**
-	 * Returns the root path (app) of project
-	 * @return 	string	app path
+	 * Returns the root path of the application.
+	 * @return string Application root path.
 	 */
 	public function GetAppRoot(): string {
 		return $this->appRoot;
 	}
 
 	/**
-	 * Check if current Magrathea Version is acceptable
-	 * @param		string	$version		min version for Magrathea
-	 * @param		boolean	$throwEx		if true, throws a 206 Magrathea Exception if version is under (default: false)
-	 * @return 	MagratheaPHP
-	 * @throws	MagratheaException		code 206: incompatible version
+	 * Checks if the current Magrathea version meets a minimum requirement.
+	 * @param string $version Minimum version required (e.g., "2.1.0").
+	 * @param bool   $throwEx If true, throws a MagratheaException if the version is not met.
+	 *                        Otherwise, it displays an error message.
+	 * @return MagratheaPHP
+	 * @throws MagratheaException (code 206) if the version is incompatible and `$throwEx` is true.
 	 */
 	public function MinVersion(string $version, bool $throwEx = false) {
 		$this->versionRequired = $version;
@@ -69,16 +73,17 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * @return 	string		$magratheaRoot
+	 * Gets the root directory of the MagratheaPHP library.
+	 * @return string The path to the MagratheaPHP source directory.
 	 */
 	public function GetMagratheaRoot(): string {
 		return __DIR__;
 	}
 
 	/**
-	 * Adds a code folder for autoload
-	 * @param string $folder	foldername
-	 * @return MagratheaPHP		itself
+	 * Adds one or more code folders for the autoloader.
+	 * @param string ...$folder One or more folder paths to add.
+	 * @return MagratheaPHP
 	 */
 	public function AddCodeFolder(...$folder): MagratheaPHP {
 		array_push($this->codeFolder, ...$folder);
@@ -86,10 +91,10 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Adds features (and its folders)
-	 * @param string	$root			__DIR__ of the base app
-	 * @param string 	$features	features names
-	 * @return MagratheaPHP		itself
+	 * Adds feature folders based on the application root.
+	 * For each feature, it adds `features/[name]` and `features/[name]/Base`.
+	 * @param string ...$features One or more feature names.
+	 * @return MagratheaPHP
 	 */
 	public function AddFeature(...$features): MagratheaPHP {
 		$root = $this->appRoot;
@@ -103,8 +108,8 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Set dev display errors
-	 * @return MagratheaPHP
+	 * Sets the environment to development mode.
+	 * Enables error reporting and display.
 	 */
 	public function Dev(): MagratheaPHP {
 		error_reporting(E_ALL);
@@ -114,29 +119,28 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Set debug development
-	 * @return MagratheaPHP
+	 * Enables the debugger.
+	 * This will also log database queries.
 	 */
 	public function Debug(): MagratheaPHP {
-		Debugger::Instance()->SetDebug();
+		Debugger::Instance()->SetDebug()->LogQueries(true);
 		return $this;
 	}
 
 	/**
-	 * Set prod environment
-	 * @return MagratheaPHP
+	 * Sets the environment to production mode.
+	 * Errors will be sent to the logger instead of being displayed.
 	 */
 	public function Prod(): MagratheaPHP {
 		Debugger::Instance()->SetType(Debugger::LOG);
 		return $this;
 	}
 
-
-
 	/**
-	* Get Config Root
-	* @return string		config root
-	*/
+	 * Gets the path to the configuration directory.
+	 * @return string The path to the `/configs` directory.
+	 * @throws MagratheaConfigException If `magRoot` is not set.
+	 */
 	public function getConfigRoot() {
 		return $this->magRoot."/configs";
 	}
@@ -161,17 +165,17 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	* Connect to Database (other name for Connect)
-	* @return MagratheaPHP
-	*/
+	 * Connects to the database. Alias for `Connect()`.
+	 * @return MagratheaPHP
+	 */
 	public function StartDB() {
 		return $this->Connect();
 	}
 
 	/**
-	* Connect to Database
-	* @return MagratheaPHP
-	*/
+	 * Connects to the database using credentials from the configuration.
+	 * @return MagratheaPHP
+	 */
 	public function Connect() {
 		try {
 			$config = Config::Instance();
@@ -189,15 +193,16 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Gets Database object
-	 * @return Database
+	 * Gets the singleton instance of the Database object.
+	 * @return Database The database instance.
 	 */
 	public function GetDB(): Database {
 		return Database::Instance();
 	}
 
-	/** 
-	 * starts session if needed
+	/**
+	 * Starts a PHP session if one is not already active.
+	 * @return MagratheaPHP
 	 */
 	public function StartSession(): MagratheaPHP {
 		if (session_status() == PHP_SESSION_NONE) {
@@ -206,6 +211,10 @@ class MagratheaPHP extends Singleton {
 		return $this;
 	}
 
+	/**
+	 * Includes the Composer autoloader.
+	 * @return void
+	 */
 	public static function LoadVendor(): void {
 		$vendorPath = realpath(__DIR__."/../../..");
 		$vendorLoad = $vendorPath."/autoload.php";
@@ -213,8 +222,8 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Return link to Magrathea's documentation
-	 * @return		string 		link
+	 * Returns the link to Magrathea's official documentation.
+	 * @return string URL for the documentation.
 	 */
 	public static function GetDocumentationLink(): string {
 		return "https://www.platypusweb.com.br/magratheaphp2";
@@ -229,8 +238,8 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Gets the version of the app (inside the src folder)
-	 * @return	string 		app version
+	 * Gets the version of the application from the `version` file in the project root.
+	 * @return string Application version, or "???" if not found.
 	 */
 	public function AppVersion(): string {
 		$file = MagratheaHelper::EnsureTrailingSlash($this->magRoot)."version";
@@ -239,9 +248,9 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	* Test Magrathea
-	* @return   void
-	*/
+	 * A simple test function to check if MagratheaPHP is working.
+	 * @return void
+	 */
 	public static function Test(): void { 
 		echo "MagratheaPHP2 is working!";
 	}

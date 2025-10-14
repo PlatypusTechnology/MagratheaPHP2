@@ -51,18 +51,27 @@ class AdminManager extends Singleton {
 
 	/**
 	 * Prints the logo
-	 * @param int $logoSize		size of the logo
 	 */
-	public function PrintLogo($logoSize): void {
+	public function PrintLogo(?int $logoSize=200): void {
 		$logoFile = $this->admin->adminLogo;
 		$ext = pathinfo($logoFile, PATHINFO_EXTENSION);
 		switch($ext) {
-			case "svg": include($logoFile); break;
-			case "jpeg": case "jpg":
-			case "png":
+			case "svg":
+				echo '<div class="logo_image" style="display: inline-block; width: '.$logoSize.'px; height: '.$logoSize.'px">';
+				include($logoFile);
+				echo '</div>';
+				break;
+			case "jpeg": case "jpg": case "png":
 				include(__DIR__."/views/sections/logo.php"); break;
 			default: echo "[logo]";
 		}
+	}
+
+	public function GetFaviconTag(): string {
+		$faviconFile = $this->admin->favicon;
+		$svgIcon = file_get_contents($faviconFile);
+		$encodedIcon = 'data:image/svg+xml;base64,' . base64_encode($svgIcon);
+		return '<link rel="icon" href="'.$encodedIcon.'" type="image/svg+xml" />';
 	}
 
 	/**

@@ -10,11 +10,12 @@ $elements = AdminElements::Instance();
 
 <!DOCTYPE html>
 <html lang="en">
+	<head>
 	<?
-		$pageTitle = $admin->GetTitle();
 		$cssStyleFiles = ["login"];
 		include("sections/meta.php");
 	?>
+	</head>
 	<body>
 
 		<?php

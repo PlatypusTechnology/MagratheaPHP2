@@ -1,7 +1,9 @@
 .card-header-login .card-logo {
 	display: inline-block;
 }
-
+.card-header-login .card-logo svg {
+	min-height: 200px;
+}
 .card-header-login .card-title {
 	display: none;
 	font-size: 40px;

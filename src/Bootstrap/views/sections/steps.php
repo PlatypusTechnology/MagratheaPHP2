@@ -64,4 +64,10 @@ function linkStepTo($step) {
 			<a href="<?=linkStepTo($s)?>">Start Develop!</a>
 		</li>
 	</ul>
+	<hr/>
+	<ul class="StepProgress">
+		<li class="StepProgress-item">
+			<a href="<?=linkStepTo(-1)?>">Tools</a>
+		</li>
+	</ul>
 </div>
