@@ -230,7 +230,8 @@ abstract class MagratheaModel{
 		foreach( $this->dbValues as $field => $type ){
 			if( $autoIncrement && $field == $this->dbPk ) continue;
 			if( !isset($this->$field) ) continue;
-			array_push($arr_Types, $this->GetDataTypeFromField($type));
+			$type = $this->GetDataTypeFromField($type);
+			array_push($arr_Types, $type);
 			array_push($arr_Fields, $field);
 			if( is_a($this->$field, "MagratheaModel") ) {
 				$arr_Values[$field] = $this->GetRelationId($this->$field);
@@ -238,7 +239,7 @@ abstract class MagratheaModel{
 				if( $field == "created_at" || $field == "updated_at" ) {
 					$arr_Values[$field] = now();
 				} else {
-					$arr_Values[$field] = $this->$field;
+					$arr_Values[$field] = ($type == "integer" || $type == "boolean") ? intval($this->$field) : $this->$field;
 				}
 			}
 		}
@@ -313,7 +314,7 @@ abstract class MagratheaModel{
 				if( $field == "updated_at" ) {
 					$arr_Values[$field] = now();
 				} else {
-					$arr_Values[$field] = $value;
+					$arr_Values[$field] = ($type == "integer" || $type == "boolean") ? intval($this->$field) : $this->$field;
 				}
 			}
 			array_push($arr_Types, $t);

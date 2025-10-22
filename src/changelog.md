@@ -1,3 +1,8 @@
+### 2.1.20
+2025-10
+	- **improvement:** improving MagratheaApi function and documentation
+	- **improvement:** improving debugging for unknown errors
+
 ### 2.1.19
 2025-10
 	- **improvement:** improving functions for Magrathea Admin

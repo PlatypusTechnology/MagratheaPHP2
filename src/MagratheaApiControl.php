@@ -16,16 +16,33 @@ use \Firebase\JWT\Key;
 #######################################################################################
 
 /**
-* 
-* Control for Create, Read, List, Update, Delete
-**/
+ * Base Control for API endpoints.
+ * Provides basic CRUD functionalities and helper methods for handling API requests,
+ * such as authentication, data retrieval from requests, and caching.
+ */
 class MagratheaApiControl {
 
+	/**
+	 * @var string|null 	$model 		The class name of the model associated with this control.
+	 */
 	protected $model = null;
+	/**
+	 * @var object|null 	$service 	The service object for handling business logic.
+	 */
 	protected $service = null;
+	/**
+	 * @var object|null 	$userInfo 	Holds the decoded JWT payload (user information).
+	 */
 	public $userInfo = null;
+	/**
+	 * @var string 			$jwtEncodeType 	The encoding algorithm for JWT.
+	 */
 	public $jwtEncodeType = "HS256";
 
+	/**
+	 * Gets all HTTP headers from the request.
+	 * @return array<string, string> An associative array of headers.
+	 */
 	public function GetAllHeaders() {
 		$headers = [];
 		foreach ($_SERVER as $name => $value){
@@ -36,6 +53,12 @@ class MagratheaApiControl {
 		return $headers;
 	}
 
+	/**
+	 * Gets the authorization token from the 'Authorization' header.
+	 * It supports 'Basic' and 'Bearer' token types.
+	 * @return string The token string.
+	 * @throws MagratheaApiException If the token format is invalid.
+	 */
 	public function GetAuthorizationToken() {
 		$token = $this->GetAllHeaders()["Authorization"];
 		$gotToken = false;
@@ -57,8 +80,8 @@ class MagratheaApiControl {
 
 	/**
 	 * Get token data
-	 * @param 	string 		$token
-	 * @return 	any				token data
+	 * @param string|false $token The JWT token. If false, it tries to get it from headers.
+	 * @return object|false Decoded token data as an object, or false if token is not found.
 	 */
 	public function GetTokenInfo($token=false) {
 		if(!$token) {
@@ -72,14 +95,30 @@ class MagratheaApiControl {
 		return $this->userInfo;
 	}
 
+	/**
+	 * Gets the secret key for JWT encoding/decoding from config.
+	 * @return string The JWT secret key.
+	 */
 	public function GetSecret(): string {
 		return Config::Instance()->Get("jwt_key");
 	}
 
+	/**
+	 * Decodes a JWT token.
+	 * @param string $token The JWT token to decode.
+	 * @return object The decoded payload as an object.
+	 */
 	public function jwtDecode($token) {
+		if(!$this->GetSecret()) throw new MagratheaApiException("JWT key empty", 500);
 		return JWT::decode($token, new Key(strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType));
 	}
+	/**
+	 * Encodes a payload into a JWT token.
+	 * @param mixed $payload The payload to encode.
+	 * @return string The generated JWT token.
+	 */
 	public function jwtEncode($payload) {
+		if(!$this->GetSecret()) throw new MagratheaApiException("JWT key empty", 500);
 		return JWT::encode($payload, strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType);
 	}
 
@@ -100,7 +139,7 @@ class MagratheaApiControl {
 	}
 
 	/**
-	* Get header Authorization
+	* Gets the Authorization header from various server sources.
 	* */
 	public function getAuthorizationHeader(){
 		$headers = null;
@@ -122,7 +161,10 @@ class MagratheaApiControl {
 		return $headers;
 	}
 
-
+	/**
+	 * Reads and parses the raw input stream (php://input).
+	 * @return mixed Parsed data. JSON is decoded into an associative array. Other content types are parsed as a string.
+	 */
 	public function GetPhpInput() {
 		$putfp = fopen('php://input', 'r');
 		$putData = '';
@@ -143,6 +185,10 @@ class MagratheaApiControl {
 		// return $data;
 	}
 
+	/**
+	 * Gets data from a PUT request.
+	 * @return array|null The PUT data as an array, or null if not a PUT request.
+	 */
 	public function GetPut() {
 		if(@$_PUT) return $_PUT;
 		if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
@@ -150,6 +196,10 @@ class MagratheaApiControl {
 		}
 		return null;
 	}
+	/**
+	 * Gets data from a POST request.
+	 * @return array|null The POST data as an array, or null if not a POST request.
+	 */
 	public function GetPost() {
 		if(@$_POST) return $_POST;
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -158,6 +208,11 @@ class MagratheaApiControl {
 		return null;
 	}
 
+	/**
+	 * Lists all items using the associated service.
+	 * @return array An array of items.
+	 * @throws \Exception If an error occurs during data retrieval.
+	 */
 	public function List() {
 		try {
 			return $this->service->GetAll();
@@ -165,6 +220,12 @@ class MagratheaApiControl {
 			throw $ex;
 		}
 	}
+	/**
+	 * Reads a single item by its ID, or lists all items if no ID is provided.
+	 * @param array|false $params Parameters from the request, expecting an "id" key.
+	 * @return object|array A model instance if ID is found, or an array of all items.
+	 * @throws \Exception If an error occurs.
+	 */
 	public function Read($params=false) {
 		try {
 			if(!$params) return $this->List();
@@ -175,6 +236,12 @@ class MagratheaApiControl {
 		}
 	}
 
+	/**
+	 * Creates a new item.
+	 * @param array|false $data Data for the new item. If false, it uses POST data.
+	 * @return object The created model instance.
+	 * @throws \Exception If the creation fails.
+	 */
 	public function Create($data=false) {
 		if(!$data) $data = $this->GetPost();
 		$m = new $this->model();
@@ -193,6 +260,12 @@ class MagratheaApiControl {
 		}
 	}
 
+	/**
+	 * Updates an existing item.
+	 * @param array $params Parameters from the request, expecting an "id" and/or "data".
+	 * @return object The updated model instance.
+	 * @throws \Exception If the ID is invalid or data is empty.
+	 */
 	public function Update($params) {
 		$put = $this->GetPut();
 		$data = @$params["data"] ? $params["data"] : $this->GetPut();
@@ -216,6 +289,12 @@ class MagratheaApiControl {
 		}
 	}
 
+	/**
+	 * Deletes an item by its ID.
+	 * @param array|false $params Parameters from the request, expecting an "id" key.
+	 * @return bool True on successful deletion.
+	 * @throws MagratheaApiException If no parameters are sent.
+	 */
 	public function Delete($params=false) {
 		if(!$params) throw new MagratheaApiException("Empty Data Sent", 500);
 		$id = $params["id"];
@@ -228,9 +307,9 @@ class MagratheaApiControl {
 	}
 
 	/**
-	 * Cache request
-	 * @param		string		$name 		cache name
-	 * @param		string		$data			specific cache identifier
+	 * Caches the current request's response.
+	 * @param string $name Cache key/name.
+	 * @param string|null $data Specific cache identifier to be appended to the name.
 	 */
 	public function Cache($name, $data=null) {
 		$caller = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT|DEBUG_BACKTRACE_IGNORE_ARGS,2)[1]['function'];
@@ -240,21 +319,31 @@ class MagratheaApiControl {
 			->Cache($name, $data);
 	}
 	/**
-	 * Removes a cache request
-	 * @param		string		$name 		cache name
-	 * @param		string		$data			specific cache identifier
+	 * Clears a specific cache entry.
+	 * @param string $name Cache key/name.
+	 * @param string|null $data Specific cache identifier.
 	 */
 	public function CacheClear($name, $data=null) {
 		MagratheaCache::Instance()
 			->Type("json")
 			->Clear($name, $data);
 	}
+
 	/**
-	 * Removes a cache request
-	 * @param		string		$pattern 		cache pattern
+	 * Clears cache entries matching a pattern.
+	 * @param string $pattern The pattern to match against cache keys.
 	 */
 	public function CacheClearPattern($pattern) {
 		MagratheaCache::Instance()->RemovePattern($pattern);
+	}
+
+	/**
+	 * Outputs raw text content and terminates the script.
+	 * @param string $content The content to output.
+	 */
+	public function Raw($content) {
+		header('Content-Type: text/plain; charset=utf-8');
+		die($content);
 	}
 
 }

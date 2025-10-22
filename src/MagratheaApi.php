@@ -16,28 +16,46 @@ use Magrathea2\Exceptions\MagratheaApiException;
 #######################################################################################
 
 /**
-* 
-* Creates a server using Magrathea Tools to respond Json files
-**/
+ * Creates and manages a RESTful API server.
+ * This class is responsible for routing requests, handling authorization,
+ * and returning JSON responses.
+ */
 class MagratheaApi {
 
+	/** @var string The default control to be called. */
 	public $control = "Home";
+	/** @var string The default action to be called. */
 	public $action = "Index";
+	/** @var array<string, mixed> The parameters from the request. */
 	public $params = array();
+	/** @var bool If true, the API will return the result instead of a JSON response. */
 	public $returnRaw = false;
+	/** @var string|null The base URL of the API. */
 	public $apiAddress = null;
 
+	/** @var MagratheaApi|null Singleton instance. */
 	protected static $inst = null;
 
-	// authorization
+	/**
+	 * @var MagratheaApiControl|null The class responsible for handling authorization logic.
+	 */
 	public ?MagratheaApiControl $authClass = null;
+	/**
+	 * @var string|null The name of the default authorization method to be called.
+	 */
 	public ?string $baseAuth = null;
 
+	/**
+	 * @var array<string, array<string, mixed>> Stores the defined API endpoints.
+	 */
 	private $endpoints = array();
+	/**
+	 * @var callable|null A fallback function to be executed if no route is matched.
+	 */
 	private $fallback = null;
 
 	/**
-	 * Constructor...
+	 * Constructor. Initializes the endpoint arrays for different HTTP methods.
 	 */
 	public function __construct(){
 		$endpoints["GET"] = array();
@@ -47,7 +65,7 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Set address
+	 * Sets the base address for the API.
 	 * @param string $addr		api url
 	 * @return 	MagratheaApi	itself
 	 */
@@ -56,7 +74,7 @@ class MagratheaApi {
 		return $this;
 	}
 	/**
-	 * gets address
+	 * Gets the base address of the API.
 	 * @return string|null		api address
 	 */
 	public function GetAddress(): string|null {
@@ -64,7 +82,7 @@ class MagratheaApi {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated This method is deprecated. Initialization is now handled differently.
 	 * Start the server, getting base calls
 	 * @return 	MagratheaApi	itself
 	 */
@@ -80,8 +98,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * includes header to allow all
-	 * @return 		MagratheaApi
+	 * Includes CORS headers to allow requests from any origin.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function AllowAll(): MagratheaApi {
 		header('Access-Control-Allow-Origin: *');
@@ -91,8 +109,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * turns cache off
-	 * @return 		MagratheaApi
+	 * Sets headers to disable browser and proxy caching.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function DisableCache(): MagratheaApi {
 		header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -102,9 +120,9 @@ class MagratheaApi {
 	}
 
 	/**
-	 * includes header to allow origins
-	 * @param 	array 	$condition 	condition for header
-	 * @return  MagratheaApi
+	 * Includes CORS headers to allow requests from a specific list of origins.
+	 * @param 	array<string> 	$allowedOrigins 	An array of allowed origin URLs.
+	 * @return  MagratheaApi itself for method chaining.
 	 */
 	public function Allow(array $allowedOrigins): MagratheaApi{
 		if (in_array(@$_SERVER["HTTP_ORIGIN"], $allowedOrigins)) {
@@ -114,10 +132,19 @@ class MagratheaApi {
 		return $this;
 	}
 
+	/** @var array<string> An array of headers to be accepted by `Access-Control-Allow-Headers`. */
 	private array $acceptControlAllowHeaders = ["Authorization", "Content-Type"];
+	/**
+	 * Adds a header to the list of accepted headers for CORS.
+	 * @param string|array<string> $accept The header(s) to add.
+	 */
 	public function AddAcceptHeaders($accept) {
 		$this->acceptControlAllowHeaders = $accept;
 	}
+	/**
+	 * Sets the `Access-Control-Allow-Headers` CORS header.
+	 * @param array<string>|null $headers Additional headers to accept.
+	 */
 	public function AcceptHeaders(?array $headers = null) {
 		if($headers != null) {
 			array_push($this->acceptControlAllowHeaders, ...$headers);
@@ -126,8 +153,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Api will return the result instead of printing it
-	 * @return 		MagratheaApi
+	 * Configures the API to return the raw result instead of a JSON-encoded response.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function SetRaw(): MagratheaApi {
 		$this->returnRaw = true;
@@ -135,10 +162,10 @@ class MagratheaApi {
 	}
 
 	/**
-	 * defines basic authorization function
-	 * @param 	object 		$authClass 	class with authorization functions
-	 * @param 	string 		$function 	basic authorization function name
-	 * @return  MagratheaApi
+	 * Defines the base authorization handler.
+	 * @param MagratheaApiControl $authClass The class containing authorization methods.
+	 * @param string|null         $function  The name of the default authorization method.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function BaseAuthorization(MagratheaApiControl $authClass, ?string $function): MagratheaApi {
 		$this->authClass = $authClass;
@@ -146,6 +173,11 @@ class MagratheaApi {
 		return $this;
 	}
 
+	/**
+	 * Determines the authorization function to use for an endpoint.
+	 * @param string|bool $auth The auth setting for the endpoint.
+	 * @return string|bool|null The name of the auth function or false if public.
+	 */
 	private function getAuthFunction($auth) {
 		if($auth === false) {
 			return false;
@@ -157,11 +189,11 @@ class MagratheaApi {
 	}
 
 	/**
-	 * includes header to allow all
-	 * @param 	string|array					$url					url for Crud. array for plural and singular endpoints
-	 * @param 	MagratheaApiControl		$control			control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	string								$auth					function that returns authorization for execution. "false" for public API
-	 * @return  MagratheaApi
+	 * Adds a standard set of CRUD (Create, Read, Update, Delete) endpoints for a model.
+	 * @param string|array<string> $url     URL for the resource. Can be a string or an array with [singular, plural].
+	 * @param MagratheaApiControl  $control The control class that handles the CRUD operations.
+	 * @param string|bool          $auth    The authorization rule for these endpoints. `false` for public.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function Crud(
 		string|array $url,
@@ -186,14 +218,14 @@ class MagratheaApi {
 	}
 
 	/**
-	 * includes header to allow all
-	 * @param 	string	 		$method				method for custom URL
-	 * @param 	string	 		$url 					custom URL
-	 * @param 	object|null	$control 			control where crud function will be. They are: Create, Read, Update and Delete
-	 * @param 	string|any	$function			function to be called from control
-	 * @param 	string|bool	$auth					function that returns authorization for execution. "false" for public API
-	 * @param 	string 			$description	description of function, for documentation (optional)
-	 * @return  MagratheaApi
+	 * Adds a custom endpoint to the API.
+	 * @param string               $method      HTTP method (GET, POST, PUT, DELETE).
+	 * @param string               $url         The URL pattern for the endpoint.
+	 * @param MagratheaApiControl|null $control The control class that handles the request.
+	 * @param string|callable      $function    The method or function to be called.
+	 * @param string|bool          $auth        The authorization rule. `false` for public.
+	 * @param string|null          $description A description of the endpoint for documentation.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function Add(
 		string $method,
@@ -215,8 +247,9 @@ class MagratheaApi {
 	}
 
 	/**
-	 * @param			function 			$fn		function to be executed on fallback
-	 * @return 		MagratheaApi
+	 * Sets a fallback function to be called when no route matches the request.
+	 * @param callable $fn The function to execute.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function Fallback($fn): MagratheaApi {
 		$this->fallback = $fn;
@@ -224,8 +257,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * print all urls
-	 * @return 		MagratheaApi
+	 * Prints a debug view of all registered endpoints.
+	 * @return MagratheaApi itself for method chaining.
 	 */
 	public function Debug(): MagratheaApi {
 		$baseUrls = $this->GetEndpoints();
@@ -249,8 +282,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Get all endpoints
-	 * @return 	array 	["control", "action", "auth", "args"]
+	 * Gets a structured array of all registered endpoints, grouped by control class.
+	 * @return array<string, array<string, array<string, mixed>>> A multi-dimensional array of endpoints.
 	 */
 	public function GetEndpoints(): array {
 		$baseUrls = array();
@@ -282,6 +315,10 @@ class MagratheaApi {
 		return $baseUrls;
 	}
 
+	/**
+	 * Gets a detailed list of all endpoints, grouped by URL.
+	 * @return array<string, array<int, array<string, mixed>>> A detailed array of endpoint configurations.
+	 */
 	public function GetEndpointsDetail() {
 		$endpoints = [];
 		foreach ($this->endpoints as $method => $functions) {
@@ -309,6 +346,12 @@ class MagratheaApi {
 		return $endpoints;
 	}
 
+	/**
+	 * Compares a registered route pattern with the current request URL.
+	 * @param array<string> $route The route pattern segments.
+	 * @param array<string> $url   The request URL segments.
+	 * @return bool True if the URL matches the route pattern.
+	 */
 	private function CompareRoute($route, $url) {
 		if($route == $url) return true;
 		if(count($route) != count($url)) return false;
@@ -322,6 +365,12 @@ class MagratheaApi {
 		}
 		return true;
 	}
+	/**
+	 * Finds a matching route for the given URL from the list of available API URLs.
+	 * @param array<string>                $url     The request URL segments.
+	 * @param array<string, array<mixed>>|false $apiUrls The available endpoints for the request method.
+	 * @return string|false The matched route pattern or false if no match is found.
+	 */
 	private function FindRoute($url, $apiUrls) {
 		if(!$apiUrls) return false;
 		foreach ($apiUrls as $apiUrl => $value) {
@@ -331,6 +380,12 @@ class MagratheaApi {
 		return false;
 	}
 
+	/**
+	 * Extracts parameters from a URL based on a route pattern.
+	 * @param string        $route The matched route pattern (e.g., "user/:id").
+	 * @param array<string> $url   The request URL segments.
+	 * @return array<string, string>|false An associative array of parameters, or false if no params.
+	 */
 	private function GetParamsFromRoute($route, $url) {
 		if(strpos($route, ':') == false) return false;
 		$params = array();
@@ -344,6 +399,10 @@ class MagratheaApi {
 		return $params;
 	}
 
+	/**
+	 * Gets the HTTP request method, handling OPTIONS requests for CORS preflight.
+	 * @return string The HTTP method (e.g., "GET", "POST").
+	 */
 	private function getMethod() {
 		$method = $_SERVER['REQUEST_METHOD'];
 		if($method == "OPTIONS") {
@@ -358,8 +417,9 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Start the server, getting base calls
-	 * @return 		string|null
+	 * Starts the API, processes the request, and returns the response.
+	 * @param bool $returnRaw If true, returns the raw data instead of a JSON response.
+	 * @return mixed The result of the API execution.
 	 */
 	public function Run($returnRaw = false) {
 		$urlCtrl = @$_GET["magrathea_control"];
@@ -373,8 +433,10 @@ class MagratheaApi {
 	}
 
 	/**
-	 * Execute URL
-	 * @return 		string|null
+	 * Finds the matching endpoint for a given URL and method, and executes it.
+	 * @param string $fullUrl The full request URL path.
+	 * @param string $method  The HTTP request method.
+	 * @return mixed The result of the endpoint execution.
 	 */
 	public function ExecuteUrl($fullUrl, $method="GET") {
 		$url = explode("/", $fullUrl);
@@ -406,6 +468,7 @@ class MagratheaApi {
 		} catch(MagratheaApiException $ex) {
 			return $this->ReturnApiException($ex);
 		} catch (\Exception $ex) {
+			print_r($ex);
 			return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 		}
 		$params = $this->GetParamsFromRoute($route, $url);
@@ -427,6 +490,13 @@ class MagratheaApi {
 		}
 	}
 
+	/**
+	 * Calls the action on the control or the callable function for an endpoint.
+	 * @param MagratheaApiControl|null $control The control instance.
+	 * @param string|callable          $fn      The function/method name or callable.
+	 * @param array<string, mixed>|null $params  Parameters to pass to the function.
+	 * @return mixed The data returned by the executed function.
+	 */
 	private function GetData($control, $fn, $params=null) {
 		if($control == null){
 			if(!is_callable($fn)) {
@@ -438,9 +508,10 @@ class MagratheaApi {
 	}
 
 	/**
-	 * returns the sent parameters in JSON format - and ends the execution with "die";
-	 * @param 	array|object 		$response 		parameter to be printed in json
-	 * @param 	int			 				$code 				code response (default: 200)
+	 * Outputs a JSON response and terminates the script.
+	 * @param array<mixed>|object $response The data to be encoded as JSON.
+	 * @param int                 $code     The HTTP status code to send.
+	 * @return mixed The raw response if `returnRaw` is true.
 	 */
 	public function Json($response, int $code=200){
 		if($this->returnRaw) return $response;
@@ -461,7 +532,8 @@ class MagratheaApi {
 	}
 
 	/**
-	 * returns a 404 error for url not found
+	 * Returns a JSON 404 Not Found error.
+	 * @return mixed
 	 */
 	private function Return404() {
 		$method = $_SERVER['REQUEST_METHOD'];
@@ -473,40 +545,56 @@ class MagratheaApi {
 	}
 
 	/**
-	 * returns a json error message
-	 * @param 	string 			$code 			error code
-	 * @param 	string 			$message 		error message
-	 * @param 	array|null 	$data 			error data
+	 * Formats and returns a MagratheaApiException as a JSON response.
+	 * @param MagratheaApiException $exception The exception to handle.
+	 * @return mixed
 	 */
 	public function ReturnApiException($exception) {
+		$data = [
+			"type" => "exception",
+			"error" => $exception->GetData(),
+			"code" => $exception->getCode(),
+			"message" => $exception->getMessage(),
+			"debug_level" => Debugger::Instance()->GetTypeDesc(),
+		];
+		if(Debugger::Instance()->GetType() == Debugger::DEV) {
+			$data["stacktrace"] = debug_backtrace();
+		}
 		return $this->Json(array(
 			"success" => false,
-			"data" => $exception->GetData(),
-			"code" => $exception->getCode(),
-			"message" => $exception->getMessage()
+			"data" => $data,
 		));
 	}
 
 	/**
-	 * returns a json error message
-	 * @param 	string 							$code 			error code
-	 * @param 	string 							$message 		error message
-	 * @param 	array|object|null 	$data 			error data
+	 * Returns a generic JSON error response.
+	 * @param int          $code    The error code.
+	 * @param string       $message The error message.
+	 * @param mixed|null   $data    Additional error data.
+	 * @param int          $status  The HTTP status code.
+	 * @return mixed
 	 */
 	public function ReturnError($code=500, $message="", $data=null, $status=200) {
+		$data = [
+			"type" => "unknown error",
+			"error" => $data,
+			"code" => $code,
+			"message" => $message,
+			"debug_level" => Debugger::Instance()->GetTypeDesc(),
+		];
+		if(Debugger::Instance()->GetType() == Debugger::DEV) {
+			$data["stacktrace"] = debug_backtrace();
+		}
 		return $this->Json(array(
 			"success" => false,
-			"data" => [
-				"error" => $data,
-				"code" => $code,
-				"message" => $message,	
-			]
+			"data" => $data,
 		), $status);
 	}
 
 	/**
-	 * returns a successful json response
-	 * @param 	object 			$data 			response data
+	 * Returns a successful JSON response.
+	 * @param mixed $data The payload to include in the response.
+	 * @return mixed
 	 */
 	public function ReturnSuccess($data) {
 		$rs = array(
@@ -518,8 +606,9 @@ class MagratheaApi {
 	}
 
 	/**
-	 * returns an error json response
-	 * @param 	object 			$data 			response data
+	 * Returns a failure JSON response.
+	 * @param mixed $data The error data or exception.
+	 * @return mixed
 	 */
 	public function ReturnFail($data) {
 		if(is_a($data, MagratheaApiException::class)) {
@@ -541,12 +630,16 @@ class MagratheaApi {
 		));
 	}
 
+	/**
+	 * Handles caching for the API response.
+	 * @param array<string, mixed> $data The data to be cached.
+	 */
 	public function Cache($data) {
 		MagratheaCache::Instance()->HandleApiCache($data);
 	}
 
 	/**
-	 * creates a Health Check API
+	 * Creates a simple `/health-check` endpoint.
 	 */
 	public function HealthCheck() {
 		$this->Add("GET", "health-check", null, function() {

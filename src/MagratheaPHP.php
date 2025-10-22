@@ -141,7 +141,7 @@ class MagratheaPHP extends Singleton {
 	 * @return string The path to the `/configs` directory.
 	 * @throws MagratheaConfigException If `magRoot` is not set.
 	 */
-	public function getConfigRoot() {
+	public function GetConfigRoot() {
 		return $this->magRoot."/configs";
 	}
 
