@@ -1,3 +1,7 @@
+### 2.1.21
+2025-10
+	- **fix:** fixing `AppConfigFeatureAdmin`
+
 ### 2.1.20
 2025-10
 	- **improvement:** improving MagratheaApi function and documentation
