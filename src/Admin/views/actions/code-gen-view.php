@@ -9,17 +9,15 @@ use function Magrathea2\p_r;
 	$obj = $_GET["object"];
 	$codeManager = CodeManager::Instance();
 	$files = $codeManager->GetFileList($obj);
-//	print_r($files);
 
 	echo "<div class='row'>";
 	foreach($files as $type => $f) {
 		$data = $codeManager->PrepareCodeFileGeneration($type, $obj);
-//		print_r($data);
 		?>
 		<div class="col-6 mt-2">
 			<b><?=$f["file-desc"]?></b><br/>
 			[<?=$data["file-destination"]?>]<br/>
-			<?
+			<?php
 			if($data["file-exists"]) {
 				$fileViewLink = AdminUrls::Instance()->FileViewUrl($data["file-destination"]);
 				echo "- <span class='warning'>File already exists</span> ";
@@ -32,13 +30,14 @@ use function Magrathea2\p_r;
 			?>
 		</div>
 		<div class="col-6 mt-2 right">
-			<?
+			<?php
 				AdminElements::Instance()->Button("Create File", "codeCreation('".$obj."', '".$type."', this);", ["btn-success", "mt-0"]);
 			?>
 		</div>
 		<div class="col-12 code_<?=$obj?>_<?=$type?> mb-2 border-bottom">
 			<pre class="code"><?=htmlentities($data["code"])?></pre>
 		</div>
-		<?
+		</div>
+		<?php
 	}
 	echo "</div>";

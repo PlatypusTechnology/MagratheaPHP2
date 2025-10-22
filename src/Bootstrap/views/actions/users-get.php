@@ -23,7 +23,7 @@ foreach ($users as $u) {
 			<input type="text" disabled id="pass_<?=$u->id?>" />
 		</div>
 	</div>
-	<?
+	<?php
 }
 
 

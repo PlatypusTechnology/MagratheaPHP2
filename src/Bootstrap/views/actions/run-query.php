@@ -17,7 +17,7 @@
 		<span><?=$ex->getMsg()?></span>
 		<br/>
 		<hr/>
-		<?
+		<?php
 		print_r($ex);
 		return;
 	}
@@ -26,7 +26,7 @@
 		?>
 		<br/>
 		<span class="error"> - no answers - </span>
-		<?
+		<?php
 	}
 
 	?>

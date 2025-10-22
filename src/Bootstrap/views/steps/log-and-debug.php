@@ -19,13 +19,13 @@
 				<span class="error">Log Folder does not exist!</span><br/>
 				<?=$logPath?>
 			</div>
-			<?
+			<?php
 		} else {
 			?>
 			<div class="col-12">
 				Log Path: <pre><?=$logPath?></pre>
 			</div>
-			<?
+			<?php
 		}
 	?>
 </div>

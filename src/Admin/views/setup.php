@@ -12,7 +12,7 @@ $title = AdminManager::Instance()->GetTitle();
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-	<?
+	<?php
 		$pageTitle = $title." - First setup";
 		$cssStyleFiles = ["login", "cards"];
 		include("sections/meta.php");
@@ -29,7 +29,7 @@ $title = AdminManager::Instance()->GetTitle();
 			<!-- Page content wrapper-->
 			<div id="page-content-wrapper">
 				<div class="center">
-					<? \Magrathea2\Admin\AdminManager::Instance()->PrintLogo(200); ?>
+					<?php \Magrathea2\Admin\AdminManager::Instance()->PrintLogo(200); ?>
 				</div>
 				<div class="disclaimer">
 					This is the first setup for Magrathea Admin.<br/>
@@ -54,7 +54,7 @@ $title = AdminManager::Instance()->GetTitle();
 								Reload for Login Page<br/>
 								<a href='javascript:location.reload()'>Click here to reload</a><br/>
 							</div>
-							<?
+							<?php
 							$showForm = false;
 						}
 					}

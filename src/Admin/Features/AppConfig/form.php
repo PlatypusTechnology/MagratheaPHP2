@@ -25,7 +25,7 @@ if(!empty($crud["action"])) {
 	<script type="text/javascript">
 		afterLoad().then(() => updateAppConfigList());
 	</script>
-	<?
+	<?php
 }
 
 if(@$_POST["magrathea-submit"] === "delete") {
@@ -45,7 +45,7 @@ if(@$_GET["id"]) {
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">
-		<?
+		<?php
 		$adminForm->Build(
 			[
 				[
@@ -80,5 +80,5 @@ if(@$_GET["id"]) {
 		?>
 	</div>
 </div>
-	<?
+	<?php
 }

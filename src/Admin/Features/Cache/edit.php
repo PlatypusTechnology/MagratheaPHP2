@@ -24,7 +24,7 @@ $textId = $file."-txt";
 	<div class="card-body">
 		<div class="row">
 			<div class="col-sm-12">
-				<?
+				<?php	
 				AdminElements::Instance()
 					->Textarea($textId, $file, $content, "cache-txt");
 				?>
@@ -32,7 +32,7 @@ $textId = $file."-txt";
 		</div>
 		<div class="row">
 			<div class="col-sm-12">
-				<?
+				<?php
 				$elements
 					->Button("save", "saveCache('".$file."')", ["btn-success", "label-margin", "mt-1"]);
 				$elements

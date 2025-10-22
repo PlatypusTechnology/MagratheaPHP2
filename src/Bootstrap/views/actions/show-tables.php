@@ -21,10 +21,7 @@ function getColumnsOf($table) {
 }
 
 if(!$rs) {
-	?>
-	<br/>
-	<span class="error"> - no tables - </span>
-	<?
+	echo "<br/><span class='error'> - no tables - </span>";
 }
 echo "<br/><br/>";
 

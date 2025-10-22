@@ -1,17 +1,15 @@
 <?php
-
 namespace Magrathea2\DB;
 
-use Magrathea2\DB\Database;
 use Magrathea2\Exceptions\MagratheaModelException;
 use Magrathea2\MagratheaModel;
 
 enum QueryType {
-	case Unknown;
-	case Select;
-	case Insert;
-	case Update;
-	case Delete;
+	const Unknown = 0;
+	const Select = 1;
+	const Insert = 2;
+	const Update = 3;
+	const Delete = 4;
 }
 
 #######################################################################################

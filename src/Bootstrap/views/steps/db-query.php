@@ -17,7 +17,7 @@ use Magrathea2\MagratheaPHP;
 			<pre class="code">Magrathea2\MagratheaPHP::Instance()->StartDB()->Load();</pre>
 			<br/><hr/>
 		</div>
-		<?
+		<?php
 	}
 	?>
 	<div class="col-12">

@@ -17,7 +17,5 @@
 	}
 
 	if($success) {
-		?>
-		<span class="success">Connection successful!</span>
-		<?
+		echo '<span class="success">Connection successful!</span>';
 	}
