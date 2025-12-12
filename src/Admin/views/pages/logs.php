@@ -99,7 +99,7 @@ foreach ($dirData as $d) {
 					<? $adminElements->Input("disabled", "tail-file", "Current Log File", $activeFile, "w-100"); ?>
 				</div>
 				<div class="col-2">
-					<? $adminElements->Input("text", "tail-lines", "Lines", 250, "w-100"); ?>
+					<? $adminElements->Input("text", "tail-lines", "Lines", 20, "w-100"); ?>
 				</div>
 				<div class="col-2">
 					<? $adminElements->Input("number", "tail-rate", "Refresh Rate (s)", 30, "w-100"); ?>

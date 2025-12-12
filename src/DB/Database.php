@@ -304,11 +304,11 @@ class Database extends Singleton {
 			throw $ex;
 		}
 		if(is_object($result) ){
-			$retorno = $result->fetch_row();
+			$rs = $result->fetch_row();
 			$result->close();
 		}
 		$this->CloseConnectionThanks();
-		return $retorno[0];
+		return $rs[0] ?? null;
 	}
 
 	/**

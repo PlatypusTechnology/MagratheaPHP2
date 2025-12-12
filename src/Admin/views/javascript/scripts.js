@@ -60,12 +60,13 @@ function arrayToObject(array) {
 }
 
 function getCurrentPage() {
-	var currentPage = window.location.pathname.split('/').pop();
-	if (currentPage.includes('.php')) {
-		return currentPage;
-	} else {
-		return '';
+	// Returns the full url with subfolders, without query string
+	let path = window.location.pathname;
+	// Remove trailing slash except for root
+	if (path.length > 1 && path.endsWith('/')) {
+		path = path.slice(0, -1);
 	}
+	return window.location.origin + path;
 }
 
 function ucfirst(string) {
@@ -149,17 +150,17 @@ function ajaxApi(method, url, payload, authorization, debug=false) {
 }
 
 function callAction(action, method="GET", data=null) {
-	let url = "/"+getCurrentPage()+"?magrathea_subpage="+action;
+	let url = getCurrentPage()+"?magrathea_subpage="+action;
 	return ajax(method, url, data, null, true);
 }
 
 function callApi(object, fn, params=null) {
-	let url = "/"+getCurrentPage()+"?magrathea_api="+ucfirst(object)+"&magrathea_api_method="+ucfirst(fn);
+	let url = getCurrentPage()+"?magrathea_api="+ucfirst(object)+"&magrathea_api_method="+ucfirst(fn);
 	return ajax("POST", url, params);
 }
 
 function callFeature(feature, action=null, method="GET", data=null) {
-	let url = "/"+getCurrentPage()+"?magrathea_feature="+feature;
+	let url = getCurrentPage()+"?magrathea_feature="+feature;
 	if (action) {
 		url += "&magrathea_feature_action=" + action;
 	}

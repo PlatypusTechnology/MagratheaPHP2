@@ -94,6 +94,14 @@ class MagratheaApiControl {
 		$this->userInfo = $this->jwtDecode($token);
 		return $this->userInfo;
 	}
+	public function GetUserInfo() {
+		if($this->userInfo) return $this->userInfo;
+		return $this->GetTokenInfo();
+	}
+	public function GetUserId(): int | null {
+		$user = $this->GetUserInfo();
+		return $user->id ?? null;
+	}
 
 	/**
 	 * Gets the secret key for JWT encoding/decoding from config.

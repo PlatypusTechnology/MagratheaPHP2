@@ -8,7 +8,7 @@ use Magrathea2\Exceptions\MagratheaException;
 */
 class MagratheaConfigException extends MagratheaException {
 	private $configFile;
-	public function __construct($message = "Magrathea Config has failed... =(", $file=null, $code=0, \Exception $previous = null) {
+	public function __construct($message = "Magrathea Config has failed... =(", $file=null, $code=0, ?\Exception $previous = null) {
 		$this->configFile = $file;
 		$this->killerError = true;
 		$this->code = $code;

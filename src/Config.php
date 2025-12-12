@@ -105,7 +105,7 @@ class Config extends Singleton {
 	* The environment is defined in `general/use_environment` property and can be defined in the `magrathea.conf` file. 
 	* @return string Environment name
 	*/
-	public function GetEnvironment(){
+	public function GetEnvironment(): string{
 		if(!isset($this->environment)){
 			$this->environment = $this->GetConfig("general/use_environment");
 		}

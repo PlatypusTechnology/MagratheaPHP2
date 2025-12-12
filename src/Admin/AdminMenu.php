@@ -259,6 +259,7 @@ class AdminMenu {
 			"conf-file" => $this->SimpleItem("Configuration File", "config"),
 			"version" => $this->SimpleItem("Version", "version"),
 			"htaccess" => $this->SimpleItem(".htaccess", "htaccess"),
+			"caddy" => $this->SimpleItem("site.caddy", "caddy"),
 			"tests" => $this->SimpleItem("Tests", "tests"),
 			"query" => $this->SimpleItem("Queries", "db-query"),
 			"connect" => $this->SimpleItem("Connect", "db-connect"),

@@ -32,23 +32,28 @@ abstract class MagratheaModelControl{
 		return static::$modelNamespace."\\".static::$modelName;
 	}
 
+	private static function ConvertToObject($item) {
+		$modelName = static::GetModelName();
+		$splitResult = Query::SplitArrayResult($item);
+		$new_object = new $modelName();
+		if(count($splitResult) > 0)
+			$item = $splitResult[$new_object->GetDbTable()];
+		$new_object->LoadObjectFromTableRow($item);
+		return $new_object;
+	}
+
 	/**
 	 * Run a query and return a list of the objects
 	 * @param 	string 	$sql 	query string
 	 * @return  array<object> 	List of objects
 	 */
-	public static function RunQuery($sql){
+	public static function RunQuery(string $sql){
 		$magdb = Database::Instance();
-		$objects = array();
 		$result = $magdb->queryAll($sql);
+		$objects = array();
 		foreach($result as $item){
-			$modelName = static::GetModelName();
-			$splitResult = Query::SplitArrayResult($item);
-			$new_object = new $modelName();
-			if(count($splitResult) > 0)
-				$item = $splitResult[$new_object->GetDbTable()];
-			$new_object->LoadObjectFromTableRow($item);
-			array_push($objects, $new_object);
+			$obj = static::ConvertToObject($item);
+			array_push($objects, $obj);
 		}
 		return $objects;
 	}
@@ -57,26 +62,21 @@ abstract class MagratheaModelControl{
 	 * @param 	string 	$sql 	query string
 	 * @return  object 	First object found
 	 */
-	public static function RunRow($sql){
+	public static function RunRow(string $sql){
 		$magdb = Database::Instance();
 		$row = $magdb->QueryRow($sql);
-		$new_object = null;
+		$obj = null;
 		if(!empty($row)){
-			$splitResult = Query::SplitArrayResult($row);
-			$modelName = static::GetModelName();
-			$new_object = new $modelName();
-			if(count($splitResult) > 0)
-				$row = $splitResult[$new_object->GetDbTable()];
-			$new_object->LoadObjectFromTableRow($row);
+			$obj = static::ConvertToObject($row);
 		}
-		return $new_object;
+		return $obj;
 	}
 	/**
 	 * Runs a query and returns the result
 	 * @param 	string 	$sql 	query string
 	 * @return  array		database result
 	 */
-	public static function QueryResult($sql){
+	public static function QueryResult(string $sql){
 		return Database::Instance()->QueryAll($sql);
 	}
 	/**
@@ -84,7 +84,7 @@ abstract class MagratheaModelControl{
 	 * @param 	string 	$sql 	query string
 	 * @return  array		database result (first line)
 	 */
-	public static function QueryRow($sql){
+	public static function QueryRow(string $sql){
 		return Database::Instance()->QueryRow($sql);
 	}
 	/**
@@ -92,7 +92,7 @@ abstract class MagratheaModelControl{
 	 * @param 	string 	$sql 	query string
 	 * @return  object		database result (first item)
 	 */
-	public static function QueryOne($sql){
+	public static function QueryOne(string $sql){
 		return Database::Instance()->QueryOne($sql);
 	}
 
@@ -102,8 +102,17 @@ abstract class MagratheaModelControl{
 	 * @param 	Query  	$magQuery  		MagratheaQuery query
 	 * @return  array<object> 		List of objects
 	 */
-	public static function RunMagQuery($magQuery){ 
+	public static function RunMagQuery(Query $magQuery){ 
 		return self::Run($magQuery); 
+	}
+	/**
+	 * Runs a Magrathea Query and returns the count of matching rows
+	 * @param   Query   $magQuery   MagratheaQuery query
+	 * @return  int     Number of matching rows
+	 */
+	public static function Count(Query $magQuery): int {
+		$q = self::QueryOne($magQuery->CountSQL());
+		return intval($q);
 	}
 
 	/**
@@ -115,8 +124,8 @@ abstract class MagratheaModelControl{
 	 * @param 	integer 			$limit    		quantity per page (20 = default)
 	 * @return  array<object> 		List of objects
 	 */
-	public static function RunPagination($magQuery, &$total, $page=0, $limit=20){
-		$total = self::QueryOne($magQuery->Count());
+	public static function RunPagination(Query $magQuery, &$total, $page=0, $limit=20){
+		$total = self::QueryOne($magQuery->CountSQL());
 		$magQuery->Limit($limit)->Page($page);
 		return self::Run($magQuery);
 	}
@@ -126,7 +135,7 @@ abstract class MagratheaModelControl{
 	 * @param 	boolean 			$onlyFirst 		returns all of it or only first row?
 	 * @return  array<object> 		List of objects
 	 */
-	public static function Run($magQuery, $onlyFirst=false){
+	public static function Run(Query $magQuery, $onlyFirst=false){
 		$array_joins = $magQuery->GetJoins();
 		$arrayObjs = array();
 
@@ -207,7 +216,7 @@ abstract class MagratheaModelControl{
 	 * @param 	string 					$whereSql 		where clause
 	 * @return  array<object> 	List of objects
 	 */
-	public static function GetSimpleWhere($whereSql){
+	public static function GetSimpleWhere(string $whereSql){
 		$sql = "SELECT * FROM ".static::$dbTable." WHERE ".$whereSql;
 		return static::RunQuery($sql);
 	}
@@ -218,7 +227,7 @@ abstract class MagratheaModelControl{
 	 * @param 	string 				$condition 	"AND" or "OR" for multiple clauses
 	 * @return  array<object> 		List of objects
 	 */
-	public static function GetWhere($arr, $condition = "AND"){
+	public static function GetWhere(string|array $arr, $condition = "AND"){
 		if(!is_array($arr)){
 			return static::GetSimpleWhere($arr);
 		}
@@ -233,7 +242,7 @@ abstract class MagratheaModelControl{
 	 * @param 	string 						$condition 	"AND" or "OR" for multiple clauses
 	 * @return  object|array 			First object available
 	 */
-	public static function GetRowWhere($arr, $condition = "AND"){
+	public static function GetRowWhere(string|array $arr, $condition = "AND"){
 		if(!is_array($arr)){
 			return static::GetSimpleWhere((string)$arr);
 		}

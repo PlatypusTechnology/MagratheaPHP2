@@ -256,6 +256,7 @@ class Admin implements iAdmin {
 		$adminMenu
 			->Add($adminMenu->GetItem("structure"))
 			->Add($adminMenu->GetItem("htaccess"))
+			->Add($adminMenu->GetItem("caddy"))
 
 			->Add($adminMenu->GetDatabaseSection())
 			->Add($adminMenu->GetObjectSection());

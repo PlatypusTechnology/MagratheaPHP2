@@ -348,6 +348,9 @@ class CodeCreator extends \Magrathea2\Singleton {
 
 		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
 
+		$code .= "/**\n";
+		$code .= "* @property ".$object."Control \$service\n";
+		$code .= "*/\n";
 		$code .= "class ".$object."Api extends \Magrathea2\MagratheaApiControl {\n";
 		$code .= "\tpublic function __construct() {\n";
 		$code .= "\t\t\$this->model = get_class(new ".$object."());\n";

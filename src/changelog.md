@@ -1,3 +1,9 @@
+### 2.1.23
+2025-12
+	- **improvement:** function `Count(Query $q)` in `MagratheaModelControl` for counting rows in a query.
+	- **new:** sample for caddy files
+	- **fix:** updated all the enums of the code for a better handling
+
 ### 2.1.21
 2025-10
 	- **fix:** fixing `AppConfigFeatureAdmin`

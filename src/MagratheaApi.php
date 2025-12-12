@@ -468,7 +468,6 @@ class MagratheaApi {
 		} catch(MagratheaApiException $ex) {
 			return $this->ReturnApiException($ex);
 		} catch (\Exception $ex) {
-			print_r($ex);
 			return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 		}
 		$params = $this->GetParamsFromRoute($route, $url);

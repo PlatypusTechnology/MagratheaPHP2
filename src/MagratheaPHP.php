@@ -89,6 +89,11 @@ class MagratheaPHP extends Singleton {
 		array_push($this->codeFolder, ...$folder);
 		return $this;
 	}
+	public function AddRootCodeFolder(...$folder): MagratheaPHP {
+		return $this->AddCodeFolder(
+			...array_map(function($f) { return $this->appRoot."/".$f; }, $folder)
+		);
+	}
 
 	/**
 	 * Adds feature folders based on the application root.
@@ -115,6 +120,7 @@ class MagratheaPHP extends Singleton {
 		error_reporting(E_ALL);
 		ini_set('display_errors', 1);
 		ini_set("log_errors", 1);
+		Debugger::Instance()->SetDev();
 		return $this;
 	}
 

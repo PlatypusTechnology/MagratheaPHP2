@@ -5,11 +5,11 @@ use Magrathea2\Exceptions\MagratheaModelException;
 use Magrathea2\MagratheaModel;
 
 enum QueryType {
-	const Unknown = 0;
-	const Select = 1;
-	const Insert = 2;
-	const Update = 3;
-	const Delete = 4;
+	case Unknown;
+	case Select;
+	case Insert;
+	case Update;
+	case Delete;
 }
 
 #######################################################################################
@@ -530,9 +530,10 @@ class Query {
 	 * 		We get all the information that you sent to the function
 	 * 			and, instead of returning the results,
 	 * 			we count how many rows you will have back
-	 * @return  string	 	amount of rows
+	 *		This will return the query for the count.
+	 * @return  string	 	query of amount of rows
 	 */
-	public function Count(){
+	public function CountSQL(): string{
 		$sqlCount = "SELECT COUNT(1) AS ok ";
 		$sqlCount .= " FROM `".$this->tables."`";
 		if(count($this->joinArr) > 0){
@@ -622,6 +623,7 @@ class Query {
 			"select" => $this->select,
 			"table" => $this->tables,
 			"where" => $this->where,
+			"whereArr" => $this->whereArr,
 		];
 	}
 

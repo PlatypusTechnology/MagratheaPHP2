@@ -31,16 +31,17 @@ function tokenUser() {
 }
 
 function executeApi(apiId) {
-	let api = $("#api-endpoint-"+apiId).html();
-	let method = $("#api-method-"+apiId).html();
-	let payload = $("#api-payload-"+apiId).val();
-	let params = $("#api-params-"+apiId).val();
-	let token = $("#token").val();
-	let url = $("#api-url").val();
+	const api = $("#api-endpoint-"+apiId).html();
+	const method = $("#api-method-"+apiId).html();
+	const payload = $("#api-payload-"+apiId).val();
+	const params = $("#api-params-"+apiId).val();
+	const token = $("#token").val();
+	const url = $("#api-url").val();
+	const req = url + api;
 	if(params) { api += "?" + params; }
 	debugAPI("new call ==["+now()+"]========> ");
 	debugAPI("\tcalling ("+method+")["+api+"]");
-	debugAPI("\t\t " + url + api);
+	debugAPI("\t\t " + req);
 	if(payload) {
 		debugAPI("\tpayload: ["+payload+"]");
 		try {
@@ -56,7 +57,7 @@ function executeApi(apiId) {
 		payloadJson = null;
 		debugAPI("\tno payload");
 	}
-	ajaxApi(method, api, payloadJson, token, true)
+	ajaxApi(method, req, payloadJson, token, true)
 		.then(rs => {
 			let response = jsonAPIFormat(rs);
 			debugAPI("\nrs:");

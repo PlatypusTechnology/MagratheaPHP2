@@ -49,7 +49,7 @@ class Debugger extends Singleton {
 	* @return  	Debugger
 	*/
 	public function SetType($type){
-//		echo "setting type: ".$type; var_dump(debug_backtrace());
+		// echo "setting type: ".$type; var_dump(debug_backtrace());
 		$this->debugType = $type;
 		return $this;
 	}
