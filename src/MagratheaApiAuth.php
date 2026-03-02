@@ -17,6 +17,11 @@ class MagratheaApiAuth extends MagratheaApiControl {
 	 * @var string  $tokenExpire  Default token expiration time.
 	 */
 	public $tokenExpire = "7 days";
+	public $authenticationErrorData = null;
+
+	public function SetAuthenticationErrorData($err) {
+		$this->authenticationErrorData = $err;
+	}
 
 	/**
 	 * Gets the authorization header.

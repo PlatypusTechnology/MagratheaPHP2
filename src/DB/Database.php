@@ -223,12 +223,60 @@ class Database extends Singleton {
 
 
 	// QUERY FUNCTIONS
+
+	/**
+	 * Splits a SQL string into individual statements, respecting quoted strings
+	 * so that semicolons inside 'values' or "values" are not treated as separators.
+	 * @param  string   $sql  Raw SQL string, possibly containing multiple statements
+	 * @return string[]       Array of individual SQL statements (trimmed, non-empty)
+	 */
+	private function SplitQueries(string $sql): array {
+		$queries = [];
+		$current = '';
+		$len = strlen($sql);
+		$inString = false;
+		$stringChar = '';
+
+		for ($i = 0; $i < $len; $i++) {
+			$char = $sql[$i];
+			if ($inString) {
+				$current .= $char;
+				if ($char === '\\') {
+					if ($i + 1 < $len) $current .= $sql[++$i];
+				} elseif ($char === $stringChar) {
+					$inString = false;
+				}
+			} else {
+				if ($char === "'" || $char === '"') {
+					$inString = true;
+					$stringChar = $char;
+					$current .= $char;
+				} elseif ($char === ';') {
+					$trimmed = trim($current);
+					if ($trimmed !== '') $queries[] = $trimmed;
+					$current = '';
+				} else {
+					$current .= $char;
+				}
+			}
+		}
+
+		$trimmed = trim($current);
+		if ($trimmed !== '') $queries[] = $trimmed;
+
+		return $queries;
+	}
+
 	/**
 	* executes the query and returns the full data
 	* @param 	string 		$sql 		Query to be executed
 	* @return 	object 		$result 	Result of the query
 	*/
 	public function Query(string $sql){
+		$queries = $this->SplitQueries($sql);
+		if (count($queries) > 1) {
+			return $this->QueryMulti($queries);
+		}
 		$this->LogControl($sql);
 		$this->OpenConnectionPlease();
 		$result = $this->mysqli->query($sql);

@@ -37,9 +37,9 @@ class MagratheaApi {
 	protected static $inst = null;
 
 	/**
-	 * @var MagratheaApiControl|null The class responsible for handling authorization logic.
+	 * @var MagratheaApiAuth|null The class responsible for handling authorization logic.
 	 */
-	public ?MagratheaApiControl $authClass = null;
+	public ?MagratheaApiAuth $authClass = null;
 	/**
 	 * @var string|null The name of the default authorization method to be called.
 	 */
@@ -459,10 +459,12 @@ class MagratheaApi {
 		$control = $ctrl["control"];
 		$fn = $ctrl["action"];
 		$auth = $ctrl["auth"];
+		$params = $this->GetParamsFromRoute($route, $url);
 		try {
 			if($auth && $this->authClass) {
-				if(!$this->authClass->$auth()) {
-					$this->ReturnError(401, "Authorization Failed (".$auth." = false)", null, 401);
+				if(!$this->authClass->$auth($params)) {
+					$data = $this->authClass->authenticationErrorData;
+					$this->ReturnError(401, "Authorization Failed! (".$auth." = false)", $data, 401);
 				}
 			}
 		} catch(MagratheaApiException $ex) {
@@ -470,7 +472,6 @@ class MagratheaApi {
 		} catch (\Exception $ex) {
 			return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 		}
-		$params = $this->GetParamsFromRoute($route, $url);
 
 		if($control != null && !method_exists($control, $fn)) {
 			return $this->ReturnError(500, "Function (".$fn.") does not exists in class ".get_class($control));

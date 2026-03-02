@@ -1,3 +1,9 @@
+### 2.1.24
+2026-02
+	- **improvement:** Authentication failing response improved
+	- **fix:** SMTP Mail fix
+	- **fix:** Database query can run multiplei queries wonderfully
+
 ### 2.1.23
 2025-12
 	- **improvement:** function `Count(Query $q)` in `MagratheaModelControl` for counting rows in a query.

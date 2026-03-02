@@ -49,7 +49,15 @@ class MagratheaMailSMTP extends MagratheaMail {
 		$this->mail->Port = $this->smtpArr["smtp_port"];
 		$this->mail->Username = $this->smtpArr["smtp_username"];
 		$this->mail->Password = $this->smtpArr["smtp_password"];
-    $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; //Enable implicit TLS encryption
+		// $this->mail->SMTPDebug = 2;
+
+		if (!empty($this->smtpArr["smtp_encryption"])) {
+			$this->mail->SMTPSecure = $this->smtpArr["smtp_encryption"];
+		} elseif ((int)$this->smtpArr["smtp_port"] === 587) {
+			$this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+		} else {
+			$this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+		}
 		return $this->mail;
 	}
 
@@ -98,9 +106,9 @@ class MagratheaMailSMTP extends MagratheaMail {
 			if ($successMail) {
 				return true;
 			} else {
-				$this->error = $this->mail->ErrorInfo;
+				$this->error = isset($this->mail) ? $this->mail->ErrorInfo : $this->error;
 				Debugger::Instance()->Add("Error sending email to ".$this->to.": ".$this->error);
-				return false;	
+				return false;
 			}
 		} catch(\Exception $ex) {
 			throw $ex;
