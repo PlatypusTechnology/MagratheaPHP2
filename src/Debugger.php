@@ -29,6 +29,7 @@ class Debugger extends Singleton {
 	const LOG = 2;
 	const DEBUG = 3;
 	const DEV = 4;
+	const ANALYSIS = 5;
 
 	private $logFile = null;
 	private $debugItems = array();
@@ -42,6 +43,7 @@ class Debugger extends Singleton {
 	* **Debugger::DEV** = Will print the debugs as it appears in the code
 	* **Debugger::DEBUG** = Will store all the debugs and print it later
 	* **Debugger::LOG** = Will log queries and other debugs in the code
+	* **Debugger::ANALYSIS** = Will return the error with the API
 	* **Debugger::NONE** = Well... nothing to do, heh?
 	* Default: **LOG**
 	*
@@ -136,10 +138,11 @@ class Debugger extends Singleton {
 	*/
 	public function GetTypeDesc(): string {
 		switch($this->debugType) {
-			case self::NONE: 	return "NONE";
-			case self::LOG: 	return "LOG";
-			case self::DEBUG:	return "DEBUG";
-			case self::DEV:		return "DEV";
+			case self::NONE: 			return "NONE";
+			case self::LOG: 			return "LOG";
+			case self::DEBUG:			return "DEBUG";
+			case self::DEV:				return "DEV";
+			case self::ANALYSIS:	return "ANALYSIS";
 			default: 					return "unknown";
 		}
 	}

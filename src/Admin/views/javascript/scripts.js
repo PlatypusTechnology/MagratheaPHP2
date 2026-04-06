@@ -111,7 +111,7 @@ function ajax(method, url, payload, authorization, debug=false) {
   });
 }
 
-function ajaxApi(method, url, payload, authorization, debug=false) {
+function ajaxApi(method, url, payload, authorization, debug=false, withStatus=false) {
 	showLoading();
 	if(debug) console.info("Calling api ["+method+"]"+url+" with payload", payload);
 	return new Promise(function(resolve, reject) {
@@ -121,9 +121,9 @@ function ajaxApi(method, url, payload, authorization, debug=false) {
 			type: method,
 			data: payload,
 			dataType: 'json',
-			success: function(response) {
+			success: function(response, _textStatus, jqXHR) {
 				hideLoading();
-				resolve(response);
+				resolve(withStatus ? { response, httpStatus: jqXHR.status } : response);
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				console.error("error on ajax post", errorThrown);
@@ -131,6 +131,7 @@ function ajaxApi(method, url, payload, authorization, debug=false) {
 					"status": textStatus,
 					"error": errorThrown,
 				};
+				if(withStatus) err["httpStatus"] = jqXHR.status;
 				if(jqXHR && jqXHR.responseJSON) {
 					err["data"] = jqXHR.responseJSON;
 				}

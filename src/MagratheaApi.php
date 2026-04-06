@@ -550,6 +550,7 @@ class MagratheaApi {
 	 * @return mixed
 	 */
 	public function ReturnApiException($exception) {
+		$debugType = Debugger::Instance()->GetType();
 		$data = [
 			"type" => "exception",
 			"error" => $exception->GetData(),
@@ -557,13 +558,21 @@ class MagratheaApi {
 			"message" => $exception->getMessage(),
 			"debug_level" => Debugger::Instance()->GetTypeDesc(),
 		];
-		if(Debugger::Instance()->GetType() == Debugger::DEV) {
+		if($debugType == Debugger::DEV || $debugType == Debugger::ANALYSIS) {
 			$data["stacktrace"] = debug_backtrace();
+		}
+		$exCode = $exception->getCode();
+		if($exCode >= 100 && $exCode <= 599) {
+			$httpStatus = $exCode;
+		} else if($exCode >= 1000 && $exCode <= 9999) {
+			$httpStatus = intval($exCode / 10);
+		} else {
+			$httpStatus = 500;
 		}
 		return $this->Json(array(
 			"success" => false,
 			"data" => $data,
-		));
+		), $httpStatus);
 	}
 
 	/**
@@ -575,14 +584,16 @@ class MagratheaApi {
 	 * @return mixed
 	 */
 	public function ReturnError($code=500, $message="", $data=null, $status=200) {
+		$debugType = Debugger::Instance()->GetType();
 		$data = [
 			"type" => "unknown error",
 			"error" => $data,
 			"code" => $code,
 			"message" => $message,
+			"debug_type" => $debugType,
 			"debug_level" => Debugger::Instance()->GetTypeDesc(),
 		];
-		if(Debugger::Instance()->GetType() == Debugger::DEV) {
+		if($debugType == Debugger::DEV || $debugType == Debugger::ANALYSIS) {
 			$data["stacktrace"] = debug_backtrace();
 		}
 		return $this->Json(array(

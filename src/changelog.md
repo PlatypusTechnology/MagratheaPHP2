@@ -1,3 +1,10 @@
+### 2.1.25
+2026-04
+	- **improvement:** API admin now show status and codes
+	- **fix:** returning correct status codes on Magrathea API
+	- **new:** Debugger mode: ANALYSIS
+	- **new:** App Namespaces for `MagratheaPHP`
+
 ### 2.1.24
 2026-02
 	- **improvement:** Authentication failing response improved

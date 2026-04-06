@@ -30,6 +30,8 @@ class MagratheaPHP extends Singleton {
 	public string $magRoot = "";
 	/** @var array<string> Folders to be included in the autoloader. */
 	public array $codeFolder = [];
+	/** @var string|null App namespace used to scope autoloader errors. */
+	public ?string $appNamespace = null;
 	/** @var string|null Minimum version of Magrathea required. */
 	public ?string $versionRequired = null;
 
@@ -109,6 +111,17 @@ class MagratheaPHP extends Singleton {
 				$root."/features/".$f."/Base"
 			);
 		}
+		return $this;
+	}
+
+	/**
+	 * Sets the project's root namespace, used to scope autoloader errors.
+	 * Only classes within this namespace will trigger a MagratheaException when not found.
+	 * @param string $namespace Root namespace of the project (e.g. "guialol").
+	 * @return MagratheaPHP
+	 */
+	public function AppNamespace(string $namespace): MagratheaPHP {
+		$this->appNamespace = $namespace;
 		return $this;
 	}
 

@@ -57,27 +57,27 @@ function executeApi(apiId) {
 		payloadJson = null;
 		debugAPI("\tno payload");
 	}
-	ajaxApi(method, req, payloadJson, token, true)
+	ajaxApi(method, req, payloadJson, token, true, true)
 		.then(rs => {
-			let response = jsonAPIFormat(rs);
+			let response = jsonAPIFormat(rs.response);
 			debugAPI("\nrs:");
 			debugAPI(response);
 			debugAPI("\n");
-			return response;
+			return { formatted: response, httpStatus: rs.httpStatus };
 		})
 		.catch(err => {
 			debugAPI("\nERROR: " + err.error);
 			if(err.data) {
-				rs = jsonAPIFormat(err.data);
-				debugAPI(rs);
-				return rs;
+				let formatted = jsonAPIFormat(err.data);
+				debugAPI(formatted);
+				return { formatted, httpStatus: err.httpStatus };
 			} else {
-				return err.error;
+				return { formatted: err.error, httpStatus: err.httpStatus };
 			}
 		})
-		.then(rs => {
-//			console.error(rs);
-			showOn("#api-rs-" + apiId, rs);
+		.then(({ formatted, httpStatus }) => {
+			showOn("#api-rs-" + apiId, formatted);
+			showOn("#api-status-code-" + apiId, httpStatus);
 		});
 }
 

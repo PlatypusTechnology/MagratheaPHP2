@@ -97,11 +97,33 @@ spl_autoload_register(function ($class) {
 			return;
 		}
 	}
-	$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
-	$ex->SetData($folders);
+	$appNamespace = MagratheaPHP::Instance()->appNamespace;
+	if ($appNamespace === null || str_starts_with($class, $appNamespace . '\\')) {
+		$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
+		$ex->SetData($folders);
+		throw $ex;
+	}
+	$ex = new MagratheaException("[Magrathea autoloader] skipped unknown class: " . $class);
+	$ex->SetData(array_map(fn($f) => ($f["class"] ?? "") . "::" . ($f["function"] ?? "") . " (" . ($f["file"] ?? "") . ":" . ($f["line"] ?? "") . ")", debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
 	throw $ex;
 });
 
+
+
+// spl_autoload_register(function ($class) {
+// 	$folders = MagratheaPHP::Instance()->codeFolder;
+// 	$class_name = getClassNameOfClass($class);
+// 	if($class_name == "ClassLoader") return;
+// 	foreach ($folders as $dir) {
+// 		if (file_exists($dir."/".$class_name.'.php')) {
+// 			require_once ($dir."/".$class_name.'.php');
+// 			return;
+// 		}
+// 	}
+// 	$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
+// 	$ex->SetData($folders);
+// 	throw $ex;
+// });
 
 
 

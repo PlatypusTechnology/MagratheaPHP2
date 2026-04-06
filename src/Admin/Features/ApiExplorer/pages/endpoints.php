@@ -108,6 +108,7 @@ $url = $feature->apiUrl;
 						?>
 					</div>
 					<div class="col-10">
+						<div id="api-status-<?= $apiId ?>">Status: <span id="api-status-code-<?= $apiId ?>"></span></div>
 						<pre class="code-light api-rs" id="api-rs-<?= $apiId ?>"></pre>
 					</div>
 				</div>
