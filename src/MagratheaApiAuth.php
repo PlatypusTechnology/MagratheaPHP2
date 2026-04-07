@@ -92,17 +92,21 @@ class MagratheaApiAuth extends MagratheaApiControl {
 	 * @return array          Array containing refresh token, token, expiration, and data.
 	 */
 	public function ResponsePayload($payload): array {
-		$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + '.$this->tokenExpire));
-		$jwtRefresh = $this->jwtEncode($payload);
-		$payload["refresh"] = $jwtRefresh;
-		$payload["expire"] = $expire;
-		$jwt = $this->jwtEncode($payload);
-		return [
-			"refresh_token" => $jwtRefresh,
-			"token" => $jwt,
-			"expires" => $expire,
-			"data" => $payload
-		];
+		try {
+			$expire = date('Y-m-d h:i:s', strtotime(\Magrathea2\now().' + '.$this->tokenExpire));
+			$jwtRefresh = $this->jwtEncode($payload);
+			$payload["refresh"] = $jwtRefresh;
+			$payload["expire"] = $expire;
+			$jwt = $this->jwtEncode($payload);
+			return [
+				"refresh_token" => $jwtRefresh,
+				"token" => $jwt,
+				"expires" => $expire,
+				"data" => $payload
+			];
+		} catch(\DomainException $ex) {
+			throw new MagratheaApiException($ex->getMessage(), 500, $ex);
+		}
 	}
 
 	/**

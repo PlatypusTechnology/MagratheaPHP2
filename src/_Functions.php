@@ -103,9 +103,6 @@ spl_autoload_register(function ($class) {
 		$ex->SetData($folders);
 		throw $ex;
 	}
-	$ex = new MagratheaException("[Magrathea autoloader] skipped unknown class: " . $class);
-	$ex->SetData(array_map(fn($f) => ($f["class"] ?? "") . "::" . ($f["function"] ?? "") . " (" . ($f["file"] ?? "") . ":" . ($f["line"] ?? "") . ")", debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
-	throw $ex;
 });
 
 

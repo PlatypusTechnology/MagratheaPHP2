@@ -4,6 +4,7 @@
 	- **fix:** returning correct status codes on Magrathea API
 	- **new:** Debugger mode: ANALYSIS
 	- **new:** App Namespaces for `MagratheaPHP`
+	- **fix:** fix autoloader only for internal classes
 
 ### 2.1.24
 2026-02
