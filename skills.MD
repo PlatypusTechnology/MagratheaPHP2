@@ -1,3 +1,8 @@
+---
+name: magrathea-php2
+description: How to correctly generate code using the MagratheaPHP2 framework. Read before writing any PHP code for a project that uses this framework.
+---
+
 # skills.MD — How to Use MagratheaPHP2 in a Project
 
 This file teaches an AI assistant how to correctly generate code using the MagratheaPHP2 framework. It is a practical, task-oriented cookbook. Read it before writing any PHP code for a project that uses this framework.
@@ -15,17 +20,19 @@ Reference files:
 3. [Creating a Model](#3-creating-a-model)
 4. [Creating a Control](#4-creating-a-control)
 5. [Building Queries](#5-building-queries)
-6. [Creating an API](#6-creating-an-api)
+6. [Creating an API Class](#6-creating-an-api-class)
 7. [Creating an API Controller](#7-creating-an-api-controller)
 8. [JWT Authentication](#8-jwt-authentication)
 9. [Caching](#9-caching)
 10. [Logging & Debugging](#10-logging--debugging)
 11. [Sending Email](#11-sending-email)
-12. [Admin Panel](#12-admin-panel)
-13. [Error Handling](#13-error-handling)
-14. [Testing](#14-testing)
-15. [Complete Application Skeleton](#15-complete-application-skeleton)
-16. [Checklist Before Delivering Code](#16-checklist-before-delivering-code)
+12. [Admin Panel — Entry Point](#12-admin-panel--entry-point)
+13. [Admin Panel — Admin Class](#13-admin-panel--admin-class)
+14. [Admin Panel — CRUD Features](#14-admin-panel--crud-features)
+15. [Error Handling](#15-error-handling)
+16. [Testing](#16-testing)
+17. [Complete Application Skeleton](#17-complete-application-skeleton)
+18. [Checklist Before Delivering Code](#18-checklist-before-delivering-code)
 
 ---
 
@@ -147,12 +154,24 @@ class Article extends MagratheaModel {
         "updated_at"  => "datetime",
     ];
 
+    // Declare each $dbValues field as an explicit typed public property
+    public int $id = 0;
+    public string $title = "";
+    public string $body = "";
+    public int $author_id = 0;
+    public bool $published = false;
+    public int $views = 0;
+    public string $created_at = "";
+    public string $updated_at = "";
+
     // Optional: aliases (left = alias, right = real column)
     protected $dbAlias = [
         "content" => "body",
     ];
 }
 ```
+
+**Important:** Always declare each `$dbValues` field as an explicit typed public property. Do NOT use `#[\AllowDynamicProperties]`.
 
 ### Supported field types
 
@@ -187,8 +206,8 @@ $article->Save(); // detects existing PK → UPDATE
 // Delete
 $article->Delete();
 
-// Serialize for API response
-return $article->ToJson();
+// Serialize for API response — use ToArray() for flat map, ToJson() for full envelope
+return $article->ToArray();
 ```
 
 ---
@@ -315,58 +334,73 @@ $result = Database::Instance()->PrepareAndExecute(
 
 ---
 
-## 6. Creating an API
+## 6. Creating an API Class
+
+The preferred pattern is to encapsulate all route definitions in a class that extends `MagratheaApi`. This makes the API reusable — both the HTTP entry point and the Admin ApiExplorer instantiate the same class.
 
 ```php
 <?php
-// public/index.php
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace App;
 
-use Magrathea2\MagratheaPHP;
 use Magrathea2\MagratheaApi;
+use App\Api\AuthControl;
+use App\Api\ArticleApiControl;
 
-MagratheaPHP::LoadVendor();
-MagratheaPHP::Instance()
-    ->AppPath(__DIR__ . '/..')
-    ->AddCodeFolder("models", "controls", "api")
-    ->Prod()
-    ->Load()
-    ->Connect();
+class MyAppApi extends MagratheaApi {
 
-$api = new MagratheaApi();
+    public function __construct() {
+        $this->Initialize();
+    }
 
-// CORS
-$api->AllowAll();                              // open (dev/public)
-// $api->Allow(["https://myapp.com"]);        // restricted (production)
+    public function Initialize() {
+        $this->AllowAll();
+        $this->SetAddress("/api/v1");
+        $this->HealthCheck();
+        $this->SetAuth();
+        $this->Articles();
+    }
 
-// Optional: base path prefix
-$api->SetAddress("/api/v1");
+    private function SetAuth() {
+        $auth = new AuthControl();
+        $this->BaseAuthorization($auth, "ValidateToken");
+        $this->Add("POST", "auth/login", $auth, "Login");
+        $this->Add("GET",  "me",         $auth, "Me",    true);
+    }
 
-// Optional: global auth on all protected routes
-$api->BaseAuthorization(new \App\Api\AuthControl(), "ValidateToken");
+    private function Articles() {
+        $api = new ArticleApiControl();
+        $this->Add("GET",    "articles",     $api, "List",   true);
+        $this->Add("GET",    "articles/:id", $api, "Read",   true);
+        $this->Add("POST",   "articles",     $api, "Create", true);
+        $this->Add("PUT",    "articles/:id", $api, "Update", true);
+        $this->Add("DELETE", "articles/:id", $api, "Delete", true);
+    }
+}
+```
 
-// Register routes
-$api->Add("GET",    "/articles",      new ArticleApiControl(), "List");
-$api->Add("GET",    "/articles/{id}", new ArticleApiControl(), "Read");
-$api->Add("POST",   "/articles",      new ArticleApiControl(), "Create", true); // auth
-$api->Add("PUT",    "/articles/{id}", new ArticleApiControl(), "Update", true);
-$api->Add("DELETE", "/articles/{id}", new ArticleApiControl(), "Delete", true);
+**HTTP entry point** (`public/index.php`) — thin wrapper that runs the API class:
 
-// Or, all of the above in one line:
-$api->Crud("/articles", new ArticleApiControl(), true);
-
-// Health check endpoint: GET /health → {"status":"ok"}
-$api->HealthCheck();
-
-// Run — this outputs JSON and exits
+```php
+<?php
+// shared bootstrap (bootstrap.php) sets up MagratheaPHP
+$api = require __DIR__ . '/api.php';
 $api->Run();
 ```
 
-**Key API rules:**
-- `Run()` must be the **last** call — it outputs and exits
+**Shared setup file** (`public/api.php`) — returns the configured instance, importable by both entry point and admin:
+
+```php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+// ... MagratheaPHP bootstrap ...
+return new \App\MyAppApi();
+```
+
+**Key rules:**
+- Group routes into private methods by domain (Auth, Articles, etc.)
+- `Run()` is called only in the HTTP entry point, never inside the class
 - `AllowAll()` is fine for development; use `Allow([...])` in production
-- Use `true` for the `$auth` parameter on any route that requires a token
-- Route params use `{name}` syntax — they arrive as `$params["name"]` in the controller
+- Route params use `:name` syntax — they arrive as `$params["name"]` in the controller
 
 ---
 
@@ -386,20 +420,20 @@ class ArticleApiControl extends MagratheaApiControl {
     // GET /articles
     public function List(): array {
         $articles = ArticleControl::GetWhere(["published" => 1]);
-        return array_map(fn($a) => $a->ToJson(), $articles);
+        return array_map(fn($a) => $a->ToArray(), $articles);
     }
 
-    // GET /articles/{id}
-    public function Read(array $params = []): object|array {
+    // GET /articles/:id
+    public function Read(array $params = []): array {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
             throw new MagratheaApiException("Article not found", 404);
         }
-        return $article->ToJson();
+        return $article->ToArray();
     }
 
     // POST /articles
-    public function Create(array $data = []): object {
+    public function Create(array $data = []): array {
         $post = $this->GetPost(); // reads JSON or form body
 
         $article = new Article();
@@ -410,11 +444,11 @@ class ArticleApiControl extends MagratheaApiControl {
         $article->created_at = now();
         $article->Save();
 
-        return $article->ToJson();
+        return $article->ToArray();
     }
 
-    // PUT /articles/{id}
-    public function Update(array $params): object {
+    // PUT /articles/:id
+    public function Update(array $params = []): array {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
             throw new MagratheaApiException("Article not found", 404);
@@ -426,10 +460,10 @@ class ArticleApiControl extends MagratheaApiControl {
         $article->updated_at = now();
         $article->Save();
 
-        return $article->ToJson();
+        return $article->ToArray();
     }
 
-    // DELETE /articles/{id}
+    // DELETE /articles/:id
     public function Delete(array $params = []): bool {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
@@ -444,7 +478,7 @@ class ArticleApiControl extends MagratheaApiControl {
 - Always throw `MagratheaApiException` for expected errors (404, 400, 403) — the router converts it to JSON automatically
 - Use `$this->GetPost()` for POST body, `$this->GetPut()` for PUT body
 - Use `$this->GetUserId()` to read the user ID from the decoded JWT token
-- Return plain arrays or `->ToJson()` objects — the router handles JSON encoding
+- Return `->ToArray()` (flat field map) for API responses — never `->ToJson()` (which wraps fields in an outer envelope)
 - Never `echo` or `die()` inside controllers
 
 ---
@@ -485,7 +519,7 @@ class AuthControl extends MagratheaApiControl {
             "exp"     => time() + 86400, // 24 hours
         ]);
 
-        return ["token" => $token, "user" => $user->ToJson()];
+        return ["token" => $token, "user" => $user->ToArray()];
     }
 
     // Used as base authorization for all protected routes
@@ -503,20 +537,10 @@ class AuthControl extends MagratheaApiControl {
 }
 ```
 
-### Step 2: Register auth routes
+### Step 2: Access user in other controllers
 
 ```php
-$api->Add("POST", "/auth/login",    new AuthControl(), "Login");
-$api->Add("POST", "/auth/register", new AuthControl(), "Register");
-
-// Set base auth for all protected routes
-$api->BaseAuthorization(new AuthControl(), "ValidateToken");
-```
-
-### Step 3: Access user in other controllers
-
-```php
-public function Create(array $data = []): object {
+public function Create(array $data = []): array {
     $userId = $this->GetUserId();       // int|null from token
     $info   = $this->GetUserInfo();     // full decoded payload object
     $role   = $info->role ?? "guest";
@@ -528,7 +552,7 @@ public function Create(array $data = []): object {
 - Always set `"exp"` in the payload
 - Never store passwords or sensitive PII in the token
 - Always override `GetSecret()` to use a config value, not a hardcoded string
-- `GetAuthorizationToken()` throws if the header is missing — call it inside `try/catch` or rely on the route's `$auth` parameter
+- `GetAuthorizationToken()` throws if the header is missing — call it inside `try/catch` or rely on the route's auth parameter
 
 ---
 
@@ -543,7 +567,7 @@ public function List(): array {
 
     // 2. Compute result
     $articles = ArticleControl::GetWhere(["published" => 1]);
-    $result   = array_map(fn($a) => $a->ToJson(), $articles);
+    $result   = array_map(fn($a) => $a->ToArray(), $articles);
 
     // 3. Save to cache for next request
     $this->Cache("articles_published", json_encode($result));
@@ -551,20 +575,19 @@ public function List(): array {
     return $result;
 }
 
-public function Create(array $data = []): object {
+public function Create(array $data = []): array {
     // ... create ...
 
     // Invalidate related cache
     $this->CacheClear("articles_published");
 
-    return $article->ToJson();
+    return $article->ToArray();
 }
 ```
 
 ### Invalidate by pattern (when many related keys exist)
 
 ```php
-// Clears: articles_published.json, articles_draft.json, articles_page_1.json, etc.
 $this->CacheClearPattern("articles_*");
 ```
 
@@ -587,19 +610,15 @@ Always include parameters that affect the result:
 ```php
 use Magrathea2\Logger;
 
-// Simple log
 Logger::Instance()->Log("Order #$orderId processed by user #$userId");
 
-// Log an exception
 try {
     // something risky
 } catch (\Exception $e) {
     Logger::Instance()->LogError($e);
 }
 
-// Different log files per category
 Logger::Instance()->SetLogFile("payments")->Log("Payment success: $amount");
-Logger::Instance()->SetLogFile("auth")->Log("Login failed: $email");
 ```
 
 ### Debugging (development only)
@@ -607,15 +626,9 @@ Logger::Instance()->SetLogFile("auth")->Log("Login failed: $email");
 ```php
 use Magrathea2\Debugger;
 
-// Add data points during a request
 Debugger::Instance()->Info("Cache miss for: articles_published");
 Debugger::Instance()->Add(["user_id" => $id, "role" => $role]);
-
-// Dump everything at end of request
 Debugger::Instance()->Show();
-
-// Enable query logging (via MagratheaPHP bootstrap)
-MagratheaPHP::Instance()->Debug(); // -> Prod() disables this automatically
 ```
 
 ---
@@ -630,9 +643,9 @@ use Magrathea2\MagratheaMail;
 $mail = new MagratheaMail();
 $mail->SetTo($user->email)
      ->SetFrom("noreply@myapp.com")
-     ->SetSubject("Welcome to MyApp!")
-     ->SetHTMLMessage("<h1>Hi {$user->name}!</h1><p>Your account is ready.</p>")
-     ->SetTXTMessage("Hi {$user->name}! Your account is ready.")
+     ->SetSubject("Welcome!")
+     ->SetHTMLMessage("<h1>Hi!</h1>")
+     ->SetTXTMessage("Hi!")
      ->Send();
 ```
 
@@ -642,53 +655,124 @@ $mail->SetTo($user->email)
 use Magrathea2\MagratheaMailSMTP;
 
 $mail = new MagratheaMailSMTP(); // uses [mail] section from config
-$mail->SetTo($user->email)
-     ->SetSubject("Password Reset")
-     ->SetHTMLMessage($htmlBody)
-     ->Send();
-```
-
-### Simulate in non-production
-
-```php
-$mail = new MagratheaMail();
-
-if (Config::Instance()->GetEnvironment() !== "production") {
-    $mail->Simulate();
-}
-
-$mail->SetTo($email)->SetSubject("Test")->SetHTMLMessage("<p>Hi</p>")->Send();
+$mail->SetTo($user->email)->SetSubject("Reset")->SetHTMLMessage($html)->Send();
 ```
 
 ---
 
-## 12. Admin Panel
+## 12. Admin Panel — Entry Point
 
-### Minimal admin entry point
+The admin entry point bootstraps Magrathea (including `StartSession()`), then hands off to `AdminManager`.
 
 ```php
 <?php
-// admin/index.php
-require_once __DIR__ . '/../vendor/autoload.php';
+// public/admin.php
 
-use Magrathea2\MagratheaPHP;
 use Magrathea2\Admin\AdminManager;
 
-MagratheaPHP::LoadVendor();
-MagratheaPHP::Instance()
-    ->AppPath(__DIR__ . '/..')
-    ->AddCodeFolder("models", "controls", "admin")
-    ->Prod()->Load()->Connect()->StartSession();
+include("bootstrap.php");           // shared MagratheaPHP setup (no Run())
+include("../admin/MyAppAdmin.php"); // the Admin class
 
-$manager = AdminManager::Instance()->StartDefault("My App Admin", "#2c3e50");
-
-if (!$manager->Auth()) {
-    header("Location: /admin/login.php");
-    exit;
+try {
+    AdminManager::Instance()->Start(new \App\MyAppAdmin());
+} catch (Exception $ex) {
+    \Magrathea2\p_r($ex);
 }
 ```
 
-### Adding a CRUD feature for a model
+**Rules:**
+- `bootstrap.php` must call `->StartSession()` for admin auth to work
+- `AdminManager::Instance()->Start()` handles auth, rendering, and routing — it does not return
+- Never call `Run()` on the API inside an admin entry point
+
+---
+
+## 13. Admin Panel — Admin Class
+
+Extend `\Magrathea2\Admin\Admin` and implement `\Magrathea2\Admin\iAdmin`.
+
+```php
+<?php
+namespace App;
+
+use Magrathea2\Admin\AdminMenu;
+use Magrathea2\Admin\Features\ApiExplorer\ApiExplorer;
+use Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig;
+use App\Admin\ArticleAdmin;
+
+class MyAppAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\iAdmin {
+
+    private $features = [];
+    private $apiFeature;
+
+    public function Initialize() {
+        $this->SetTitle("My App Admin");
+        $this->SetPrimaryColor("#5a2672");
+        $this->SetAdminLogo(__DIR__ . "/logo.svg"); // absolute path
+    }
+
+    public function Auth($user): bool {
+        return parent::Auth($user); // uses default Magrathea admin auth
+    }
+
+    public function SetFeatures() {
+        parent::SetFeatures();
+        $this->LoadConfig();
+        $this->LoadFeatures();
+        $this->LoadApi();
+    }
+
+    public function LoadApi() {
+        $this->apiFeature = new ApiExplorer();
+        $this->apiFeature->SetApi(new MyAppApi()); // instantiate the API class
+        $this->AddFeature($this->apiFeature);
+    }
+
+    public function LoadConfig() {
+        $this->features["app-config"] = new AdminFeatureAppConfig(true);
+        $this->features["app-config"]->featureId   = "AppConfig";
+        $this->features["app-config"]->featureName = "Settings";
+        $this->AddFeature($this->features["app-config"]);
+    }
+
+    public function LoadFeatures() {
+        $this->AddCrudFeature(new ArticleAdmin());
+        // add more CRUD features here
+    }
+
+    public function BuildMenu(): AdminMenu {
+        $menu = new AdminMenu();
+
+        $menu->Add($this->features["app-config"]->GetMenuItem());
+
+        $menu->Add($menu->CreateTitle("Api"))
+             ->Add($this->apiFeature->GetMenuItem());
+
+        $this->AddFeaturesMenu($menu); // auto-adds all CRUD features
+
+        $menu->Add(["title" => "Magrathea", "type" => "main"]);
+        $this->AddMagratheaMenu($menu);
+        $menu->Add($menu->GetLogoutMenuItem());
+
+        return $menu;
+    }
+}
+```
+
+**Key methods:**
+- `Initialize()` — title, primary color, logo path (called once on load)
+- `Auth($user)` — return `parent::Auth($user)` for default Magrathea auth
+- `SetFeatures()` — orchestrates LoadConfig / LoadFeatures / LoadApi; always call `parent::SetFeatures()` first
+- `LoadApi()` — creates `ApiExplorer`, calls `SetApi(new YourApiClass())`, adds feature
+- `LoadFeatures()` — calls `AddCrudFeature()` for each CRUD admin class
+- `BuildMenu()` — constructs the sidebar; use `CreateTitle()` for section headers, `AddFeaturesMenu()` to auto-include CRUD items, always end with `GetLogoutMenuItem()`
+- `AddFeature()` vs `AddCrudFeature()` — use `AddCrudFeature` for `AdminCrudObject` subclasses, `AddFeature` for everything else
+
+---
+
+## 14. Admin Panel — CRUD Features
+
+Each model gets a companion CRUD admin class extending `AdminCrudObject`.
 
 ```php
 <?php
@@ -696,49 +780,53 @@ namespace App\Admin;
 
 use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 
-class ArticleAdminFeature extends AdminCrudObject {
+class ArticleAdmin extends AdminCrudObject {
     protected $modelName        = "Article";
     protected $modelNamespace   = "App\\Models\\";
     protected $controlName      = "ArticleControl";
     protected $controlNamespace = "App\\Controls\\";
     protected $label            = "Articles";
-    protected $icon             = "newspaper"; // Bootstrap icon name
+    protected $icon             = "newspaper"; // Bootstrap Icons name
 }
 ```
 
+**The admin class folder must be registered with `AddCodeFolder()` in bootstrap.**
+
+### Field visibility / permissions
+
+By default `AdminCrudObject` allows full CRUD. Override to restrict:
+
 ```php
-// Register it
-$manager->GetAdmin()->AddFeaturesArray([new ArticleAdminFeature()]);
+class ArticleAdmin extends AdminCrudObject {
+    // ... properties ...
+
+    public function CanCreate(): bool { return false; } // read-only list
+    public function CanEdit(): bool   { return false; }
+    public function CanDelete(): bool { return true;  }
+}
 ```
+
+### Bootstrap Icons reference
+
+Common values for `$icon`: `person`, `file-earmark-text`, `card-text`, `pencil`, `trash`, `search`, `newspaper`, `gear`, `box-arrow-right`.
 
 ---
 
-## 13. Error Handling
+## 15. Error Handling
 
 ### In API controllers — always use MagratheaApiException
 
 ```php
 use Magrathea2\Exceptions\MagratheaApiException;
 
-// 400 Bad Request
-if (empty($post["email"])) {
-    throw new MagratheaApiException("Email is required", 400);
-}
-
-// 401 Unauthorized
+throw new MagratheaApiException("Email is required", 400);
 throw new MagratheaApiException("Unauthorized", 401);
-
-// 403 Forbidden
 throw new MagratheaApiException("You don't have permission", 403);
-
-// 404 Not Found
 throw new MagratheaApiException("Resource not found", 404);
 
-// 422 Validation failed
 throw (new MagratheaApiException("Validation failed", 422))
     ->SetData(["errors" => $validationErrors]);
 
-// Convert generic exception
 try {
     // some operation
 } catch (\Exception $e) {
@@ -760,7 +848,7 @@ set_exception_handler(function (\Throwable $e) {
 
 ---
 
-## 14. Testing
+## 16. Testing
 
 ### PHPUnit bootstrap (phpunit.xml)
 
@@ -782,12 +870,8 @@ use Magrathea2\DB\Database;
 use Magrathea2\Config;
 
 class MyTest extends TestCase {
-
     protected function setUp(): void {
-        // Mock DB — no real queries
         Database::Instance()->Mock();
-
-        // Mock config
         Config::Instance()->SetConfig([
             "database" => ["host" => "localhost", "database" => "test"],
             "jwt"      => ["secret" => "test-secret"],
@@ -796,42 +880,9 @@ class MyTest extends TestCase {
 }
 ```
 
-### Testing query builder (no DB needed)
-
-```php
-public function testSelectQuery(): void {
-    $sql = Query::Select()
-        ->Table("articles")
-        ->Where(["published" => 1])
-        ->Order("created_at DESC")
-        ->Limit(5)
-        ->SQL();
-
-    $this->assertStringContainsString("FROM articles", $sql);
-    $this->assertStringContainsString("published = '1'", $sql);
-    $this->assertStringContainsString("LIMIT 5", $sql);
-}
-```
-
-### Testing a model
-
-```php
-public function testModelAssignment(): void {
-    $article = new \App\Models\Article();
-    $article->title     = "Test";
-    $article->published = true;
-
-    $this->assertEquals("Test", $article->title);
-    $this->assertTrue($article->published);
-    $this->assertTrue($article->IsEmpty()); // no PK set
-}
-```
-
 ---
 
-## 15. Complete Application Skeleton
-
-A minimal but complete structure for a new MagratheaPHP2 project:
+## 17. Complete Application Skeleton
 
 ```
 my-app/
@@ -845,102 +896,118 @@ my-app/
 ├── api/
 │   ├── AuthControl.php
 │   └── ArticleApiControl.php
-├── public/
-│   └── index.php         ← API entry point (web root)
 ├── admin/
-│   ├── index.php         ← Admin entry point
-│   └── features/
-│       └── ArticleAdminFeature.php
-├── cache/                ← writable by web server
-├── logs/                 ← writable by web server
+│   ├── MyAppAdmin.php        ← Admin class
+│   ├── ArticleAdmin.php      ← CRUD feature
+│   └── logo.svg
+├── public/
+│   ├── bootstrap.php         ← shared MagratheaPHP setup (returns nothing)
+│   ├── api.php               ← returns new MyAppApi() (importable)
+│   ├── index.php             ← require api.php → Run()
+│   └── admin.php             ← AdminManager::Start(new MyAppAdmin())
+├── MyAppApi.php              ← extends MagratheaApi
+├── cache/
+├── logs/
 └── vendor/
 ```
 
-**composer.json minimum:**
-
-```json
-{
-    "require": {
-        "magrathea/magrathea-php2": "^2.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "./"
-        }
-    }
-}
-```
-
-**public/index.php:**
+**`public/bootstrap.php`** — shared setup, no output:
 
 ```php
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
-
 use Magrathea2\MagratheaPHP;
-use Magrathea2\MagratheaApi;
-use App\Api\AuthControl;
-use App\Api\ArticleApiControl;
 
 MagratheaPHP::LoadVendor();
 MagratheaPHP::Instance()
     ->AppPath(__DIR__ . '/..')
-    ->AddCodeFolder("models", "controls", "api")
-    ->Prod()->Load()->Connect();
+    ->AddCodeFolder("models", "controls", "api", "admin")
+    ->Prod()->Load()->Connect()->StartSession();
+```
 
-$api = new MagratheaApi();
-$api->AllowAll()
-    ->BaseAuthorization(new AuthControl(), "ValidateToken");
+**`public/api.php`** — importable, returns the configured API:
 
-$api->Add("POST", "/auth/login", new AuthControl(), "Login");
+```php
+<?php
+require_once __DIR__ . "/bootstrap.php";
+return new \App\MyAppApi();
+```
 
-$api->Add("GET",  "/articles",      new ArticleApiControl(), "List");
-$api->Add("GET",  "/articles/{id}", new ArticleApiControl(), "Read");
-$api->Add("POST", "/articles",      new ArticleApiControl(), "Create", true);
-$api->Add("PUT",  "/articles/{id}", new ArticleApiControl(), "Update", true);
-$api->Add("DELETE", "/articles/{id}", new ArticleApiControl(), "Delete", true);
+**`public/index.php`** — HTTP entry point:
 
-$api->HealthCheck();
+```php
+<?php
+$api = require __DIR__ . "/api.php";
 $api->Run();
+```
+
+**`public/admin.php`** — admin entry point:
+
+```php
+<?php
+use Magrathea2\Admin\AdminManager;
+require __DIR__ . "/bootstrap.php";
+
+try {
+    AdminManager::Instance()->Start(new \App\MyAppAdmin());
+} catch (Exception $ex) {
+    \Magrathea2\p_r($ex);
+}
 ```
 
 ---
 
-## 16. Checklist Before Delivering Code
-
-Use this before finalizing any generated code for a MagratheaPHP2 project.
+## 18. Checklist Before Delivering Code
 
 ### Bootstrap
 - [ ] `MagratheaPHP::LoadVendor()` is called first
 - [ ] `AppPath()` is set with `__DIR__` or an absolute path
-- [ ] All class folders are registered with `AddCodeFolder()`
+- [ ] All class folders registered with `AddCodeFolder()` (including `admin/` for admin panels)
 - [ ] `->Load()->Connect()` is called before any DB operation
+- [ ] `->StartSession()` called when admin panel is used
 - [ ] Mode is `->Dev()` for local, `->Prod()` for server
 
 ### Models
 - [ ] `$dbTable` is set
 - [ ] `$dbValues` includes all columns with correct types
 - [ ] `$dbPk` is set if primary key is not `"id"`
-- [ ] Model file is in a folder registered with `AddCodeFolder()`
+- [ ] Each `$dbValues` field has an explicit typed public property declaration
+- [ ] No `#[\AllowDynamicProperties]` attribute used
 
 ### Controls
 - [ ] `$modelName`, `$modelNamespace`, `$dbTable` are all set
 - [ ] Namespace matches the actual file location
 
-### API
+### API Class
+- [ ] Extends `MagratheaApi`
+- [ ] Constructor calls `Initialize()`
+- [ ] Routes grouped into domain methods
+- [ ] `Run()` is NOT called inside the class — only in the HTTP entry point
+
+### API Controllers
 - [ ] Every controller extends `MagratheaApiControl`
 - [ ] All error cases throw `MagratheaApiException`, not generic exceptions
-- [ ] User input is never directly interpolated into SQL (use `Query::Clean()` or `PrepareAndExecute()`)
-- [ ] `$api->Run()` is the last line of the entry point
-- [ ] Auth is set to `true` on routes that require a token
+- [ ] User input never directly interpolated into SQL
 - [ ] `GetPost()` / `GetPut()` used (not `$_POST` directly)
+- [ ] Returns `->ToArray()` not `->ToJson()` for API responses
+
+### Admin Class
+- [ ] Extends `\Magrathea2\Admin\Admin` and implements `\Magrathea2\Admin\iAdmin`
+- [ ] `SetFeatures()` calls `parent::SetFeatures()` first
+- [ ] `LoadApi()` uses `SetApi(new YourApiClass())` — not `require`
+- [ ] `BuildMenu()` ends with `GetLogoutMenuItem()`
+- [ ] `AddCrudFeature()` used for `AdminCrudObject` subclasses
+
+### Admin CRUD Features
+- [ ] Extends `AdminCrudObject`
+- [ ] `$modelName`, `$modelNamespace`, `$controlName`, `$controlNamespace` all set
+- [ ] `$label` and `$icon` set for UI
 
 ### Config
-- [ ] Secrets use `$=ENV_VAR` — never hardcoded in `.conf` files
-- [ ] Config file is at `config/magrathea.conf` relative to `AppPath`
+- [ ] Secrets use `$=ENV_VAR` — never hardcoded
+- [ ] Config file at `config/magrathea.conf` relative to `AppPath`
 
 ### General
-- [ ] `now()` used for datetime fields (not `date()` directly)
-- [ ] `->ToJson()` used in API responses, not `->ToArray()`
-- [ ] Cache invalidated when data is mutated (`CacheClear` / `CacheClearPattern`)
+- [ ] `now()` used for datetime fields
+- [ ] Cache invalidated when data is mutated
 - [ ] Singletons accessed via `::Instance()`, never `new ClassName()`
