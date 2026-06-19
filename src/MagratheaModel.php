@@ -48,7 +48,7 @@ abstract class MagratheaModel{
 	 */
 	public function IsEmpty(): bool {
 		$pk = $this->GetPkName();
-		return ($this->$pk != null);
+		return ($this->$pk == null);
 	}
 	/**
 	 * Gets table related to model

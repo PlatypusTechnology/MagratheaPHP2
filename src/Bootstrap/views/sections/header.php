@@ -1,5 +1,8 @@
 <?php
+
 $headerTitle = $headerTitle ?? "Magrathea Bootstrap";
+$version = Magrathea2\MagratheaPHP::Instance()->Version();
+
 ?>
 
 <div class="container">
@@ -10,5 +13,6 @@ $headerTitle = $headerTitle ?? "Magrathea Bootstrap";
 			</div>
 			<span class="fs-4"><?=$headerTitle?></span>
 		</a>
+		<span class="mx-5 fs-8">magrathea version: <?=$version?></span>
 	</header>
 </div>

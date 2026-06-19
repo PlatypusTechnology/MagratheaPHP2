@@ -98,94 +98,10 @@ spl_autoload_register(function ($class) {
 		}
 	}
 	$appNamespace = MagratheaPHP::Instance()->appNamespace;
-	if ($appNamespace === null || str_starts_with($class, $appNamespace . '\\')) {
+	if ($appNamespace !== null && str_starts_with($class, $appNamespace . '\\')) {
 		$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
 		$ex->SetData($folders);
 		throw $ex;
 	}
 });
-
-
-
-// spl_autoload_register(function ($class) {
-// 	$folders = MagratheaPHP::Instance()->codeFolder;
-// 	$class_name = getClassNameOfClass($class);
-// 	if($class_name == "ClassLoader") return;
-// 	foreach ($folders as $dir) {
-// 		if (file_exists($dir."/".$class_name.'.php')) {
-// 			require_once ($dir."/".$class_name.'.php');
-// 			return;
-// 		}
-// 	}
-// 	$ex = new MagratheaException("Could not find class [".$class_name."]. Are the code folders correct?", 500);
-// 	$ex->SetData($folders);
-// 	throw $ex;
-// });
-
-
-
-
-// // DEPRECATED:
-// /**
-//  * Loads database configuration for the selected environment.
-//  * 	If no environment is sent, it will use the information from the default environment
-//  * @param 	string 		$env	Environment to load
-//  * @return 	MagratheaDatabase Instance
-//  */
-// function loadMagratheaEnv_deprecated($env = null): Database|bool{
-// 	global $magdb;
-// 	if( empty($env) ){
-// 		try {
-// 			$env = Config::Instance()->GetEnvironment();
-// 		} catch(\Exception $ex) { return false; }
-// 		if(empty($env)) return false;
-// 	} else {
-// 		Config::Instance()->SetEnvironment($env);
-// 	}
-// 	try {
-// 		$configSection = Config::Instance()->GetConfigSection($env);
-// 		date_default_timezone_set( Config::Instance()->GetConfig("general/time_zone") );
-
-// 		$magdb = Database::Instance();
-// 		$conn = $magdb->SetConnection($configSection["db_host"], $configSection["db_name"], $configSection["db_user"], $configSection["db_pass"]);
-// 	} catch(\Exception $ex) {
-// 		throw $ex;
-// 	}
-// 	return $conn;
-// }
-
-// /**
-//  * dumps vars
-//  * @param 	object 		$debugme 	Object to be printed
-//  * @return  string  	nicely printed var
-//  */	
-// /*
-//  function dump($debugme): string {
-// 	ob_start();
-// 	var_dump($debugme);
-// 	return ob_get_clean();
-// }
-// */
-
-// /**
-//  * gets an array and prints a select
-//  * @param   array 		array to be printed
-//  * @param 	string 		type to be selected
-//  * @return 	boolean		is field selected?
-//  */
-// function magrathea_printFields_deprecated($fields_arr, $selected = null) : bool {
-// 	$options = "";
-// 	$selected = false;
-// 	foreach($fields_arr as $field){
-// 		if( $field == $selected ){
-// 			$selected = true;
-// 			$options .= "<option value='".$field."' selected>".$field."</option>";
-// 		} else {
-// 			$options .= "<option value='".$field."'>".$field."</option>";
-// 		}
-// 	}
-// 	echo $options;
-// 	return $selected;
-// }
-
 

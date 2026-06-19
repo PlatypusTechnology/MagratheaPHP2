@@ -58,7 +58,7 @@ class AdminManager extends Singleton {
 		switch($ext) {
 			case "svg":
 				echo '<div class="logo_image" style="display: inline-block; width: '.$logoSize.'px; height: '.$logoSize.'px">';
-				include($logoFile);
+				echo file_get_contents($logoFile);
 				echo '</div>';
 				break;
 			case "jpeg": case "jpg": case "png":

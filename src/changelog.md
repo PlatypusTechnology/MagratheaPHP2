@@ -1,3 +1,10 @@
+### 2.1.26
+2026-04
+	- **fix:** fix bug from 2.1.25 on autoloader only for internal classes
+	- **improvement:** cleaning code comments
+	- **improvement:** Adding Magrathea Version to bootstrap
+	- **improvement:** fixing admin logo
+
 ### 2.1.25
 2026-04
 	- **improvement:** API admin now show status and codes
