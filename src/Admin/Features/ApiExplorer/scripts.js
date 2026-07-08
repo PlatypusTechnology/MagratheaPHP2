@@ -31,14 +31,14 @@ function tokenUser() {
 }
 
 function executeApi(apiId) {
-	const api = $("#api-endpoint-"+apiId).html();
+	let api = $("#api-endpoint-"+apiId).html();
 	const method = $("#api-method-"+apiId).html();
 	const payload = $("#api-payload-"+apiId).val();
 	const params = $("#api-params-"+apiId).val();
 	const token = $("#token").val();
 	const url = $("#api-url").val();
-	const req = url + api;
 	if(params) { api += "?" + params; }
+	const req = url + api;
 	debugAPI("new call ==["+now()+"]========> ");
 	debugAPI("\tcalling ("+method+")["+api+"]");
 	debugAPI("\t\t " + req);

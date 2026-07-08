@@ -1,5 +1,9 @@
+### 2.1.27
+2026-06
+	- **fix:** fix error on ApiExplorer Admin
+
 ### 2.1.26
-2026-04
+2026-06
 	- **fix:** fix bug from 2.1.25 on autoloader only for internal classes
 	- **improvement:** cleaning code comments
 	- **improvement:** Adding Magrathea Version to bootstrap
