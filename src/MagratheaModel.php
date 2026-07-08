@@ -227,6 +227,11 @@ abstract class MagratheaModel{
 		$arr_Types = array();
 		$arr_Fields = array();
 		$arr_Values = array();
+		foreach( $this->dbValues as $field => $type ) {
+			if( $type == "uuid" && empty($this->$field) ) {
+				$this->$field = Uuid::V7();
+			}
+		}
 		foreach( $this->dbValues as $field => $type ){
 			if( $autoIncrement && $field == $this->dbPk ) continue;
 			if( !isset($this->$field) ) continue;
@@ -442,6 +447,8 @@ abstract class MagratheaModel{
 				return "decimal";
 			case "datetime":
 				return "date";
+			case "uuid":
+				return "text";
 		}
 	}
 

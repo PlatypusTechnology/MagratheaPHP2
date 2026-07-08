@@ -1,3 +1,7 @@
+### 2.1.30
+2026-07
+	- **new:** native `"uuid"` field type for models — auto-generates a UUIDv7 on `Insert()` when the field is declared in `$dbValues` and left unset (`Uuid::V7()` helper added)
+
 ### 2.1.27
 2026-06
 	- **fix:** fix error on ApiExplorer Admin

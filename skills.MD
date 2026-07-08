@@ -253,6 +253,9 @@ For simple internal tools without the feature/Base convention, a flat single-cla
 | `text` | string (TEXT column) |
 | `float` | float (DECIMAL/FLOAT) |
 | `datetime` | string in `Y-m-d H:i:s` format |
+| `uuid` | string (CHAR(36)), auto-generated UUIDv7 on insert if unset |
+
+`uuid` behaves the same way `created_at`/`updated_at` already do: declare `$this->dbValues["uuid"] = "uuid";` and the framework fills it in on `Insert()` (via `Uuid::V7()`) whenever the property is left empty. An explicitly pre-set value (e.g. from a fixture or migration) is respected and never overwritten. Nothing changes on `Update()` — UUIDs are immutable once assigned. Requires MagratheaPHP2 `2.1.30`+.
 
 ### Using a model
 
@@ -1063,6 +1066,7 @@ try {
 - [ ] `$dbPk` is set if primary key is not `"id"`
 - [ ] Each `$dbValues` field has an explicit typed public property declaration
 - [ ] No `#[\AllowDynamicProperties]` attribute used
+- [ ] If the project uses UUIDs as external ids, the field is declared as `"uuid"` type, not hand-rolled
 
 ### Controls
 - [ ] `$modelName`, `$modelNamespace`, `$dbTable` are all set
