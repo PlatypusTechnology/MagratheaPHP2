@@ -38,30 +38,55 @@ Reference files:
 
 ## 1. Project Bootstrap
 
-**Every entry point starts the same way.** Never skip any step.
+**Every entry point starts the same way**, and in real projects this bootstrap lives in one shared file — conventionally `app/_inc.php` — that every entry point (`public/index.php`, `public/admin.php`) requires. Never skip any step.
+
+Real projects organize domain code as **features**, not flat `models/`/`controls`/ folders: one folder per table/domain under `app/features/<Name>/`, added via `->AddFeature(...)` (see §3–4 for what goes inside). Plain `->AddCodeFolder(...)` is still used for non-feature folders like `admin`, `api`, `shared`.
 
 ```php
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+// app/_inc.php
+require __DIR__ . "/../vendor/autoload.php";
 
-use Magrathea2\MagratheaPHP;
+error_reporting(E_ALL);
+ini_set("display_errors", "1");
 
-MagratheaPHP::LoadVendor(); // always first — registers the autoloader
+try {
+    Magrathea2\MagratheaPHP::Instance()
+        ->MinVersion("2.1.19")                  // optional, pins a minimum framework version
+        ->AppPath(realpath(dirname(__FILE__)))  // this folder (app/) becomes appRoot
+        ->AddCodeFolder(
+            "admin",
+            "api",
+            "api/Authentication",
+            "api/Controls",
+            "shared",
+        )
+        ->AddFeature(                           // adds features/<Name> + features/<Name>/Base for each
+            "Article", "Author",
+        )
+        ->Dev()                                 // or ->Prod() in production
+        ->Load();                               // reads config/magrathea.conf, relative to appRoot's parent
+} catch (Exception $ex) {
+    \Magrathea2\p_r($ex);
+}
+```
 
-$app = MagratheaPHP::Instance()
-    ->AppPath(__DIR__)                          // absolute path to app root
-    ->AddCodeFolder("models", "controls", "api") // folders the autoloader scans
-    ->Dev()                                     // or ->Prod() in production
-    ->Load()                                    // reads config/magrathea.conf
-    ->Connect();                                // opens DB connection
+Entry points then just require it:
+
+```php
+<?php
+// public/index.php
+require __DIR__ . "/../app/_inc.php";
+// ... build and Run() the API class ...
 ```
 
 **Rules:**
-- `LoadVendor()` must be called before `Instance()`
-- `AppPath()` must be called before `Load()`
+- `AppPath()` must be called before `Load()`; `config/magrathea.conf` is expected one level **above** `AppPath()` (i.e. sibling of `app/`, not inside it)
 - `AddCodeFolder()` paths are relative to `AppPath`
+- `AddFeature("Article", ...)` adds `<appRoot>/features/Article` and `<appRoot>/features/Article/Base` to the autoloader — see §3 for what lives in each
 - Use `->Dev()` locally, `->Prod()` on servers
 - Call `->StartSession()` before any session use (admin panel, etc.)
+- `->Connect()` is optional in `_inc.php` — many projects let each request connect lazily; call it explicitly if you need the DB immediately
 
 ---
 
@@ -69,59 +94,55 @@ $app = MagratheaPHP::Instance()
 
 **Config file location:** `<appRoot>/config/magrathea.conf`
 
+Sections are named by **environment**, not by topic. `[general]` holds cross-environment settings, including `use_environment` (which section is active by default — usually overridden by `->Dev()` / `->Prod()`). Each environment section (`[dev]`, `[production]`, …) repeats the full flat set of keys it needs — there is no `[section:env]` override/inheritance syntax.
+
 ### Writing a config file
 
 ```ini
-[database]
-host     = localhost
-database = my_db
-username = root
-password = secret
-port     = 3306
+[general]
+	use_environment = "default"
+	time_zone = "America/Sao_Paulo"
 
-[app]
-name    = My Application
+[dev]
+	db_host = "localhost"
+	db_name = "my_db"
+	db_user = "root"
+	db_pass = "secret"
+	db_port = "3306"
+	site_path = "/var/www/html"
+	logs_path = "../logs"
+	cache_path = "../cache"
+	timezone = "America/Sao_Paulo"
+	server_url = "http://localhost:8080"
+	jwt_key = "a-very-long-random-string-here"
 
-[logs]
-path = /var/log/my_app/
-
-[cache]
-path = /tmp/my_app_cache/
-
-[jwt]
-secret = a-very-long-random-string-here
+[production]
+	db_host = "db.prod.server"
+	db_name = "my_db"
+	db_user = "app_user"
+	db_pass = "$=DB_PASSWORD"
+	db_port = "3306"
+	site_path = "/var/www/html"
+	logs_path = "../logs"
+	cache_path = "../cache"
+	timezone = "America/Sao_Paulo"
+	server_url = "https://myapp.example.com"
+	jwt_key = "$=JWT_SECRET"
 ```
 
-### Multi-environment (override only what changes)
-
-```ini
-[database]
-host     = localhost
-database = dev_db
-username = root
-password = dev_pass
-
-[database:production]
-host     = db.prod.server
-database = prod_db
-username = app_user
-password = $=DB_PASSWORD
-```
+Keys are quoted strings; indentation with a tab under each section header is the convention seen in real configs (not required by the parser, but keep it for consistency).
 
 ### Reading config in code
 
 ```php
 use Magrathea2\Config;
 
-// Read a full section
-$db = Config::Instance()->GetConfigSection("database");
-echo $db["host"];
+// Read a single key from the active environment section
+$host = Config::Instance()->GetConfig("db_host");
 
-// Read a single key with section/key notation
-$host = Config::Instance()->GetConfig("database/host");
-
-// Read from default section
-$appName = Config::Instance()->Get("name");
+// Read the full active-environment section
+$env = Config::Instance()->GetConfigSection();
+echo $env["db_host"];
 ```
 
 **Never hardcode credentials.** Use `$=ENV_VAR_NAME` for secrets.
@@ -130,48 +151,97 @@ $appName = Config::Instance()->Get("name");
 
 ## 3. Creating a Model
 
-A model maps to one database table. One class per table.
+A model maps to one database table, and lives in its own **feature** folder (added via `->AddFeature("Article", ...)` in `_inc.php`, see §1). This is the convention observed across real production Magrathea2 projects — prefer it over a flat `models/` folder.
+
+Each feature is **split into a generated `Base` class and a concrete class**:
+
+- `app/features/Article/Base/ArticleBase.php` — holds `$dbTable`, `$dbPk`, `$dbValues`, and FK **relations**. Marked as generated ("changes can be overwritten through the admin") because Magrathea's admin tooling can regenerate it from the DB schema — but hand-writing it in this exact shape is normal when that tooling isn't in play.
+- `app/features/Article/Article.php` — the concrete class, `extends Base\ArticleBase`, empty unless you add real business-logic methods.
 
 ```php
 <?php
-namespace App\Models;
+// app/features/Article/Base/ArticleBase.php
+## FILE GENERATED BY MAGRATHEA.
+## This file was automatically generated and changes can be overwritten through the admin
 
+namespace App\Models\Base;
+
+use Magrathea2\iMagratheaModel;
 use Magrathea2\MagratheaModel;
 
-class Article extends MagratheaModel {
+class ArticleBase extends MagratheaModel implements iMagratheaModel {
 
-    protected $dbTable = "articles";   // table name
-    protected $dbPk    = "id";         // primary key column (default is "id")
+    public $id, $title, $body, $author_id, $published, $views;
+    public $created_at, $updated_at;
+    protected $autoload = null;
 
-    protected $dbValues = [
-        "id"          => "int",
-        "title"       => "string",
-        "body"        => "text",
-        "author_id"   => "int",
-        "published"   => "boolean",
-        "views"       => "int",
-        "created_at"  => "datetime",
-        "updated_at"  => "datetime",
-    ];
+    public function __construct($id = 0) {
+        $this->MagratheaStart();
+        if (!empty($id)) {
+            $pk = $this->dbPk;
+            $this->$pk = $id;
+            $this->GetById($id);
+        }
+    }
 
-    // Declare each $dbValues field as an explicit typed public property
-    public int $id = 0;
-    public string $title = "";
-    public string $body = "";
-    public int $author_id = 0;
-    public bool $published = false;
-    public int $views = 0;
-    public string $created_at = "";
-    public string $updated_at = "";
+    public function MagratheaStart() {
+        $this->dbTable = "articles";
+        $this->dbPk = "id";
+        $this->dbValues["id"] = "int";
+        $this->dbValues["title"] = "string";
+        $this->dbValues["body"] = "text";
+        $this->dbValues["author_id"] = "int";
+        $this->dbValues["published"] = "boolean";
+        $this->dbValues["views"] = "int";
+        $this->dbValues["created_at"] = "datetime";
+        $this->dbValues["updated_at"] = "datetime";
 
-    // Optional: aliases (left = alias, right = real column)
-    protected $dbAlias = [
-        "content" => "body",
-    ];
+        // FK relation example — lazy-loaded getter/setter pair
+        $this->relations["properties"]["Author"] = null;
+        $this->relations["methods"]["Author"] = "GetAuthor";
+        $this->relations["lazyload"]["Author"] = "true";
+        $this->relations["external"]["author_id"] = "\App\Author\Author";
+    }
+
+    public function GetControl() {
+        return new \App\Controls\Base\ArticleControlBase();
+    }
+
+    // >>> relations:
+    public function GetAuthor() {
+        if ($this->relations["properties"]["Author"] != null) return $this->relations["properties"]["Author"];
+        $this->relations["properties"]["Author"] = new \App\Author\Author($this->author_id);
+        return $this->relations["properties"]["Author"];
+    }
+    public function SetAuthor($author) {
+        $this->relations["properties"]["Author"] = $author;
+        $this->author_id = $author->GetID();
+        return $this;
+    }
 }
 ```
 
-**Important:** Always declare each `$dbValues` field as an explicit typed public property. Do NOT use `#[\AllowDynamicProperties]`.
+```php
+<?php
+// app/features/Article/Article.php
+namespace App\Models;
+
+class Article extends \App\Models\Base\ArticleBase {
+
+    public function __construct($id = 0) {
+        parent::__construct($id);
+    }
+
+    // real business-logic methods go here, e.g.:
+    public function IsPublished(): bool {
+        return (bool) $this->published;
+    }
+}
+```
+
+**Important:** declare every `$dbValues` field as a public property on the Base class (untyped, comma-declared as above, matching the generator's style). Do NOT use `#[\AllowDynamicProperties]`.
+
+For simple internal tools without the feature/Base convention, a flat single-class model (`$dbTable`/`$dbPk`/`$dbValues` directly in one class extending `MagratheaModel`) also works — but match whatever convention the rest of the project already uses.
 
 ### Supported field types
 
@@ -193,7 +263,7 @@ $article->title     = "Hello World";
 $article->body      = "My first article.";
 $article->published = true;
 $article->created_at = now();
-$id = $article->Save(); // returns new ID
+$id = $article->Save(); // returns new ID (or ->Insert() explicitly)
 
 // Load by PK
 $article = new Article(42);
@@ -214,18 +284,38 @@ return $article->ToArray();
 
 ## 4. Creating a Control
 
-Every model gets a companion Control class for static data access.
+Every model gets a companion Control class for static data access — same feature-folder Base split as the model.
 
 ```php
 <?php
-namespace App\Controls;
+// app/features/Article/Base/ArticleControlBase.php
+## FILE GENERATED BY MAGRATHEA.
+## This file was automatically generated and changes can be overwritten through the admin
+
+namespace App\Controls\Base;
 
 use Magrathea2\MagratheaModelControl;
 
-class ArticleControl extends MagratheaModelControl {
-    protected static $modelName      = "Article";
+class ArticleControlBase extends MagratheaModelControl {
     protected static $modelNamespace = "App\\Models\\";
-    protected static $dbTable        = "articles";
+    protected static $modelName = "Article";
+    protected static $dbTable = "articles";
+}
+```
+
+```php
+<?php
+// app/features/Article/ArticleControl.php
+namespace App\Controls;
+
+use Magrathea2\DB\Query;
+
+class ArticleControl extends \App\Controls\Base\ArticleControlBase {
+
+    // real query/business-logic methods go here, e.g.:
+    public function GetPublished() {
+        return $this->GetWhere(["published" => 1]);
+    }
 }
 ```
 
