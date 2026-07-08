@@ -69,59 +69,55 @@ $app = MagratheaPHP::Instance()
 
 **Config file location:** `<appRoot>/config/magrathea.conf`
 
+Sections are named by **environment**, not by topic. `[general]` holds cross-environment settings, including `use_environment` (which section is active by default — usually overridden by `->Dev()` / `->Prod()`). Each environment section (`[dev]`, `[production]`, …) repeats the full flat set of keys it needs — there is no `[section:env]` override/inheritance syntax.
+
 ### Writing a config file
 
 ```ini
-[database]
-host     = localhost
-database = my_db
-username = root
-password = secret
-port     = 3306
+[general]
+	use_environment = "default"
+	time_zone = "America/Sao_Paulo"
 
-[app]
-name    = My Application
+[dev]
+	db_host = "localhost"
+	db_name = "my_db"
+	db_user = "root"
+	db_pass = "secret"
+	db_port = "3306"
+	site_path = "/var/www/html"
+	logs_path = "../logs"
+	cache_path = "../cache"
+	timezone = "America/Sao_Paulo"
+	server_url = "http://localhost:8080"
+	jwt_key = "a-very-long-random-string-here"
 
-[logs]
-path = /var/log/my_app/
-
-[cache]
-path = /tmp/my_app_cache/
-
-[jwt]
-secret = a-very-long-random-string-here
+[production]
+	db_host = "db.prod.server"
+	db_name = "my_db"
+	db_user = "app_user"
+	db_pass = "$=DB_PASSWORD"
+	db_port = "3306"
+	site_path = "/var/www/html"
+	logs_path = "../logs"
+	cache_path = "../cache"
+	timezone = "America/Sao_Paulo"
+	server_url = "https://myapp.example.com"
+	jwt_key = "$=JWT_SECRET"
 ```
 
-### Multi-environment (override only what changes)
-
-```ini
-[database]
-host     = localhost
-database = dev_db
-username = root
-password = dev_pass
-
-[database:production]
-host     = db.prod.server
-database = prod_db
-username = app_user
-password = $=DB_PASSWORD
-```
+Keys are quoted strings; indentation with a tab under each section header is the convention seen in real configs (not required by the parser, but keep it for consistency).
 
 ### Reading config in code
 
 ```php
 use Magrathea2\Config;
 
-// Read a full section
-$db = Config::Instance()->GetConfigSection("database");
-echo $db["host"];
+// Read a single key from the active environment section
+$host = Config::Instance()->GetConfig("db_host");
 
-// Read a single key with section/key notation
-$host = Config::Instance()->GetConfig("database/host");
-
-// Read from default section
-$appName = Config::Instance()->Get("name");
+// Read the full active-environment section
+$env = Config::Instance()->GetConfigSection();
+echo $env["db_host"];
 ```
 
 **Never hardcode credentials.** Use `$=ENV_VAR_NAME` for secrets.
