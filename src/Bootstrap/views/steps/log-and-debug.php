@@ -6,7 +6,7 @@
 
 	$logPath = $config->Get("logs_path");
 
-	$logPathOk = realpath($logPath);
+	$logPathOk = $logPath ? realpath($logPath) : false;
 ?>
 
 <h3>Log</h3>

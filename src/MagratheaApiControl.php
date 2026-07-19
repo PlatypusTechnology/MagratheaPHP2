@@ -60,7 +60,7 @@ class MagratheaApiControl {
 	 * @throws MagratheaApiException If the token format is invalid.
 	 */
 	public function GetAuthorizationToken() {
-		$token = $this->GetAllHeaders()["Authorization"];
+		$token = $this->GetAllHeaders()["Authorization"] ?? "";
 		$gotToken = false;
 		if (substr($token, 0, 6) == 'Basic ') {
 			$token = trim(substr($token, 6));

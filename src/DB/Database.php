@@ -139,7 +139,7 @@ class Database extends Singleton {
 			if($this->mysqli->connect_errno){
 				throw new MagratheaDBException("Failed to connect to MySQL: (".$this->mysqli->connect_errno.") ".$this->mysqli->connect_error);
 			}
-			$this->mysqli->set_charset("utf8");
+			$this->mysqli->set_charset("utf8mb4");
 		} catch (\Exception $ex) {
 			Debugger::Instance()->AddError($ex);
 			throw new MagratheaDBException($ex->getMessage());

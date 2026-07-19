@@ -651,27 +651,34 @@ public function Create(array $data = []): array {
 
 ## 9. Caching
 
+`Cache($name, $data=null)` does **not** take the response payload as its second argument. `$data` is an optional key *suffix/discriminator* — it gets appended to `$name` (as `"{$name}-{$data}"`) to build the cache file's handle, e.g. to key the cache by an id or page number. Never pass a JSON blob or the computed result as `$data`.
+
+Calling `$this->Cache($name, $data)` only *peeks*: if a cache file for that key already exists, it outputs it and kills execution (`die`) right there. It never writes anything itself. The actual write-to-disk happens automatically later, when the framework serializes the controller's return value to JSON — no second manual call is needed or correct.
+
 ### In a controller (recommended pattern)
 
 ```php
 public function List(): array {
-    // 1. Serve from cache if available (outputs and exits on hit)
+    // Serve from cache if available (outputs and exits on hit).
+    // Saving happens automatically when the response is emitted.
     $this->Cache("articles_published");
 
-    // 2. Compute result
     $articles = ArticleControl::GetWhere(["published" => 1]);
-    $result   = array_map(fn($a) => $a->ToArray(), $articles);
+    return array_map(fn($a) => $a->ToArray(), $articles);
+}
 
-    // 3. Save to cache for next request
-    $this->Cache("articles_published", json_encode($result));
+public function View(array $params = []): array {
+    // $data suffix keys the cache per-id
+    $this->Cache("article", $params["id"]);
 
-    return $result;
+    $article = new ArticleControl($params["id"]);
+    return $article->ToArray();
 }
 
 public function Create(array $data = []): array {
     // ... create ...
 
-    // Invalidate related cache
+    // Invalidate related cache (same $name/$data used to build the key)
     $this->CacheClear("articles_published");
 
     return $article->ToArray();
@@ -686,11 +693,11 @@ $this->CacheClearPattern("articles_*");
 
 ### Cache key naming convention
 
-Always include parameters that affect the result:
+Always include parameters that affect the result. Prefer the `$data` suffix param for a single discriminator (id, page); bake the rest into `$name`:
 
 ```php
-"articles_cat_{$categoryId}_page_{$page}"
-"user_{$userId}_profile"
+$this->Cache("articles_cat_{$categoryId}", $page);
+$this->Cache("user_profile", $userId);
 "products_active_sort_price"
 ```
 

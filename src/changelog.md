@@ -1,3 +1,8 @@
+### 2.1.31
+2026-07
+	- **fix:** `MagratheaApiControl::GetAuthorizationToken()` no longer throws a PHP warning when the `Authorization` header is missing, which in dev could corrupt the response status/body
+	- **fix:** __URGENT FIX__: setting charset to `utf8mb4` to accept emojis in the database (`Guia.LOL` urgent change)
+
 ### 2.1.30
 2026-07
 	- **new:** native `"uuid"` field type for models — auto-generates a UUIDv7 on `Insert()` when the field is declared in `$dbValues` and left unset (`Uuid::V7()` helper added)
