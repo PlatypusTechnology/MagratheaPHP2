@@ -263,7 +263,9 @@ class MagratheaPHP extends Singleton {
 	public function AppVersion(): string {
 		$file = MagratheaHelper::EnsureTrailingSlash($this->magRoot)."version";
 		if(!file_exists($file)) return "???";
-		return file_get_contents($file);
+		$version = file_get_contents($file);
+		if($version === false) return "???";
+		return rtrim($version, "\r\n");
 	}
 
 	/**

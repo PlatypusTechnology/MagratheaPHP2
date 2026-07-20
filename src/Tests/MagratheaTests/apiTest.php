@@ -3,6 +3,17 @@
 use Magrathea2\MagratheaApi;
 use Magrathea2\MagratheaApiControl;
 use Magrathea2\Tests\TestsHelper;
+use Magrathea2\DB\Database;
+
+class FailingHealthCheckDatabaseMock {
+	public function OpenConnectionPlease() {
+		throw new \Exception("db down");
+	}
+
+	public function CloseConnectionThanks() {
+		return true;
+	}
+}
 
 class MagratheaApiTest extends \PHPUnit\Framework\TestCase {
 
@@ -11,6 +22,20 @@ class MagratheaApiTest extends \PHPUnit\Framework\TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->api = new MagratheaApi();
+		$this->resetDatabaseSingleton();
+	}
+
+	protected function tearDown(): void {
+		$this->resetDatabaseSingleton();
+		parent::tearDown();
+	}
+
+	private function resetDatabaseSingleton(): void {
+		$property = new \ReflectionProperty(\Magrathea2\Singleton::class, "instance");
+		$property->setAccessible(true);
+		$instances = $property->getValue();
+		$instances[Database::class] = null;
+		$property->setValue(null, $instances);
 	}
 
 	public function testApiCanBeInstantiated() {
@@ -56,6 +81,26 @@ class MagratheaApiTest extends \PHPUnit\Framework\TestCase {
 		$this->assertArrayHasKey("anonymous", $endpoints);
 		$this->assertArrayHasKey("GET", $endpoints["anonymous"]);
 		$this->assertArrayHasKey("health-check", $endpoints["anonymous"]["GET"]);
+	}
+
+	public function testHealthCheckResponseWithoutDatabaseFieldByDefault() {
+		$this->api->HealthCheck();
+		$endpoint = $this->api->GetEndpoints()["anonymous"]["GET"]["health-check"];
+		$response = $endpoint["action"]();
+
+		$this->assertEquals("ok", $response["health"]);
+		$this->assertArrayNotHasKey("database", $response);
+	}
+
+	public function testHealthCheckResponseIncludesDatabaseFailWhenCheckEnabledAndConnectionFails() {
+		Database::MockClass(new FailingHealthCheckDatabaseMock());
+
+		$this->api->HealthCheck(true);
+		$endpoint = $this->api->GetEndpoints()["anonymous"]["GET"]["health-check"];
+		$response = $endpoint["action"]();
+
+		$this->assertEquals("ok", $response["health"]);
+		$this->assertEquals("fail", $response["database"]);
 	}
 
 }

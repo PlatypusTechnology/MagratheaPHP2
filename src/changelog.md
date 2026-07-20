@@ -1,3 +1,8 @@
+### 2.2.1
+2026-07
+	- **new:** `MagratheaApi::HealthCheck()` gained a `$checkDatabase` param — when `true`, the `GET /health-check` response also includes a `database` field (`"ok"`/`"fail"`) reflecting DB connectivity
+	- **fix:** `MagratheaPHP::AppVersion()` now strips trailing line breaks from the `version` file, and returns `"???"` instead of `false` if the file can't be read
+
 ### 2.2.0
 2026-07
 	- **new:** `MagratheaPagination` object — return it from an API controller and `MagratheaApi::ReturnSuccess()` automatically builds a paginated JSON envelope (`{success, data, page, count, has_more, total?}`)

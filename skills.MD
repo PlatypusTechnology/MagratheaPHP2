@@ -456,7 +456,7 @@ class MyAppApi extends MagratheaApi {
     public function Initialize() {
         $this->AllowAll();
         $this->SetAddress("/api/v1");
-        $this->HealthCheck();
+        $this->HealthCheck(true); // includes "database": "ok"|"fail" in response
         $this->SetAuth();
         $this->Articles();
     }

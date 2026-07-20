@@ -158,8 +158,18 @@ $api->Fallback(function() {
 });
 ```
 
-### `HealthCheck(): void`
-Registers a `GET /health` endpoint that returns `{"status": "ok"}`.
+### `HealthCheck(bool $checkDatabase = false): void`
+Registers a `GET /health-check` endpoint that always returns `health` and `time`.
+
+When `$checkDatabase` is `true`, it also checks DB connectivity and adds `database` with `"ok"` or `"fail"`.
+
+```php
+$api->HealthCheck();
+// {"health":"ok","time":"2026-07-20 10:00:00"}
+
+$api->HealthCheck(true);
+// {"health":"ok","time":"2026-07-20 10:00:00","database":"ok"}
+```
 
 ---
 

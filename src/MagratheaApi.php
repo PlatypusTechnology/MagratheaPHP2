@@ -665,12 +665,29 @@ class MagratheaApi {
 	/**
 	 * Creates a simple `/health-check` endpoint.
 	 */
-	public function HealthCheck() {
-		$this->Add("GET", "health-check", null, function() {
-			return [
+	public function HealthCheck(bool $checkDatabase=false) {
+		$this->Add("GET", "health-check", null, function() use ($checkDatabase) {
+			$response = [
 				"health" => "ok",
 				"time" => now(),
 			];
+
+			if($checkDatabase) {
+				$database = \Magrathea2\DB\Database::Instance();
+				$connected = false;
+				try {
+					$database->OpenConnectionPlease();
+					$connected = true;
+					$response["database"] = "ok";
+				} catch (\Throwable $e) {
+					$response["database"] = "fail";
+				}
+				if($connected) {
+					$database->CloseConnectionThanks();
+				}
+			}
+
+			return $response;
 		}, false);
 	}
 

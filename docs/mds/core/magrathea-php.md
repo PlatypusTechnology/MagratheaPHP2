@@ -115,7 +115,7 @@ $db = MagratheaPHP::Instance()->GetDB();
 Calls `session_start()` if no session is active.
 
 ### `AppVersion(): string`
-Returns the version value from the app's own config.
+Reads the app version from `<magRoot>/version` and removes trailing line breaks (`\n` / `\r\n`).
 
 ---
 
