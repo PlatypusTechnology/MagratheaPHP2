@@ -2,6 +2,7 @@
 2026-07
 	- **new:** `MagratheaApi::HealthCheck()` gained a `$checkDatabase` param — when `true`, the `GET /health-check` response also includes a `database` field (`"ok"`/`"fail"`) reflecting DB connectivity
 	- **fix:** `MagratheaPHP::AppVersion()` now strips trailing line breaks from the `version` file, and returns `"???"` instead of `false` if the file can't be read
+	- **new:** `OpenApiAdmin` admin feature — renders a Swagger UI page for a given OpenAPI/Swagger file URL, add via `AddFeature(new OpenApiAdmin("swagger.yaml"))`
 
 ### 2.2.0
 2026-07

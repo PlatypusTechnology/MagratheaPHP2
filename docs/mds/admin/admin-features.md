@@ -9,33 +9,45 @@ The admin panel is organized around pluggable **features**. Each feature is a se
 
 ## Base: AdminFeature
 
-All features extend the abstract `AdminFeature` class.
+All features extend the `AdminFeature` class (and, by convention, implement `iAdminFeature`).
 
 ### Key Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `$featureId` | `string` | Unique identifier used in URLs |
-| `$label` | `string` | Display name in the menu |
-| `$icon` | `string` | Bootstrap icon name |
-| `$active` | `bool` | Whether this feature is enabled |
+| `$featureName` | `string` | Display name in the menu (defaults to `"Unknown"`) |
+| `$featureId` | `string` | Unique identifier used in URLs and menu highlighting (defaults to `"some-feature"`; falls back to the class's basename if left empty) |
+| `$featureIcon` | `mixed` | Bootstrap icon name, or `null` for no icon |
+| `$featureClassPath` | `string` | Absolute directory the default `Index()` includes `index.php` from — set it via `SetClassPath()` |
 
 ### Key Methods
 
-#### `GetFeatureId(): string`
-Returns the feature's URL-safe ID.
+#### `Initialize(): void`
+Hook called at the end of the constructor. Override to set up properties, register JS/CSS, etc. — no-op by default.
 
-#### `GetLabel(): string`
-Returns the menu label.
+#### `AddJs(string $file): AdminFeature` / `AddCSS(string $file): AdminFeature`
+Register a JS/CSS file (absolute path) with `AdminManager` so it's loaded on every admin page. Both return `$this` for chaining.
 
-#### `IsActive(): bool`
-Returns whether the feature is enabled.
+#### `SetClassPath($path): void`
+Sets `$featureClassPath`, the directory the default `Index()` implementation includes `index.php` from.
 
-#### `Handle(): void`
-Called by the router when this feature's URL is matched. Override to implement page logic.
+#### `HasPermission($action=null): bool`
+Permission check run before rendering the index page or any subpage; returns `true` by default. Override to restrict access — `GetPage()` calls `AdminManager::Instance()->PermissionDenied()` when this returns `false`.
 
-#### `Render(): void`
-Outputs the feature's HTML view.
+#### `GetPage(): void`
+Entry point called by the router. Reads `$_GET["magrathea_feature_subpage"]`: if present and permitted, calls that method on the feature (a "subpage"); otherwise calls `Index()`.
+
+#### `Index(): void`
+Default page renderer — `include($this->featureClassPath . "/index.php")`. Most built-in features override this directly instead of relying on `$featureClassPath` (see `OpenApiAdmin` below).
+
+#### `GetSubpageUrl($subpage, $params=[])`
+Builds a URL to one of this feature's subpages via `AdminUrls::Instance()->GetFeatureUrl()`.
+
+#### `IsFeatureActive(): bool`
+True when `$_GET["magrathea_feature"]` matches `$featureId` — used for menu highlighting.
+
+#### `GetMenuItem(): array`
+Returns `["title", "icon", "feature", "active"]`, consumed by `AdminMenu` when building the sidebar.
 
 ---
 
@@ -176,6 +188,26 @@ $api->Add("POST", "/products",     new ProductApiControl(), "Create", true,  "Cr
 
 ---
 
+### OpenApi Feature
+
+**Path:** `src/Admin/Features/OpenApi/`
+
+Renders a [Swagger UI](https://swagger.io/tools/swagger-ui/) page inside the admin panel for a given OpenAPI/Swagger spec file (loaded client-side from `swagger-ui-dist` via CDN). Useful when you maintain a static `swagger.yaml`/`swagger.json` alongside the API and want a browsable, try-it-out UI without wiring it into `ApiExplorer` (which instead introspects routes registered on a `MagratheaApi` instance).
+
+**Menu item:** "Open API"
+**Feature ID:** `AdminOpenApi`
+
+```php
+use Magrathea2\Admin\Features\OpenApi\OpenApiAdmin;
+
+// $fileUrl is passed straight to Swagger UI's `url` option — defaults to "swagger.yaml"
+$this->AddFeature(new OpenApiAdmin("swagger.yaml"));
+```
+
+If the `app_url` config key is set (`Config::Instance()->Get("app_url")`), the feature rewrites every Swagger "try it out" request's host/scheme to that base URL, keeping the request path — handy when the admin panel and the API are served from different hosts.
+
+---
+
 ## Creating a Custom Feature
 
 ```php
@@ -183,43 +215,47 @@ $api->Add("POST", "/products",     new ProductApiControl(), "Create", true,  "Cr
 namespace App\Admin;
 
 use Magrathea2\Admin\AdminFeature;
+use Magrathea2\Admin\iAdminFeature;
 
-class ReportsFeature extends AdminFeature {
+class ReportsFeature extends AdminFeature implements iAdminFeature {
 
-    protected $featureId = "reports";
-    protected $label     = "Reports";
-    protected $icon      = "bar-chart";
+    public string $featureName = "Reports";
+    public string $featureId   = "reports";
+    public $featureIcon        = "bar-chart";
 
-    public function Handle(): void {
-        // Process request, set data
-        $this->data["sales"] = SalesControl::GetMonthlySummary();
+    public function __construct() {
+        parent::__construct();
+        $this->SetClassPath(__DIR__); // Index() will include __DIR__ . "/index.php"
     }
 
-    public function Render(): void {
-        // Output HTML
-        include __DIR__ . "/views/reports.php";
+    // Optional: restrict access
+    public function HasPermission($action = null): bool {
+        return true;
     }
 }
 ```
 
+`__DIR__ . "/index.php"` then has access to `$this` as the feature instance (it's included from inside `Index()`), typically via a `$elements = AdminElements::Instance();` header plus whatever HTML/PHP the page needs — see `src/Admin/Features/OpenApi/index.php` for a minimal example, or override `Index()` directly instead of relying on `$featureClassPath` if the page needs pre-processing before rendering.
+
 ```php
-// Register
-$admin->AddFeaturesArray([new ReportsFeature()]);
+// Register — AddFeature() is protected, so call it from inside your Admin subclass
+// (e.g. in LoadFeatures(), see the Admin Class doc); AddFeaturesArray() is public
+// if you need to register a batch of features from outside.
+$this->AddFeature(new ReportsFeature());
 ```
 
 ---
 
 ## Feature Routing
 
-The admin router maps the URL segment after `/admin/` to a feature ID:
+The admin router reads two query-string params (see `AdminManager::GetActiveFeature()` and `AdminFeature::GetPage()`):
 
 ```
-GET /admin/          → default dashboard
-GET /admin/products  → feature with featureId "products"
-GET /admin/reports   → feature with featureId "reports"
+GET /admin.php?magrathea_feature=reports                              → ReportsFeature::GetPage() → Index()
+GET /admin.php?magrathea_feature=reports&magrathea_feature_subpage=x   → ReportsFeature::GetPage() → $this->x()
 ```
 
-`AdminManager::GetActiveFeature()` returns the matching feature for the current URL.
+`AdminManager::Instance()->GetActiveFeature()` returns the feature instance matching `magrathea_feature` (by `$featureId`). `AdminFeature::IsFeatureActive()` compares against the same param to highlight the current item in the menu.
 
 ---
 
