@@ -3,6 +3,7 @@
 	"description": "Magrathea PHP 2",
 	"type": "library",
 	"license": "MIT",
+	"homepage": "https://www.platypusweb.com.br/magratheaphp2/docs/",
 	"autoload": {
 		"psr-4": {
 			"Magrathea2\\": "src/"
