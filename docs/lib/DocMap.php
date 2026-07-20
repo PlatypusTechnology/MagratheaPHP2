@@ -4,7 +4,7 @@ namespace AiDocs;
 
 /**
  * Static map of the documentation site's navigation tree.
- * Mirrors mds/index.md by design choice - see documentation/CLAUDE.md.
+ * Mirrors mds/index.md by design choice - see docs/CLAUDE.md.
  */
 class DocMap {
 

@@ -42,7 +42,7 @@ class SearchIndex {
 	}
 
 	private static function BaseUrl(): string {
-		$dir = rtrim(dirname($_SERVER["SCRIPT_NAME"] ?? "/documentation"), "/");
+		$dir = rtrim(dirname($_SERVER["SCRIPT_NAME"] ?? "/docs"), "/");
 		return $dir;
 	}
 }

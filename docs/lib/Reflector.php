@@ -11,7 +11,7 @@ use ReflectionException;
 /**
  * Pulls live, always-accurate class/method signatures straight from src/ via
  * PHP Reflection, so the reference data can never drift from the code the
- * way hand-written narrative docs can. See documentation/CLAUDE.md.
+ * way hand-written narrative docs can. See docs/CLAUDE.md.
  */
 class Reflector {
 

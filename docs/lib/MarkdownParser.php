@@ -6,7 +6,7 @@ namespace AiDocs;
  * Tiny self-contained Markdown -> HTML converter (no composer dependency).
  * Covers what mds/*.md actually uses: headings, fenced code, tables,
  * lists, bold/italic/inline-code, links, blockquotes, hr. Not a general-purpose
- * CommonMark implementation - see documentation/CLAUDE.md before extending.
+ * CommonMark implementation - see docs/CLAUDE.md before extending.
  */
 class MarkdownParser {
 

@@ -1,10 +1,16 @@
-# CLAUDE.md — documentation
+# CLAUDE.md — docs
 
 Guide for your future self working on this folder. This is a from-scratch documentation
 site for MagratheaPHP2, replacing the old `docs/`, `docs-cache/`, and `.phpdoc/` folders
-(deleted 2026-07-20). The old repo-root `documentation/` folder was renamed to
-`mds/` and moved inside this folder on the same date — it is no longer a
-sibling of `documentation/`, it now lives at `documentation/mds/`.
+(deleted 2026-07-20). The old repo-root `documentation/` folder (the narrative markdown
+source) was renamed to `mds/` and moved inside this site's folder on the same date — it is
+no longer a repo-root sibling, it now lives at `mds/` inside here.
+
+Note: this site's own folder was originally called `documentation/` and was renamed to
+`docs/` later on 2026-07-20, to match the path already live in production
+(`platypusweb.com.br/site/magratheaphp2/docs/`). Don't confuse this with the older,
+unrelated `docs/` folder mentioned above that existed before this site was built and was
+deleted — that name was reused after the fact.
 
 ## General instructions from Paulo
 
