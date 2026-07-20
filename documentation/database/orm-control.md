@@ -122,8 +122,8 @@ $total = ProductControl::Count($query);
 echo "Total active products: $total";
 ```
 
-### `RunPagination(Query $magQuery, &$total, int $page = 0, int $limit = 20): array<MagratheaModel>`
-Executes a query with pagination, also returning the total count by reference.
+### `RunPagination(Query $magQuery, &$total, int $page = 0, int $limit = 20, bool $withTotal = true): array<MagratheaModel>`
+Executes a query with pagination, also returning the total count by reference. Pass `$withTotal = false` to skip the `COUNT(*)` query — `$total` is then left as `null`.
 
 ```php
 $query = Query::Select()->Obj(new Product())->Where(["active" => 1]);
@@ -132,6 +132,26 @@ $total = 0;
 $products = ProductControl::RunPagination($query, $total, page: 0, limit: 20);
 
 echo "Showing " . count($products) . " of $total";
+```
+
+### `GetPagination(Query $magQuery, int $page = 0, int $limit = 20, bool $withTotal = false): MagratheaPagination`
+Builds a `MagratheaPagination` object directly from a query — the recommended way to paginate an API endpoint. Return it straight from an API controller action and `MagratheaApi::ReturnSuccess()` will build the paginated JSON envelope (`{success, data, page, count, has_more, total?}`) automatically.
+
+By default (`$withTotal = false`) it avoids an extra `COUNT(*)` query: it fetches `$limit + 1` rows, and if that extra row comes back, sets `has_more = true` and trims the result back down to `$limit`. Pass `$withTotal = true` to also compute and include `total` (at the cost of a `COUNT(*)` query).
+
+```php
+use Magrathea2\DB\Query;
+use App\Controls\ProductControl;
+
+// In an API controller:
+public function List(array $params = []): \Magrathea2\MagratheaPagination {
+    $query = Query::Select()->Obj(new \App\Models\Product())->Where(["active" => 1])->Order("name ASC");
+    return ProductControl::GetPagination($query, page: (int)($params["page"] ?? 0), limit: 20);
+}
+```
+
+```json
+{"success": true, "data": [ ... ], "page": 0, "count": 20, "has_more": true}
 ```
 
 ---

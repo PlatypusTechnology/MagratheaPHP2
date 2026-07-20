@@ -344,13 +344,21 @@ $recent = ArticleControl::RunQuery(
 // Count
 $total = ArticleControl::QueryOne("SELECT COUNT(*) FROM articles WHERE published = 1");
 
-// Paginated
+// Paginated (with total — costs an extra COUNT(*) query)
 $total = 0;
 $query = \Magrathea2\DB\Query::Select()
     ->Obj(new \App\Models\Article())
     ->Where(["published" => 1])
     ->Order("created_at DESC");
 $page = ArticleControl::RunPagination($query, $total, page: 0, limit: 10);
+
+// Paginated for an API response — no COUNT(*) query, has_more computed via limit+1 trick.
+// Return the MagratheaPagination directly from a controller action; see §7.
+$query = \Magrathea2\DB\Query::Select()
+    ->Obj(new \App\Models\Article())
+    ->Where(["published" => 1])
+    ->Order("created_at DESC");
+$pagination = ArticleControl::GetPagination($query, page: 0, limit: 10); // MagratheaPagination
 ```
 
 ---
@@ -504,7 +512,9 @@ return new \App\MyAppApi();
 namespace App\Api;
 
 use Magrathea2\MagratheaApiControl;
+use Magrathea2\MagratheaPagination;
 use Magrathea2\Exceptions\MagratheaApiException;
+use Magrathea2\DB\Query;
 use App\Controls\ArticleControl;
 use App\Models\Article;
 
@@ -514,6 +524,16 @@ class ArticleApiControl extends MagratheaApiControl {
     public function List(): array {
         $articles = ArticleControl::GetWhere(["published" => 1]);
         return array_map(fn($a) => $a->ToArray(), $articles);
+    }
+
+    // GET /articles/paginated?page=0 — returning a MagratheaPagination makes
+    // MagratheaApi::ReturnSuccess() build {success, data, page, count, has_more} automatically.
+    public function ListPaginated(array $params = []): MagratheaPagination {
+        $query = Query::Select()
+            ->Obj(new Article())
+            ->Where(["published" => 1])
+            ->Order("created_at DESC");
+        return ArticleControl::GetPagination($query, page: (int)($params["page"] ?? 0), limit: 20);
     }
 
     // GET /articles/:id

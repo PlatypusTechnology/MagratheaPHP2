@@ -116,18 +116,45 @@ abstract class MagratheaModelControl{
 	}
 
 	/**
-	 * Runs query with Pagination. 
+	 * Runs query with Pagination.
 	 * 	This way, is not necessary to worry about including pagination on Magrathea Query, this function can deal with it
 	 * @param 	Query  	$magQuery 		MagratheaQuery query
 	 * @param 	int  				&$total   		total of rows (it will be stored in this variable; it's a pointer!)
 	 * @param 	integer 			$page     		page to get (0 = first)
 	 * @param 	integer 			$limit    		quantity per page (20 = default)
+	 * @param 	boolean 			$withTotal 		if false, skips the COUNT(*) query and leaves $total as null
 	 * @return  array<object> 		List of objects
 	 */
-	public static function RunPagination(Query $magQuery, &$total, $page=0, $limit=20){
-		$total = self::QueryOne($magQuery->CountSQL());
+	public static function RunPagination(Query $magQuery, &$total, $page=0, $limit=20, $withTotal=true){
+		$total = $withTotal ? self::QueryOne($magQuery->CountSQL()) : null;
 		$magQuery->Limit($limit)->Page($page);
 		return self::Run($magQuery);
+	}
+
+	/**
+	 * Runs query with Pagination and returns a MagratheaPagination object, ready to be
+	 * returned directly from an API controller (MagratheaApi::ReturnSuccess() recognizes it).
+	 * 	By default ($withTotal=false), avoids the extra COUNT(*) query: it fetches one row
+	 * 	more than requested to determine `has_more`, then trims the result back to $limit.
+	 * @param 	Query  	$magQuery 		MagratheaQuery query
+	 * @param 	integer 			$page     		page to get (0 = first)
+	 * @param 	integer 			$limit    		quantity per page (20 = default)
+	 * @param 	boolean 			$withTotal 		if true, runs a COUNT(*) query and fills MagratheaPagination::$total
+	 * @return  MagratheaPagination
+	 */
+	public static function GetPagination(Query $magQuery, $page=0, $limit=20, $withTotal=false) {
+		$total = null;
+		$fetchLimit = $withTotal ? $limit : $limit + 1;
+		$rows = self::RunPagination($magQuery, $total, $page, $fetchLimit, $withTotal);
+
+		if($withTotal) {
+			$hasMore = (($page + 1) * $limit) < $total;
+		} else {
+			$hasMore = count($rows) > $limit;
+			if($hasMore) $rows = array_slice($rows, 0, $limit);
+		}
+
+		return new MagratheaPagination($rows, $page, count($rows), $withTotal ? $total : null, $hasMore);
 	}
 	/**
 	 * Runs a Magrathea Query and returns a list of objects

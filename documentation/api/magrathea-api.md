@@ -199,6 +199,21 @@ Return a standardized success response:
 {"success": true, "data": ...}
 ```
 
+If `$data` is a `MagratheaPagination` instance, a paginated envelope is returned instead:
+
+```json
+{"success": true, "data": [...], "page": 0, "count": 20, "has_more": true, "total": 143}
+```
+
+`total` is only included when it was computed (see `MagratheaModelControl::GetPagination()`). Just return a `MagratheaPagination` from a controller action — no other code changes needed:
+
+```php
+public function List(array $params = []): MagratheaPagination {
+    $query = Query::Select()->Obj(new Article())->Where(["published" => 1])->Order("created_at DESC");
+    return ArticleControl::GetPagination($query, page: (int)($params["page"] ?? 0), limit: 20);
+}
+```
+
 ### `ReturnFail(mixed $data): mixed`
 Return a standardized failure response:
 

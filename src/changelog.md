@@ -1,3 +1,9 @@
+### 2.2.0
+2026-07
+	- **new:** `MagratheaPagination` object — return it from an API controller and `MagratheaApi::ReturnSuccess()` automatically builds a paginated JSON envelope (`{success, data, page, count, has_more, total?}`)
+	- **new:** `MagratheaModelControl::GetPagination()` — builds a `MagratheaPagination` from a `Query`; by default fetches `limit + 1` rows to compute `has_more` without an extra `COUNT(*)` query
+	- **improvement:** `MagratheaModelControl::RunPagination()` gained a `$withTotal` param (default `true`, backward compatible) to skip the `COUNT(*)` query when the total isn't needed
+
 ### 2.1.31
 2026-07
 	- **fix:** `MagratheaApiControl::GetAuthorizationToken()` no longer throws a PHP warning when the `Authorization` header is missing, which in dev could corrupt the response status/body

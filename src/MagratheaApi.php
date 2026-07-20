@@ -604,14 +604,27 @@ class MagratheaApi {
 
 	/**
 	 * Returns a successful JSON response.
+	 * If $data is a MagratheaPagination, builds a paginated envelope instead
+	 * ({success, data, page, count, has_more, total?}).
 	 * @param mixed $data The payload to include in the response.
 	 * @return mixed
 	 */
 	public function ReturnSuccess($data) {
-		$rs = array(
-			"success" => true,
-			"data" => $data
-		);
+		if($data instanceof MagratheaPagination) {
+			$rs = array(
+				"success" => true,
+				"data" => $data->data,
+				"page" => $data->page,
+				"count" => $data->count,
+				"has_more" => $data->hasMore,
+			);
+			if($data->total !== null) $rs["total"] = $data->total;
+		} else {
+			$rs = array(
+				"success" => true,
+				"data" => $data
+			);
+		}
 		$this->Cache($rs);
 		return $this->Json($rs);
 	}
