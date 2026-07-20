@@ -26,6 +26,8 @@ if ($p === "all-classes") {
 	$route = "md-files";
 } elseif ($p === "about") {
 	$route = "about";
+} elseif ($p === "changelog") {
+	$route = "changelog";
 } elseif ($p !== "" && strpos($p, "/") !== false) {
 	[$category, $slug] = explode("/", $p, 2);
 	$page = DocMap::FindPage($category, $slug);
@@ -50,6 +52,8 @@ if ($route === "home") {
 	include __DIR__ . "/views/md-files.php";
 } elseif ($route === "about") {
 	include __DIR__ . "/views/about.php";
+} elseif ($route === "changelog") {
+	include __DIR__ . "/views/changelog.php";
 } elseif ($route === "page") {
 	include __DIR__ . "/views/page.php";
 } else {

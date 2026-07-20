@@ -18,5 +18,6 @@
 		<li><a href="<?= $baseUrl ?>/?p=examples" class="<?= $route === "examples" ? "active" : "" ?>">Examples</a></li>
 		<li><a href="<?= $baseUrl ?>/?p=md-files" class="<?= $route === "md-files" ? "active" : "" ?>">MD Files</a></li>
 		<li><a href="<?= $baseUrl ?>/?p=about" class="<?= $route === "about" ? "active" : "" ?>">About</a></li>
+		<li><a href="<?= $baseUrl ?>/?p=changelog" class="<?= $route === "changelog" ? "active" : "" ?>">Changelog</a></li>
 	</ul>
 </nav>
