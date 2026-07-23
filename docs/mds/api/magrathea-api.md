@@ -149,6 +149,17 @@ $api->Crud("/products", new ProductApiControl());
 $api->Crud("/products", new ProductApiControl(), true);
 ```
 
+`Crud()` always registers `Update` under `PUT`, never `PATCH` — if you also want a `PATCH`
+route for the same resource/handler, register it yourself with `Add()`:
+
+```php
+$api->Crud("/products", new ProductApiControl());
+$api->Add("PATCH", "/products/{id}", new ProductApiControl(), "Update", true);
+```
+
+Both `PUT` and `PATCH` bodies are read the same way in a controller — `GetPut()` (or its
+alias `GetPatch()`) returns the decoded body regardless of which of the two verbs was used.
+
 ### `Fallback(callable $fn): MagratheaApi`
 Register a fallback handler for routes that don't match anything.
 

@@ -194,15 +194,22 @@ class MagratheaApiControl {
 	}
 
 	/**
-	 * Gets data from a PUT request.
-	 * @return array|null The PUT data as an array, or null if not a PUT request.
+	 * Gets data from a PUT (or PATCH) request.
+	 * @return array|null The PUT data as an array, or null if not a PUT/PATCH request.
 	 */
 	public function GetPut() {
 		if(@$_PUT) return $_PUT;
-		if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
+		if ($_SERVER['REQUEST_METHOD'] == 'PUT' || $_SERVER['REQUEST_METHOD'] == 'PATCH') {
 			return $this->GetPhpInput();
 		}
 		return null;
+	}
+	/**
+	 * Gets data from a PATCH request.
+	 * @return array|null The PATCH data as an array, or null if not a PATCH/PUT request.
+	 */
+	public function GetPatch() {
+		return $this->GetPut();
 	}
 	/**
 	 * Gets data from a POST request.

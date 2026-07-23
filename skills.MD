@@ -589,7 +589,7 @@ class ArticleApiControl extends MagratheaApiControl {
 
 **Controller rules:**
 - Always throw `MagratheaApiException` for expected errors (404, 400, 403) — the router converts it to JSON automatically
-- Use `$this->GetPost()` for POST body, `$this->GetPut()` for PUT body
+- Use `$this->GetPost()` for POST body, `$this->GetPut()` for PUT body — `GetPut()` also reads a `PATCH` body (or call its alias `$this->GetPatch()`); `Crud()` only ever registers `Update` under `PUT`, so a `PATCH` route on the same handler must be added separately with `Add("PATCH", ...)`
 - Use `$this->GetUserId()` to read the user ID from the decoded JWT token
 - Return `->ToArray()` (flat field map) for API responses — never `->ToJson()` (which wraps fields in an outer envelope)
 - Never `echo` or `die()` inside controllers

@@ -101,7 +101,7 @@ $url = $feature->apiUrl;
 						echo "<br/>";
 						$elements->Input("text", "api-params-" . $apiId, false, "", ["w-100", "mb-2"], null, "Query Params");
 						echo "<br/>";
-						if ($end["method"] == "POST" || $end["method"] == "PUT") {
+						if (in_array($end["method"], ["POST", "PUT", "PATCH"])) {
 							$elements->Textarea("api-payload-" . $apiId, "Payload", null, ["w-100", "payload-text"]);
 						}
 						$elements->Button($end["method"], "executeApi(" . $apiId . ")", ["btn-success", "w-100", "no-margin"]);

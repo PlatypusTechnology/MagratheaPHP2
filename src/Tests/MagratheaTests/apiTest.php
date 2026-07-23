@@ -59,6 +59,14 @@ class MagratheaApiTest extends \PHPUnit\Framework\TestCase {
 		$this->assertArrayHasKey("test", $endpoints["anonymous"]["GET"]);
 	}
 
+	public function testAddPatchEndpoint() {
+		TestsHelper::Print("Testing adding a PATCH endpoint");
+		$this->api->Add("PATCH", "test/:id", null, function() { return "ok"; });
+		$endpoints = $this->api->GetEndpoints();
+		$this->assertArrayHasKey("PATCH", $endpoints["anonymous"]);
+		$this->assertArrayHasKey("test/:id", $endpoints["anonymous"]["PATCH"]);
+	}
+
 	public function testCrudEndpoints() {
 		TestsHelper::Print("Testing adding CRUD endpoints");
 		$control = new MagratheaApiControl();

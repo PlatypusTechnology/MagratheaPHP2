@@ -61,6 +61,7 @@ class MagratheaApi {
 		$endpoints["GET"] = array();
 		$endpoints["POST"] = array();
 		$endpoints["PUT"] = array();
+		$endpoints["PATCH"] = array();
 		$endpoints["DELETE"] = array();
 	}
 
@@ -91,7 +92,7 @@ class MagratheaApi {
 		if(!@empty($_GET["magrathea_action"])) self::$inst->action = $_GET["magrathea_action"];
 		if(!@empty($_GET["magrathea_params"])) self::$inst->params = $_GET["magrathea_params"];
 		header('Access-Control-Allow-Headers: Access-Control-Allow-Origin, Content-Type, Authorization');
-		header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS'); 
+		header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 		header('Access-Control-Max-Age: 1000');
 		header('Content-Type: application/json, charset=utf-8');
 		return $this;
@@ -219,7 +220,7 @@ class MagratheaApi {
 
 	/**
 	 * Adds a custom endpoint to the API.
-	 * @param string               $method      HTTP method (GET, POST, PUT, DELETE).
+	 * @param string               $method      HTTP method (GET, POST, PUT, PATCH, DELETE).
 	 * @param string               $url         The URL pattern for the endpoint.
 	 * @param MagratheaApiControl|null $control The control class that handles the request.
 	 * @param string|callable      $function    The method or function to be called.

@@ -82,11 +82,18 @@ $email = $data["email"] ?? "";
 ```
 
 ### `GetPut(): ?array`
-Returns the decoded PUT request body (reads from `php://input`).
+Returns the decoded PUT (or PATCH) request body (reads from `php://input`).
 
 ```php
 $data = $this->GetPut();
 $newPrice = $data["price"] ?? null;
+```
+
+### `GetPatch(): ?array`
+Alias of `GetPut()` — returns the decoded PATCH (or PUT) request body.
+
+```php
+$data = $this->GetPatch();
 ```
 
 ### `GetPhpInput(): mixed`
