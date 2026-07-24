@@ -69,7 +69,7 @@ function getClassNameOfClass($fullClassName) {
  * @return  	array
  */
 function magrathea_getTypesArr() : array{
-	$types = array("int", "boolean", "string", "text", "float", "datetime");
+	$types = array("int", "boolean", "string", "text", "float", "datetime", "date");
 	return $types;
 }
 

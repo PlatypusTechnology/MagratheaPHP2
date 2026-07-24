@@ -71,7 +71,16 @@ class Product extends MagratheaModel {
 | `string` | `string` | VARCHAR, CHAR, etc. |
 | `text` | `string` | TEXT columns |
 | `float` | `float` | DECIMAL, FLOAT, DOUBLE |
-| `datetime` | `string` | MySQL datetime format |
+| `datetime` | `string` | MySQL datetime format (`Y-m-d H:i:s`) |
+| `date` | `string` | MySQL date format (`Y-m-d`) — see note below |
+
+**`date` normalization:** on `Insert()`/`Update()`, a `date` field's value is normalized
+to `Y-m-d` before binding. Accepted inputs: `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"`, and
+ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`). Anything else throws a `MagratheaModelException`.
+The date part is taken **as written** — no timezone conversion happens, so
+`"1990-05-10T03:00:00.000Z"` stores `1990-05-10` regardless of server timezone. That is
+the right behavior for birthdate-style fields, but clients east/west of UTC should prefer
+sending a plain `"YYYY-MM-DD"` to avoid off-by-one-day surprises.
 
 ---
 

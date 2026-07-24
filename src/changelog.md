@@ -1,3 +1,8 @@
+### 2.2.2
+2026-07
+	- **new:** `"date"` field type for models — SQL `date` columns are now detected as `"date"` (instead of collapsing into `"datetime"`) when generating objects; on `Insert()`/`Update()` the value is normalized to `Y-m-d` before binding, accepting `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"` and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throwing a `MagratheaModelException` if the value is not a parseable date. Note: the ISO-8601 date part is taken as written — no timezone conversion is applied
+	- **backward compatibility:** existing generated Base files and `magrathea_objects.conf` entries that say `"datetime"` for SQL `date` columns keep working exactly as before; the new type only applies once a project regenerates its objects. Admin auto-CRUD renders `"date"` fields as `<input type="date">`
+
 ### 2.2.1
 2026-07
 	- **new:** `MagratheaApi::HealthCheck()` gained a `$checkDatabase` param — when `true`, the `GET /health-check` response also includes a `database` field (`"ok"`/`"fail"`) reflecting DB connectivity

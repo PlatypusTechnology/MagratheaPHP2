@@ -89,7 +89,7 @@ Returns the array of data types supported by the ORM field system:
 
 ```php
 $types = magrathea_getTypesArr();
-// ["int", "boolean", "string", "text", "float", "datetime"]
+// ["int", "boolean", "string", "text", "float", "datetime", "date"]
 ```
 
 Used internally by `MagratheaModel` when validating `$dbValues` field type declarations.

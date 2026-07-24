@@ -513,8 +513,11 @@ class ObjectManager extends \Magrathea2\Singleton {
 				$currentType = "text";
 				break;
 			case "tim":
-			case "dat":
 				$currentType = "datetime";
+				break;
+			case "dat":
+				// column type "date" (exactly) is a date; "datetime" keeps the full timestamp
+				$currentType = (strtolower($fieldType) == "date") ? "date" : "datetime";
 				break;
 			case "flo":
 				$currentType = "float";
@@ -531,7 +534,7 @@ class ObjectManager extends \Magrathea2\Singleton {
 	 * @return array
 	 */
 	public function GetTypesArr(): array {
-		$types = array("int", "boolean", "string", "text", "float", "datetime");
+		$types = array("int", "boolean", "string", "text", "float", "datetime", "date");
 		return array_combine($types, $types);
 	}
 
@@ -572,6 +575,8 @@ class ObjectManager extends \Magrathea2\Singleton {
 				return "float DEFAULT NULL";
 			case "datetime":
 				return "datetime NULL";
+			case "date":
+				return "date NULL";
 			case "string":
 			default:
 				return "varchar(255) NULL";
