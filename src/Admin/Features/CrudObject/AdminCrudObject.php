@@ -163,6 +163,9 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 			case "pk":
 				$fieldType = "disabled";
 				break;
+			case "date":
+				$fieldType = "date";
+				break;
 			case "int":
 			case "text":
 			default:

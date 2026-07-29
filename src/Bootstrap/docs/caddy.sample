@@ -1,0 +1,52 @@
+api.platypusweb.com.br {
+	# Block access to all hidden files and directories (starting with a dot)
+	@hiddenFiles path_regexp hiddenFiles {.*(?:/\.[^/]+)+}
+	respond @hiddenFiles 403
+
+	root * /var/www/platypusweb/api/src/app
+
+	# Serve existing files (static and PHP) directly
+	@existing file
+	handle @existing {
+		@php path *.php
+		handle @php {
+			php_fastcgi unix//run/php/php8.4-fpm.sock {
+				env HTTP_AUTHORIZATION {http.request.header.Authorization}
+			}
+		}
+		handle {
+			file_server {
+        hide .user.ini
+			}
+		}
+	}
+
+	# If not an existing file, apply rewrite rules
+	handle {
+		@rule1 path_regexp r1 ^/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/(.*)$
+		rewrite @rule1 /index.php?magrathea_control={re.r1.1}&magrathea_action={re.r1.2}&magrathea_params={re.r1.3}
+
+		@rule2 path_regexp r2 ^/([a-zA-Z0-9_-]+)/(.*)$
+		rewrite @rule2 /index.php?magrathea_control={re.r2.1}&magrathea_action={re.r2.2}
+
+		@rule3 path_regexp r3 ^/(.*)$
+		rewrite @rule3 /index.php?magrathea_control={re.r3.1}
+
+		php_fastcgi unix//run/php/php8.4-fpm.sock {
+			env HTTP_AUTHORIZATION {http.request.header.Authorization}
+		}
+	}
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "no-referrer-when-downgrade"
+	}
+
+	# Enable gzip compression
+	encode gzip
+}
+

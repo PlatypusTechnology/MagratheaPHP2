@@ -281,6 +281,7 @@ class DatabaseSimulate extends Singleton {
 						$params .= "d";
 						break;
 					case "datetime":
+					case "date":
 					case "text":
 					case "string":
 					default:

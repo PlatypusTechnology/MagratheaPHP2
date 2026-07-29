@@ -521,7 +521,7 @@ class MagratheaApi {
 			$status = array(
 				200 => '200 OK',
 				400 => '400 Bad Request',
-				401 => 'Unauthorized',
+				401 => '401 Unauthorized',
 				422 => 'Unprocessable Entity',
 				500 => '500 Internal Server Error'
 			);

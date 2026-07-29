@@ -232,10 +232,10 @@ abstract class MagratheaModel{
 				$this->$field = Uuid::V7();
 			}
 		}
-		foreach( $this->dbValues as $field => $type ){
+		foreach( $this->dbValues as $field => $fieldType ){
 			if( $autoIncrement && $field == $this->dbPk ) continue;
 			if( !isset($this->$field) ) continue;
-			$type = $this->GetDataTypeFromField($type);
+			$type = $this->GetDataTypeFromField($fieldType);
 			array_push($arr_Types, $type);
 			array_push($arr_Fields, $field);
 			if( is_a($this->$field, "MagratheaModel") ) {
@@ -243,6 +243,8 @@ abstract class MagratheaModel{
 			} else {
 				if( $field == "created_at" || $field == "updated_at" ) {
 					$arr_Values[$field] = now();
+				} else if( $fieldType == "date" ) {
+					$arr_Values[$field] = self::FormatDateValue($this->$field, $field);
 				} else {
 					$arr_Values[$field] = ($type == "integer" || $type == "boolean") ? intval($this->$field) : $this->$field;
 				}
@@ -318,6 +320,8 @@ abstract class MagratheaModel{
 			} else {
 				if( $field == "updated_at" ) {
 					$arr_Values[$field] = now();
+				} else if( $type == "date" ) {
+					$arr_Values[$field] = self::FormatDateValue($this->$field, $field);
 				} else {
 					$arr_Values[$field] = ($type == "integer" || $type == "boolean") ? intval($this->$field) : $this->$field;
 				}
@@ -446,10 +450,29 @@ abstract class MagratheaModel{
 			case "float":
 				return "decimal";
 			case "datetime":
+			case "date":
 				return "date";
 			case "uuid":
 				return "text";
 		}
+	}
+
+	/**
+	 * Normalizes a value of a `date` field to "Y-m-d" for binding.
+	 * Accepts "YYYY-MM-DD", "YYYY-MM-DD HH:MM:SS" and ISO-8601
+	 * ("YYYY-MM-DDTHH:MM:SS.sssZ"); the date part is taken as written,
+	 * with no timezone conversion.
+	 * @param 	string|null 	$value 		value to normalize
+	 * @param 	string 				$field 		field name, for the exception message
+	 * @return 	string|null							date as "Y-m-d" (null stays null)
+	 * @throws 	MagratheaModelException		if the value cannot be parsed as a date
+	 */
+	public static function FormatDateValue($value, string $field="") {
+		if($value === null) return null;
+		if(preg_match('/^(\d{4}-\d{2}-\d{2})([T ].*)?$/', trim($value), $matches)) {
+			return $matches[1];
+		}
+		throw new MagratheaModelException("Invalid date value for field [".$field."]: [".$value."]");
 	}
 
 	/**
