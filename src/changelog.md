@@ -3,6 +3,7 @@
 	- **new:** `"date"` field type for models — SQL `date` columns are now detected as `"date"` (instead of collapsing into `"datetime"`) when generating objects; on `Insert()`/`Update()` the value is normalized to `Y-m-d` before binding, accepting `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"` and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throwing a `MagratheaModelException` if the value is not a parseable date. Note: the ISO-8601 date part is taken as written — no timezone conversion is applied
 	- **backward compatibility:** existing generated Base files and `magrathea_objects.conf` entries that say `"datetime"` for SQL `date` columns keep working exactly as before; the new type only applies once a project regenerates its objects. Admin auto-CRUD renders `"date"` fields as `<input type="date">`
 	- **fix:** `MagratheaApi::Json()` sent a malformed `Status: Unauthorized` header for 401 responses (missing the leading `401`), which Caddy/PHP-FPM couldn't parse — causing a bare 502 instead of the real 401 response
+	- **fix:** `MagratheaApi::Json()` threw an undefined-array-key warning for any HTTP status code outside `200/400/401/422/500` (e.g. `403`, `404`, `409`) — under `display_errors=On` this leaked an HTML warning into the JSON response body and broke the subsequent `header()` call. Replaced the partial status map with a full reason-phrase table plus an `'Unknown Status'` fallback for unlisted codes
 
 ### 2.2.1
 2026-07

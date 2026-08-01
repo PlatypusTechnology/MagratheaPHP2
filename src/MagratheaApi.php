@@ -518,15 +518,16 @@ class MagratheaApi {
 		if($this->returnRaw) return $response;
 		header('Content-Type: application/json');
 		if($code != 200) {
-			$status = array(
-				200 => '200 OK',
-				400 => '400 Bad Request',
-				401 => '401 Unauthorized',
-				422 => 'Unprocessable Entity',
-				500 => '500 Internal Server Error'
+			$phrases = array(
+				200 => 'OK', 201 => 'Created', 204 => 'No Content',
+				400 => 'Bad Request', 401 => 'Unauthorized', 403 => 'Forbidden',
+				404 => 'Not Found', 405 => 'Method Not Allowed', 409 => 'Conflict',
+				422 => 'Unprocessable Entity', 429 => 'Too Many Requests',
+				500 => 'Internal Server Error', 503 => 'Service Unavailable'
 			);
+			$phrase = $phrases[$code] ?? 'Unknown Status';
 			http_response_code($code);
-			header('Status: '.$status[$code]);
+			header('Status: '.$code.' '.$phrase);
 		}
 		echo json_encode($response);
 		die;
