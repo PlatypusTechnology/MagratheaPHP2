@@ -18,7 +18,7 @@ use Magrathea2\MagratheaModelControl;
 
 class ProductControl extends MagratheaModelControl {
     protected static $modelName      = "Product";
-    protected static $modelNamespace = "App\\Models\\";
+    protected static $modelNamespace = "App\\Models";
     protected static $dbTable        = "products";
 }
 ```
@@ -28,7 +28,7 @@ class ProductControl extends MagratheaModelControl {
 | Property | Type | Example |
 |----------|------|---------|
 | `$modelName` | `string` | `"Product"` |
-| `$modelNamespace` | `string` | `"App\\Models\\"` |
+| `$modelNamespace` | `string` | `"App\\Models"` |
 | `$dbTable` | `string` | `"products"` |
 
 ---

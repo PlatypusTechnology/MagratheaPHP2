@@ -73,6 +73,7 @@ class Product extends MagratheaModel {
 | `float` | `float` | DECIMAL, FLOAT, DOUBLE |
 | `datetime` | `string` | MySQL datetime format (`Y-m-d H:i:s`) |
 | `date` | `string` | MySQL date format (`Y-m-d`) — see note below |
+| `uuid` | `string` | Auto-generated UUIDv7 on `Insert()` if left unset — see note below |
 
 **`date` normalization:** on `Insert()`/`Update()`, a `date` field's value is normalized
 to `Y-m-d` before binding. Accepted inputs: `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"`, and
@@ -81,6 +82,22 @@ The date part is taken **as written** — no timezone conversion happens, so
 `"1990-05-10T03:00:00.000Z"` stores `1990-05-10` regardless of server timezone. That is
 the right behavior for birthdate-style fields, but clients east/west of UTC should prefer
 sending a plain `"YYYY-MM-DD"` to avoid off-by-one-day surprises.
+
+**`uuid` generation:** on `Insert()`/`InsertWithPk()`, any field declared `"uuid"` in
+`$dbValues` that is still empty gets filled in with `Uuid::V7()` (`src/Uuid.php`) — a
+time-ordered RFC 9562 UUIDv7: a 48-bit millisecond timestamp prefix followed by 10 bytes
+from PHP's CSPRNG (`random_bytes()`), with the version/variant bits set per spec. A field
+that already has a value (set explicitly before `Insert()`) is left alone and never
+overwritten. Nothing regenerates it on `Update()` — UUIDs are treated as immutable once
+assigned.
+
+Collision-safety is **not** enforced by the framework: there is no pre-insert uniqueness
+check and no catch/retry around a duplicate-key error on `INSERT` — a collision would
+surface as a rethrown DB exception. In practice this is safe because `random_bytes(10)`
+supplies enough entropy that a same-millisecond collision is statistically negligible, but
+the real backstop is the database: the `uuid` column must actually be declared
+`PRIMARY KEY`/`UNIQUE` in the schema for uniqueness to be *guaranteed* rather than merely
+"very likely."
 
 ---
 

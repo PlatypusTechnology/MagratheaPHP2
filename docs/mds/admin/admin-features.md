@@ -96,7 +96,7 @@ use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 class ProductAdminFeature extends AdminCrudObject {
     // Model to manage
     protected $modelName      = "Product";
-    protected $modelNamespace = "App\\Models\\";
+    protected $modelNamespace = "App\\Models";
 
     // Control class for DB queries
     protected $controlName      = "ProductControl";

@@ -267,7 +267,7 @@ use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 
 class ProductAdminFeature extends AdminCrudObject {
     protected $modelName      = "Product";
-    protected $modelNamespace = "App\\Models\\";
+    protected $modelNamespace = "App\\Models";
     protected $controlName    = "ProductControl";
     protected $controlNamespace = "App\\Controls\\";
     protected $label          = "Products";

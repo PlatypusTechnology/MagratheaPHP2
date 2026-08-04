@@ -258,6 +258,8 @@ For simple internal tools without the feature/Base convention, a flat single-cla
 
 `uuid` behaves the same way `created_at`/`updated_at` already do: declare `$this->dbValues["uuid"] = "uuid";` and the framework fills it in on `Insert()` (via `Uuid::V7()`) whenever the property is left empty. An explicitly pre-set value (e.g. from a fixture or migration) is respected and never overwritten. Nothing changes on `Update()` — UUIDs are immutable once assigned. Requires MagratheaPHP2 `2.1.30`+.
 
+**Collision safety is not enforced in application code** — there is no pre-insert uniqueness check and no catch/retry on a duplicate-key error; `Uuid::V7()` relies purely on `random_bytes(10)` entropy. Always declare the `uuid` column `PRIMARY KEY`/`UNIQUE` in the DB schema so uniqueness is actually guaranteed, not just statistically likely.
+
 `date` (requires MagratheaPHP2 `2.2.2`+) normalizes its value to `Y-m-d` on `Insert()`/`Update()`: it accepts `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"`, and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throws `MagratheaModelException` for anything else. The date part is taken as written — **no timezone conversion** — so prefer sending plain `"YYYY-MM-DD"` from clients to avoid off-by-one-day issues east of UTC. Existing models that declare a SQL `date` column as `"datetime"` keep working unchanged; the `"date"` type is picked up when objects are regenerated.
 
 ### Using a model
@@ -303,7 +305,7 @@ namespace App\Controls\Base;
 use Magrathea2\MagratheaModelControl;
 
 class ArticleControlBase extends MagratheaModelControl {
-    protected static $modelNamespace = "App\\Models\\";
+    protected static $modelNamespace = "App\\Models";
     protected static $modelName = "Article";
     protected static $dbTable = "articles";
 }
@@ -905,7 +907,7 @@ use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 
 class ArticleAdmin extends AdminCrudObject {
     protected $modelName        = "Article";
-    protected $modelNamespace   = "App\\Models\\";
+    protected $modelNamespace   = "App\\Models";
     protected $controlName      = "ArticleControl";
     protected $controlNamespace = "App\\Controls\\";
     protected $label            = "Articles";
