@@ -8,17 +8,19 @@ pluggable admin panel, built and maintained by <strong>Paulo Henrique Martins</s
 (Platypus Technology) and released under the MIT license.</p>
 
 <h2>Platypus Web</h2>
-<p>
-	<img src="<?= $baseUrl ?>/assets/img/platypus-logo.svg" alt="Platypus Web" width="300">
-</p>
-<p>This is a product by <strong>Platypus Web</strong>. Built in Brazil (and Mexico, and
-Germany, and UK, and Portugal, and whatever I was travelling around) — and used
-everywhere else.</p>
-<p><a href="https://platypusweb.com.br" target="_blank" rel="noopener">platypusweb.com.br</a></p>
+<div style="display:flex; align-items:center; gap:1rem;">
+	<img src="<?= $baseUrl ?>/assets/img/platypus-logo.svg" alt="Platypus Web" width="120">
+	<p style="margin:0;">
+		This is a product by <strong>Platypus Web</strong>.<br>
+		Built in Brazil (and Mexico, and Germany, and UK, and Portugal, and whatever I was
+		travelling around) — and used everywhere else.<br>
+		<a href="https://platypusweb.com.br" target="_blank" rel="noopener">platypusweb.com.br</a>
+	</p>
+</div>
 
 <h2>Author</h2>
 <div style="display:flex; align-items:center; gap:1rem;">
-	<img src="<?= $baseUrl ?>/assets/img/zebras.png" alt="" width="64">
+	<img src="<?= $baseUrl ?>/assets/img/zebras.png" alt="" width="120">
 	<p style="margin:0;">
 		<strong>Paulo Martins</strong><br>
 		<a href="https://github.com/paulovelho" target="_blank" rel="noopener">github.com/paulovelho</a>
