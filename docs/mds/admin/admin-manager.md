@@ -98,11 +98,14 @@ echo "style='color: rgb($color)'";
 ```
 
 ### `PrintLogo(?int $logoSize = 200): void`
-Outputs the `<img>` tag for the admin logo.
+Outputs the admin logo, sized to `$logoSize` px. The markup depends on the file
+extension of `Admin::$adminLogo`: `.jpeg`/`.jpg`/`.png` render as an `<img>` tag,
+while `.svg` inlines the SVG file's contents inside a sized wrapper `<div>`.
 
 ```php
 AdminManager::Instance()->PrintLogo(150);
-// <img src="/assets/logo.png" width="150" />
+// PNG/JPEG: <img src="/assets/logo.png" width="150" ...>
+// SVG:      <div class="logo_image" style="...width: 150px; height: 150px">...inline <svg>...</div>
 ```
 
 ### `GetFaviconTag(): string`

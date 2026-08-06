@@ -1,3 +1,7 @@
+### 2.2.3
+2026-08
+	- **fix:** `AdminManager::PrintLogo()` rendered SVG logos with literal `<?=$logoSize?>` text in the `width`/`height` attributes instead of the actual size — `file_get_contents()` reads the default `views/logo.svg` template as raw bytes without evaluating its PHP placeholder. Now does a plain string substitution on the SVG content instead of executing it, fixing the default template while staying inert for custom SVG logos
+
 ### 2.2.2
 2026-07
 	- **new:** `"date"` field type for models — SQL `date` columns are now detected as `"date"` (instead of collapsing into `"datetime"`) when generating objects; on `Insert()`/`Update()` the value is normalized to `Y-m-d` before binding, accepting `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"` and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throwing a `MagratheaModelException` if the value is not a parseable date. Note: the ISO-8601 date part is taken as written — no timezone conversion is applied

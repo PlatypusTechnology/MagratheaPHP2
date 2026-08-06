@@ -187,7 +187,8 @@ Returns the panel title.
 Returns the primary color as RGB decimal string.
 
 #### `PrintLogo(?int $logoSize = 200): void`
-Outputs the logo `<img>` tag.
+Outputs the admin logo sized to `$logoSize` px — an `<img>` tag for
+`.jpeg`/`.jpg`/`.png` logos, or the inlined SVG markup for `.svg` logos.
 
 #### `GetFaviconTag(): string`
 Returns the favicon `<link>` HTML tag.
