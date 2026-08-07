@@ -57,7 +57,7 @@ class MagratheaHelperTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEquals("1.00 TB", MagratheaHelper::FormatSize(pow(1024, 4)));
 
 		// Test decimals
-		$this->assertEquals("1.46 GB", MagratheaHelper::FormatSize(1572864 * 1024, 2));
+		$this->assertEquals("1.50 GB", MagratheaHelper::FormatSize(1572864 * 1024, 2));
 		$this->assertEquals("1.5 GB", MagratheaHelper::FormatSize(1572864 * 1024, 1));
 		$this->assertEquals("2 GB", MagratheaHelper::FormatSize(1572864 * 1024, 0));
 	}

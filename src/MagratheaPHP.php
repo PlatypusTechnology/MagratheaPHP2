@@ -156,6 +156,14 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
+	 * Checks whether the project was started in dev mode (via `->Dev()`).
+	 * @return bool True if the Debugger is currently set to Debugger::DEV.
+	 */
+	public function IsDev(): bool {
+		return Debugger::Instance()->GetType() === Debugger::DEV;
+	}
+
+	/**
 	 * Gets the path to the configuration directory.
 	 * @return string The path to the `/configs` directory.
 	 * @throws MagratheaConfigException If `magRoot` is not set.

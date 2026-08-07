@@ -38,6 +38,12 @@ class MagratheaApiControl {
 	 * @var string 			$jwtEncodeType 	The encoding algorithm for JWT.
 	 */
 	public $jwtEncodeType = "HS256";
+	/**
+	 * @var bool 			$forceSecureCookie 	Default `Secure` attribute for auth cookies set via
+	 * 											`SetAuthCookie()`/`ClearAuthCookie()`. Override to false
+	 * 											for local HTTP development.
+	 */
+	protected bool $forceSecureCookie = true;
 
 	/**
 	 * Gets all HTTP headers from the request.
@@ -90,9 +96,33 @@ class MagratheaApiControl {
 		if(!$token) {
 			$token = $this->getTokenByType("Basic");
 		}
+		if(!$token) {
+			$token = $this->getTokenFromCookie();
+		}
 		if(!$token) return false;
 		$this->userInfo = $this->jwtDecode($token);
 		return $this->userInfo;
+	}
+
+	/**
+	 * Reads the session token from the cookie named by `GetCookieName()`, if any.
+	 * @return string|null The cookie's token value, or null if not present/not enabled.
+	 */
+	protected function getTokenFromCookie(): ?string {
+		$name = $this->GetCookieName();
+		if(!$name) return null;
+		return $_COOKIE[$name] ?? null;
+	}
+
+	/**
+	 * Name of the cookie to check for a session token, as a fallback when no
+	 * Authorization header is present. Returns null by default — cookie auth
+	 * is opt-in per project; override in a project's own ApiControl subclass
+	 * to enable it (same pattern as GetSecret()).
+	 * @return string|null
+	 */
+	protected function GetCookieName(): ?string {
+		return null;
 	}
 	public function GetUserInfo() {
 		if($this->userInfo) return $this->userInfo;
@@ -128,6 +158,63 @@ class MagratheaApiControl {
 	public function jwtEncode($payload) {
 		if(!$this->GetSecret()) throw new MagratheaApiException("JWT key empty", 500);
 		return JWT::encode($payload, strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType);
+	}
+
+	/**
+	 * Issues the session token as a cookie, in addition to (or instead of)
+	 * returning it in the response body. Expiry is derived from the JWT's
+	 * own `exp` claim so the cookie never outlives (or underlives) the token.
+	 * Requires `GetCookieName()` to be overridden to return a name (see
+	 * `GetTokenInfo()`'s cookie fallback) — cookie auth is opt-in.
+	 * @param string $token The JWT token to store in the cookie.
+	 * @param string|null $domain Cookie `Domain` attribute (e.g. ".guia.lol" to share across subdomains). Null/empty keeps it host-only.
+	 * @param bool $httpOnly Whether the cookie is inaccessible to client-side JS. Defaults to true.
+	 * @param string $sameSite `SameSite` attribute ("Lax", "Strict", or "None"). Defaults to "Lax".
+	 * @param bool|null $forceSecure Overrides `$forceSecureCookie` for this call only. Leave null to
+	 *                               use the instance default.
+	 * @return void
+	 */
+	public function SetAuthCookie(
+		string $token,
+		?string $domain = null,
+		bool $httpOnly = true,
+		string $sameSite = "Lax",
+		?bool $forceSecure = null
+	): void {
+		$expiry = 0;
+		try {
+			$payload = $this->jwtDecode($token);
+			if(isset($payload->exp)) $expiry = (int)$payload->exp;
+		} catch (\Exception $e) { /* fall back to session cookie if undecodable */ }
+
+		setcookie($this->GetCookieName() ?? "mt_session", $token, [
+			"expires"  => $expiry,
+			"path"     => "/",
+			"domain"   => $domain ?? "",
+			"secure"   => $forceSecure ?? $this->forceSecureCookie,
+			"httponly" => $httpOnly,
+			"samesite" => $sameSite,
+		]);
+	}
+
+	/**
+	 * Clears the session cookie previously set by `SetAuthCookie()`.
+	 * Because the cookie is `HttpOnly` by default, it can't be cleared from
+	 * client-side JS — logout needs a real server round-trip that calls this.
+	 * @param string|null $domain Must match the `Domain` the cookie was set with.
+	 * @param bool|null $forceSecure Overrides `$forceSecureCookie` for this call only. Leave null to
+	 *                               use the instance default.
+	 * @return void
+	 */
+	public function ClearAuthCookie(?string $domain = null, ?bool $forceSecure = null): void {
+		setcookie($this->GetCookieName() ?? "mt_session", "", [
+			"expires"  => time() - 3600,
+			"path"     => "/",
+			"domain"   => $domain ?? "",
+			"secure"   => $forceSecure ?? $this->forceSecureCookie,
+			"httponly" => true,
+			"samesite" => "Lax",
+		]);
 	}
 
 	/**

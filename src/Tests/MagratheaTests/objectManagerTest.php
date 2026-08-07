@@ -23,7 +23,7 @@ class objectManagerTest extends \PHPUnit\Framework\TestCase {
 		$objManager = ObjectManager::Instance();
 		$objManager->SetObjectFilePath(null);
 		$path = $objManager->GetObjectFilePath();
-		$this->assertEquals(__DIR__."/configs", $path);
+		$this->assertEquals(__DIR__."/configs/".$objManager->fileName, $path);
 	}
 
 	function testGetObjects() {

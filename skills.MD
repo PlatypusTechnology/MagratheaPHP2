@@ -616,9 +616,10 @@ use App\Controls\UserControl;
 
 class AuthControl extends MagratheaApiControl {
 
-    // Override to use config-driven secret
+    // GetSecret() already reads "jwt_key" from the active environment section
+    // by default (config/magrathea.conf) — only override it for a different key name.
     public function GetSecret(): string {
-        return Config::Instance()->GetConfig("jwt/secret");
+        return Config::Instance()->Get("jwt_key");
     }
 
     // POST /auth/login
@@ -671,6 +672,40 @@ public function Create(array $data = []): array {
 - Never store passwords or sensitive PII in the token
 - Always override `GetSecret()` to use a config value, not a hardcoded string
 - `GetAuthorizationToken()` throws if the header is missing — call it inside `try/catch` or rely on the route's auth parameter
+
+### Step 3: Cookie-based auth (opt-in)
+
+`GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `GetCookieName()` — it returns `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
+
+```php
+class AuthControl extends MagratheaApiControl {
+
+    // Enables the cookie fallback in GetTokenInfo(); override on a shared
+    // base ApiControl class if more than one controller needs it.
+    protected function GetCookieName(): ?string {
+        return "app_session";
+    }
+
+    public function Login(): array {
+        // ... validate credentials, build $token as above ...
+
+        // Issues the cookie; expiry is derived from the token's own "exp" claim
+        $this->SetAuthCookie($token, ".example.com"); // domain scoped to share across subdomains
+        return ["token" => $token];
+    }
+
+    // HttpOnly cookies can't be cleared client-side — logout needs a real endpoint
+    public function Logout(): array {
+        $this->ClearAuthCookie(".example.com");
+        return ["success" => true];
+    }
+}
+```
+
+**Cookie auth rules:**
+- Header wins when both a header and a matching cookie are present
+- `SetAuthCookie()`/`ClearAuthCookie()` are `Secure` by default (the `$forceSecureCookie` instance property, defaults `true`) — for local `http://localhost` development, override `$forceSecureCookie` to `false` on your `ApiControl` subclass, or pass `forceSecure: false` per call
+- Two `ApiControl`s sharing a cookie need the *same* `GetCookieName()` **and** the same `$domain` passed to `SetAuthCookie()` — mismatched `Domain` scopes on the same cookie name is the one combination to avoid
 
 ---
 

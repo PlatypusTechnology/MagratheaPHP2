@@ -90,6 +90,71 @@ class UserApiControl extends MagratheaApiControl {
 
 ---
 
+## Cookie-Based Auth (Opt-In)
+
+`GetTokenInfo()` falls back to a cookie when no `Authorization` header is present — `Bearer`, then `Basic`, then a cookie. This lets a session be recognized without a client having to attach a header at all, which matters for scenarios a header can't cover, e.g. a session shared across sibling subdomains via a cookie scoped to a parent domain (`Domain=.example.com`).
+
+This fallback is **off by default** and does not affect any existing project. It only activates once a project overrides `GetCookieName()` in its own `ApiControl` subclass — the same opt-in convention already used by `GetSecret()`:
+
+```php
+class AuthControl extends MagratheaApiControl {
+    protected function GetCookieName(): ?string {
+        return "app_session";
+    }
+}
+```
+
+If `GetCookieName()` still returns `null` (the framework default), the cookie is never consulted and `Bearer`/`Basic` behave exactly as before. When a header **and** a matching cookie are both present, the header always wins.
+
+Because `GetTokenInfo()` reads `GetCookieName()` off the instance handling the request, override it once on a shared base `ApiControl` class that every protected controller extends — not just on the login controller — so the fallback works consistently everywhere `$this->GetUserId()` / `$this->GetUserInfo()` is called.
+
+### Issuing the cookie on login
+
+`SetAuthCookie()` writes the session cookie, deriving its expiry from the JWT's own `exp` claim so the cookie never outlives (or underlives) the token:
+
+```php
+class AuthControl extends MagratheaApiControl {
+    protected function GetCookieName(): ?string {
+        return "app_session";
+    }
+
+    public function Login(): array {
+        $post = $this->GetPost();
+        // ... validate credentials ...
+
+        $token = $this->jwtEncode([
+            "user_id" => $user->id,
+            "exp"     => time() + 86400,
+        ]);
+
+        $this->SetAuthCookie($token, ".example.com"); // share across subdomains
+        return ["token" => $token]; // still returned in the body for non-cookie clients
+    }
+}
+```
+
+`SetAuthCookie(string $token, ?string $domain = null, bool $httpOnly = true, string $sameSite = "Lax", ?bool $forceSecure = null)` marks the cookie `Secure` by default — controlled by the `$forceSecureCookie` instance property (defaults to `true`), not by dev/prod mode. A `Secure` cookie is never sent by the browser over plain `http://localhost`, so for local HTTP development override `$forceSecureCookie` to `false` on your `ApiControl` subclass, or pass `forceSecure: false` for a one-off call.
+
+### Clearing the cookie on logout
+
+Because the cookie defaults to `HttpOnly`, client-side JS cannot delete it — logout needs a real server round-trip:
+
+```php
+class AuthControl extends MagratheaApiControl {
+    // ...
+    public function Logout(): array {
+        $this->ClearAuthCookie(".example.com"); // domain must match SetAuthCookie()
+        return ["success" => true];
+    }
+}
+```
+
+### Same name, same scope — sharing a cookie between APIs
+
+A cookie's identity to the browser is the triple `(name, Domain, Path)`, not "which API set it." Two `ApiControl`s using **different** `GetCookieName()` values are fully isolated from each other, even under the same domain. Two using the **same** name **and** the same `Domain` passed to `SetAuthCookie()` are reading/writing the literal same cookie — that's what makes cross-subdomain session sharing work. Mixing the same name with mismatched `Domain` scopes is the one combination to avoid: the browser may store them as distinct cookies that still collide under a single key when PHP parses `$_COOKIE`, since duplicate cookie names in one request produce unpredictable "last one wins" behavior there.
+
+---
+
 ## Token Best Practices
 
 ### Always set `exp` (expiration)
@@ -105,16 +170,22 @@ $token = $this->jwtEncode([
 
 ```ini
 ; magrathea.conf
-[jwt]
-secret = your-very-long-random-secret-here
+[dev]
+    jwt_key = "a-very-long-random-string-here"
+
+[production]
+    jwt_key = "$=JWT_SECRET"
 ```
 
+`GetSecret()` already reads `jwt_key` from the active environment section by default — no override needed:
+
 ```php
-// Override GetSecret() in your control
 public function GetSecret(): string {
-    return \Magrathea2\Config::Instance()->GetConfig("jwt/secret");
+    return \Magrathea2\Config::Instance()->Get("jwt_key");
 }
 ```
+
+Only override it if a project wants a different config key name.
 
 ### Never store sensitive data in the payload
 

@@ -5,13 +5,9 @@ use Magrathea2\MagratheaApiControl;
 use Magrathea2\Tests\TestsHelper;
 use Magrathea2\DB\Database;
 
-class FailingHealthCheckDatabaseMock {
-	public function OpenConnectionPlease() {
+class FailingHealthCheckDatabaseMock extends Database {
+	public function OpenConnectionPlease(): bool {
 		throw new \Exception("db down");
-	}
-
-	public function CloseConnectionThanks() {
-		return true;
 	}
 }
 
@@ -101,7 +97,7 @@ class MagratheaApiTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	public function testHealthCheckResponseIncludesDatabaseFailWhenCheckEnabledAndConnectionFails() {
-		Database::MockClass(new FailingHealthCheckDatabaseMock());
+		Database::MockClass(FailingHealthCheckDatabaseMock::Instance());
 
 		$this->api->HealthCheck(true);
 		$endpoint = $this->api->GetEndpoints()["anonymous"]["GET"]["health-check"];

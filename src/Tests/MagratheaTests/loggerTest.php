@@ -63,7 +63,7 @@ class loggerTest extends \PHPUnit\Framework\TestCase {
 		MagratheaPHP::Instance()->AppPath(__DIR__."/test-dump");
 		$path = Logger::Instance()->LoadLogsPath()->GetLogPath();
 		$this->assertEquals(__DIR__."/logs", $path);
-		$defaultFile = "log_".@date("Ym")."log";
+		$defaultFile = "log_".@date("Ym").".log";
 		$this->assertEquals($defaultFile, Logger::Instance()->GetLogFile());
 	}
 

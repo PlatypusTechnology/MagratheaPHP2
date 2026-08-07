@@ -1,3 +1,9 @@
+### 2.2.4
+2026-08
+	- **new:** `MagratheaApiControl::GetTokenInfo()` gained a cookie-based fallback, tried after `Bearer`/`Basic`, so a session can be recognized across subdomains via a cookie instead of a header. Opt-in only: the new `GetCookieName()` hook returns `null` by default (no behavior change for any existing project), and must be overridden in a project's own `ApiControl` subclass to enable it — same convention as `GetSecret()`
+	- **new:** `MagratheaApiControl::SetAuthCookie()` / `ClearAuthCookie()` — issues/clears the session cookie, deriving its expiry from the JWT's own `exp` claim. `SetAuthCookie()` accepts a `$domain` (e.g. `.example.com` to share a session across subdomains), and defaults to `HttpOnly` + `SameSite=Lax`. Because `HttpOnly` cookies can't be cleared client-side, logout now needs a real server round-trip through `ClearAuthCookie()`
+	- **new:** `MagratheaPHP::IsDev()` — read-accessor for whether the project was started with `->Dev()`. Used by `SetAuthCookie()`/`ClearAuthCookie()` to only mark the cookie `Secure` outside of dev, since a `Secure` cookie is never sent by the browser over plain `http://localhost`
+
 ### 2.2.3
 2026-08
 	- **fix:** `AdminManager::PrintLogo()` rendered SVG logos with literal `<?=$logoSize?>` text in the `width`/`height` attributes instead of the actual size — `file_get_contents()` reads the default `views/logo.svg` template as raw bytes without evaluating its PHP placeholder. Now does a plain string substitution on the SVG content instead of executing it, fixing the default template while staying inert for custom SVG logos
