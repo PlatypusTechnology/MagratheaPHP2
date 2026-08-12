@@ -4,7 +4,7 @@ use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\ObjectManager;
 
 $control = ObjectManager::Instance();
-$objectName = $_GET["object"];
+$objectName = $_POST["object"];
 $relations = $control->GetRelationsByObject($objectName);
 
 $rs = "";

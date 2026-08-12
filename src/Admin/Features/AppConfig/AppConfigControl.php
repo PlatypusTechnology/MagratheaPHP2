@@ -147,7 +147,7 @@ class AppConfigControl extends MagratheaModelControl {
 	 */
 	public function ParseLine(string $line): array {
 		$config = explode("==|>>", $line);
-		$key_regex = '/==\[(\w+)\](\w+)/';
+		$key_regex = '/==\[(\w+)\](.+)/';
 		preg_match($key_regex, $config[0], $matches);
 		if(empty($matches)) {
 			$system = false;

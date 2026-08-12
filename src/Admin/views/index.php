@@ -1,5 +1,6 @@
 <?php
 
+use Magrathea2\Admin\AdminCsrf;
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminManager;
 
@@ -20,6 +21,7 @@ if(!empty($magrathea_subpage)) {
 		<style><?=AdminManager::Instance()->GetCss();?></style>
 		<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 		<script type="text/javascript">
+			var magrathea_csrf_token = "<?=AdminCsrf::Instance()->GetToken()?>";
 			<?php include("javascript/pre-load-scripts.js"); ?>
 		</script>
 	</head>

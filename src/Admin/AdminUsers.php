@@ -26,6 +26,7 @@ class AdminUsers extends Singleton {
 		if(!$loginData["success"]) return $loginData;
 		$user = $loginData["user"];
 		$_SESSION[$this->sessionName] = serialize($user);
+		AdminCsrf::Instance()->Regenerate();
 		AdminManager::Instance()->Log("login", $user, $user->id);
 		return $loginData;
 	}

@@ -112,7 +112,7 @@ function saveObjectInfo(el) {
 
 function deleteObject(object) {
 	if(!confirm("Do you wish to remove object [ "+object+" ]?")) return;
-	callAction("object-remove&object="+object)
+	callAction("object-remove", "POST", {object})
 		.then(rs => {
 			$("#obj-responses").prepend(rs);
 		});

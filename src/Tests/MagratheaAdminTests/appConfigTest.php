@@ -22,7 +22,7 @@ class appConfigTest extends \PHPUnit\Framework\TestCase {
 		$v2 = "a value w1th <special> characters";
 		$t2 = "==[n]some_complicated key==|>>".$v2.">>;;";
 		$r2 = $configControl->ParseLine($t2);
-		$this->assertTrue($r2["system"]);
+		$this->assertFalse($r2["system"]);
 		$this->assertEquals("some_complicated key", $r2["key"]);
 		$this->assertEquals($v2, $r2["value"]);
 	}
@@ -33,7 +33,7 @@ class appConfigTest extends \PHPUnit\Framework\TestCase {
 		$t1 = "==app_name==|>>magrathea>>;;";
 		$r1 = $configControl->ParseLine($t1);
 		$this->assertFalse($r1["system"]);
-		$this->assertEquals("code_structure", $r1["key"]);
-		$this->assertEquals("feature", $r1["value"]);
+		$this->assertEquals("app_name", $r1["key"]);
+		$this->assertEquals("magrathea", $r1["value"]);
 	}
 }

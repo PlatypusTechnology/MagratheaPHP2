@@ -1,12 +1,14 @@
 <?php
 
+use Magrathea2\Admin\AdminCsrf;
 use Magrathea2\Admin\AdminElements;
 
 $elements = AdminElements::Instance();
 
 ?>
 <form action="" method="post" name="<?=$formName?>" id="<?=$formName?>">
-	<div class="row">	
+	<input type="hidden" name="magrathea_csrf_token" value="<?=AdminCsrf::Instance()->GetToken()?>" />
+	<div class="row">
 	<?php
 		foreach($formElements as $el) {
 			echo '<div class="'.@$el["size"].'">';
