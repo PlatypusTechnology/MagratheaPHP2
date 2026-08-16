@@ -677,16 +677,14 @@ public function Create(array $data = []): array {
 
 ### Step 3: Cookie-based auth (opt-in)
 
-`GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `GetCookieName()` — it returns `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
+`GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `$cookieName` — it is `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
 
 ```php
 class AuthControl extends MagratheaApiControl {
 
     // Enables the cookie fallback in GetTokenInfo(); override on a shared
     // base ApiControl class if more than one controller needs it.
-    protected function GetCookieName(): ?string {
-        return "app_session";
-    }
+    protected ?string $cookieName = "app_session";
 
     public function Login(): array {
         // ... validate credentials, build $token as above ...
@@ -707,7 +705,7 @@ class AuthControl extends MagratheaApiControl {
 **Cookie auth rules:**
 - Header wins when both a header and a matching cookie are present
 - `SetAuthCookie()`/`ClearAuthCookie()` are `Secure` by default (the `$forceSecureCookie` instance property, defaults `true`) — for local `http://localhost` development, override `$forceSecureCookie` to `false` on your `ApiControl` subclass, or pass `forceSecure: false` per call
-- Two `ApiControl`s sharing a cookie need the *same* `GetCookieName()` **and** the same `$domain` passed to `SetAuthCookie()` — mismatched `Domain` scopes on the same cookie name is the one combination to avoid
+- Two `ApiControl`s sharing a cookie need the *same* `$cookieName` **and** the same `$domain` passed to `SetAuthCookie()` — mismatched `Domain` scopes on the same cookie name is the one combination to avoid
 
 ---
 

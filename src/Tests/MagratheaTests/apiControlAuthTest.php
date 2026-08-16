@@ -20,9 +20,7 @@ use Magrathea2\Tests\TestsHelper;
 use Magrathea2\Config;
 
 class CookieEnabledApiControl extends MagratheaApiControl {
-	protected function GetCookieName(): ?string {
-		return "test_session";
-	}
+	protected ?string $cookieName = "test_session";
 }
 
 class MagratheaApiControlAuthTest extends \PHPUnit\Framework\TestCase {
@@ -47,7 +45,7 @@ class MagratheaApiControlAuthTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	public function testCookieFallbackDecodesTokenWhenCookieNameOverridden() {
-		TestsHelper::Print("Testing GetTokenInfo() falls back to a cookie when GetCookieName() is overridden");
+		TestsHelper::Print("Testing GetTokenInfo() falls back to a cookie when \$cookieName is overridden");
 		$control = new CookieEnabledApiControl();
 		$token = $this->makeToken($control);
 		$_COOKIE["test_session"] = $token;
@@ -59,7 +57,7 @@ class MagratheaApiControlAuthTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	public function testCookieFallbackIsOptInAndDisabledByDefault() {
-		TestsHelper::Print("Testing GetTokenInfo() ignores the cookie when GetCookieName() is left at the default (null)");
+		TestsHelper::Print("Testing GetTokenInfo() ignores the cookie when \$cookieName is left at the default (null)");
 		$control = new MagratheaApiControl();
 		$token = $this->makeToken($control);
 		$_COOKIE["test_session"] = $token;
