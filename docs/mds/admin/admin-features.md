@@ -32,7 +32,7 @@ Register a JS/CSS file (absolute path) with `AdminManager` so it's loaded on eve
 Sets `$featureClassPath`, the directory the default `Index()` implementation includes `index.php` from.
 
 #### `HasPermission($action=null): bool`
-Permission check run before rendering the index page or any subpage; returns `true` by default. Override to restrict access — `GetPage()` calls `AdminManager::Instance()->PermissionDenied()` when this returns `false`.
+Permission check run before rendering the index page, any subpage, or a direct feature action; returns `true` by default. Override to restrict access — all three admin dispatch paths (`GetPage()`, `Start::CheckFeature()`, and the explicit-subpage branch of `views/index.php`) call `AdminManager::Instance()->PermissionDenied()` when this returns `false`, passing the action/subpage name about to be invoked as `$action`. (Prior to v2.3.1, only `GetPage()` enforced this — the other two paths called the target method directly with no check, so a feature-specific override should not assume `$action` only ever holds subpage names reachable via `GetPage()`.)
 
 #### `GetPage(): void`
 Entry point called by the router. Reads `$_GET["magrathea_feature_subpage"]`: if present and permitted, calls that method on the feature (a "subpage"); otherwise calls `Index()`.
@@ -248,12 +248,15 @@ $this->AddFeature(new ReportsFeature());
 
 ## Feature Routing
 
-The admin router reads two query-string params (see `AdminManager::GetActiveFeature()` and `AdminFeature::GetPage()`):
+The admin router reads query-string params across two independent dispatch paths (see `AdminManager::GetActiveFeature()`, `AdminFeature::GetPage()`, and `Start::CheckFeature()`):
 
 ```
-GET /admin.php?magrathea_feature=reports                              → ReportsFeature::GetPage() → Index()
-GET /admin.php?magrathea_feature=reports&magrathea_feature_subpage=x   → ReportsFeature::GetPage() → $this->x()
+GET /admin.php?magrathea_feature=reports                                        → ReportsFeature::GetPage() → Index()
+GET /admin.php?magrathea_feature=reports&magrathea_feature_subpage=x            → ReportsFeature::GetPage() → $this->x()
+GET /admin.php?magrathea_feature=reports&magrathea_feature_action=x             → Start::CheckFeature() → $this->x()
 ```
+
+The first two rows go through `views/index.php`, which defaults `magrathea_feature_subpage` to `GetPage` and calls that method on the feature instance; `GetPage()` itself then reads the same `magrathea_feature_subpage` param to decide between `Index()` and a named subpage. The third row is a separate, earlier dispatch point — `Start::CheckFeature()` runs before `views/index.php` is even included, and calls the method named by `magrathea_feature_action` directly. Both the explicit-subpage branch of `views/index.php` and `CheckFeature()` call `HasPermission()` before dispatching (see above); the default `GetPage()`-via-`Index()` path enforces it internally instead.
 
 `AdminManager::Instance()->GetActiveFeature()` returns the feature instance matching `magrathea_feature` (by `$featureId`). `AdminFeature::IsFeatureActive()` compares against the same param to highlight the current item in the menu.
 

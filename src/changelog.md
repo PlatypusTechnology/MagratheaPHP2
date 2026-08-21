@@ -1,3 +1,8 @@
+### 2.3.1
+2026-08
+	- **fix:** two admin dispatch paths could call a feature's action method while skipping `AdminFeature::HasPermission()` entirely — `Start::CheckFeature()` (the `?magrathea_feature=X&magrathea_feature_action=Y` route) called `$feature->$action()` directly with no permission check, and `views/index.php`'s subpage dispatch called `$f->$subpage()` directly for any explicit `magrathea_feature_subpage` value, also unchecked. Only the default subpage path (`AdminFeature::GetPage()`) enforced `HasPermission()`. Both bypasses are now closed: `CheckFeature()` and the explicit-subpage branch of `views/index.php` call `HasPermission($action)`/`HasPermission($subpage)` before dispatching, rejecting via the same `AdminManager::PermissionDenied()` used everywhere else. The default (`GetPage()`) path is unchanged — it already enforced this itself
+	- **note:** this is a behavior change only for a feature that has overridden `HasPermission()` with logic that assumes it is only ever called from the default subpage path. `AdminFeature::HasPermission()`'s base implementation returns `true` unconditionally, and the only in-repo override (`AdminFeatureUserLog`) also always returns `true`, so this is a no-op for any feature that hasn't written a custom override. As with the 2.3.0 CSRF enforcement, this ships immediately with no opt-out or staged rollout
+
 ### 2.3.0
 2026-08
 	- **new:** `AdminCsrf` class (`src/Admin/AdminCsrf.php`) — CSRF token management for the admin panel: `GetToken()` (get-or-create), `Regenerate()`, `Validate()`. The token is seeded on every admin request (`Start::Initialize()`) and rotated on login (`AdminUsers::Login()`)

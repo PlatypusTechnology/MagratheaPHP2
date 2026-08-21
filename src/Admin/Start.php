@@ -66,6 +66,8 @@ class Start extends Singleton {
 			$feature = AdminManager::Instance()->GetFeature($featureName);
 			if (!$feature) {
 				AdminElements::Instance()->ErrorCard("Feature [".$featureName."] not available!");
+			} else if (!$feature->HasPermission($action)) {
+				AdminManager::Instance()->PermissionDenied();
 			} else {
 				$feature->$action();
 			}

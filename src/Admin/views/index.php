@@ -55,6 +55,9 @@ if(!empty($magrathea_subpage)) {
 								// $f->Initialize();
 								$subpage = @$_GET["magrathea_feature_subpage"];
 								if(!$subpage) $subpage = "GetPage";
+								if($subpage !== "GetPage" && !$f->HasPermission($subpage)) {
+									AdminManager::Instance()->PermissionDenied();
+								}
 								$f->$subpage();
 								$gotSomething = true;
 							}
