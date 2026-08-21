@@ -6,6 +6,7 @@ use Exception;
 use Magrathea2\Admin\Api\AdminApi;
 use Magrathea2\Admin\Features\AppConfig\AppConfigControl;
 use Magrathea2\Debugger;
+use Magrathea2\Logger;
 use Magrathea2\Singleton;
 use Magrathea2\MagratheaPHP;
 
@@ -28,6 +29,7 @@ class Start extends Singleton {
 
 	protected function Initialize() {
 		MagratheaPHP::Instance()->StartSession();
+		AdminCsrf::Instance()->GetToken();
 		$this->appPath = MagratheaPHP::Instance()->appRoot;
 		return $this;
 	}
@@ -74,6 +76,22 @@ class Start extends Singleton {
 	}
 
 	/**
+	 * Checks the CSRF token on every admin POST request.
+	 * Reads the token from the `magrathea_csrf_token` POST field, falling back to the
+	 * `X-Magrathea-CSRF-Token` header (used by AJAX calls). GET is exempt: a token embedded
+	 * in a URL would leak via browser history, server/proxy logs, and Referer headers.
+	 */
+	private function CheckCsrf(): void {
+		if ($_SERVER["REQUEST_METHOD"] !== "POST") return;
+		$token = @$_POST["magrathea_csrf_token"];
+		if (!$token) $token = @$_SERVER["HTTP_X_MAGRATHEA_CSRF_TOKEN"];
+		if (!AdminCsrf::Instance()->Validate($token)) {
+			Logger::Instance()->SetLogFile("csrf")->Log("CSRF check failed for ".(@$_SERVER["REQUEST_URI"] ?? "unknown"));
+			AdminManager::Instance()->PermissionDenied();
+		}
+	}
+
+	/**
 	 * Loads Magrathea Admin
 	 */
 	public function Load(): void {
@@ -84,6 +102,7 @@ class Start extends Singleton {
 					$message = "Access Denied: User is not an admin!";
 					AdminManager::Instance()->ErrorPage($message);
 				}
+				$this->CheckCsrf();
 				$this->CheckApi();
 				$this->CheckFeature();
 				include ("views/index.php");

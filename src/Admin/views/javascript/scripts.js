@@ -80,6 +80,9 @@ function ajax(method, url, payload, authorization, debug=false) {
 		switch(method.toUpperCase()) {
 			case "POST":
 				console.info("auth: ", authorization);
+				payload = Object.assign({}, payload, {
+					magrathea_csrf_token: (typeof magrathea_csrf_token !== "undefined") ? magrathea_csrf_token : null,
+				});
 				$.post(url, payload, (rs) => resolve(rs))
 				.fail(err => {
 					console.error("error", err);

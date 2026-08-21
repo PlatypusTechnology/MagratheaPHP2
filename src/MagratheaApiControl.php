@@ -44,6 +44,14 @@ class MagratheaApiControl {
 	 * 											for local HTTP development.
 	 */
 	protected bool $forceSecureCookie = true;
+	/**
+	 * @var string|null 	$cookieName 	Name of the cookie to check for a session token, as a
+	 * 										fallback when no Authorization header is present. Null by
+	 * 										default — cookie auth is opt-in per project; override in a
+	 * 										project's own ApiControl subclass to enable it (same pattern
+	 * 										as GetSecret()).
+	 */
+	protected ?string $cookieName = null;
 
 	/**
 	 * Gets all HTTP headers from the request.
@@ -105,25 +113,15 @@ class MagratheaApiControl {
 	}
 
 	/**
-	 * Reads the session token from the cookie named by `GetCookieName()`, if any.
+	 * Reads the session token from the cookie named by `$cookieName`, if any.
 	 * @return string|null The cookie's token value, or null if not present/not enabled.
 	 */
 	protected function getTokenFromCookie(): ?string {
-		$name = $this->GetCookieName();
+		$name = $this->cookieName;
 		if(!$name) return null;
 		return $_COOKIE[$name] ?? null;
 	}
 
-	/**
-	 * Name of the cookie to check for a session token, as a fallback when no
-	 * Authorization header is present. Returns null by default — cookie auth
-	 * is opt-in per project; override in a project's own ApiControl subclass
-	 * to enable it (same pattern as GetSecret()).
-	 * @return string|null
-	 */
-	protected function GetCookieName(): ?string {
-		return null;
-	}
 	public function GetUserInfo() {
 		if($this->userInfo) return $this->userInfo;
 		return $this->GetTokenInfo();
@@ -164,7 +162,7 @@ class MagratheaApiControl {
 	 * Issues the session token as a cookie, in addition to (or instead of)
 	 * returning it in the response body. Expiry is derived from the JWT's
 	 * own `exp` claim so the cookie never outlives (or underlives) the token.
-	 * Requires `GetCookieName()` to be overridden to return a name (see
+	 * Requires `$cookieName` to be overridden to a non-null value (see
 	 * `GetTokenInfo()`'s cookie fallback) — cookie auth is opt-in.
 	 * @param string $token The JWT token to store in the cookie.
 	 * @param string|null $domain Cookie `Domain` attribute (e.g. ".guia.lol" to share across subdomains). Null/empty keeps it host-only.
@@ -187,7 +185,7 @@ class MagratheaApiControl {
 			if(isset($payload->exp)) $expiry = (int)$payload->exp;
 		} catch (\Exception $e) { /* fall back to session cookie if undecodable */ }
 
-		setcookie($this->GetCookieName() ?? "mt_session", $token, [
+		setcookie($this->cookieName ?? "mt_session", $token, [
 			"expires"  => $expiry,
 			"path"     => "/",
 			"domain"   => $domain ?? "",
@@ -207,7 +205,7 @@ class MagratheaApiControl {
 	 * @return void
 	 */
 	public function ClearAuthCookie(?string $domain = null, ?bool $forceSecure = null): void {
-		setcookie($this->GetCookieName() ?? "mt_session", "", [
+		setcookie($this->cookieName ?? "mt_session", "", [
 			"expires"  => time() - 3600,
 			"path"     => "/",
 			"domain"   => $domain ?? "",

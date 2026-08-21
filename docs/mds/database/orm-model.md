@@ -99,6 +99,24 @@ the real backstop is the database: the `uuid` column must actually be declared
 `PRIMARY KEY`/`UNIQUE` in the schema for uniqueness to be *guaranteed* rather than merely
 "very likely."
 
+### Strict typing (`$strictTypes`)
+
+By default, `LoadObjectFromTableRow()` assigns whatever the DB driver returns for each
+column with no type coercion — mysqli/PDO return every column as a string regardless of
+its SQL type, so numeric and boolean properties end up as strings unless the calling code
+casts them.
+
+Set `protected $strictTypes = true;` on a model (or its Base class) to opt into typed
+hydration: values are cast to their declared `$dbValues` PHP type on load — `int` → `(int)`,
+`boolean` → `(bool)`, `float` → `(float)`. `null` is always left as `null`, and
+`string`/`text`/`uuid`/`date`/`datetime` fields are left untouched (the DB driver already
+returns those as strings). A value that can't be cast — schema drift, e.g. a non-numeric
+string landing in an `int` column — throws `MagratheaModelException` naming the field and
+value.
+
+`$strictTypes` defaults to `false` and must be opted into per model; it does not change any
+existing model's behavior. Requires MagratheaPHP2 `2.3.0`+.
+
 ---
 
 ## Properties
@@ -112,6 +130,7 @@ the real backstop is the database: the `uuid` column must actually be declared
 | `$relations` | `array` | Related object definitions |
 | `$dirtyValues` | `array` | Modified-but-not-saved fields |
 | `$autoLoad` | `array\|null` | Relations loaded in constructor |
+| `$strictTypes` | `bool` | Opt-in typed hydration on load — see [Strict typing](#strict-typing-stricttypes) above (default `false`) |
 
 ---
 
@@ -214,7 +233,7 @@ echo $product->GetID(); // same
 ## Loading Methods
 
 ### `LoadObjectFromTableRow(array|object $row): void`
-Populates model properties from a database row (array or stdClass). Used internally by `MagratheaModelControl`.
+Populates model properties from a database row (array or stdClass). Used internally by `MagratheaModelControl`. If `$strictTypes` is enabled, values are cast to their declared `$dbValues` type — see [Strict typing](#strict-typing-stricttypes) above.
 
 ```php
 $row = Database::Instance()->QueryRow("SELECT * FROM products WHERE id = 1");

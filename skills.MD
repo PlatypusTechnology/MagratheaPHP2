@@ -262,6 +262,8 @@ For simple internal tools without the feature/Base convention, a flat single-cla
 
 `date` (requires MagratheaPHP2 `2.2.2`+) normalizes its value to `Y-m-d` on `Insert()`/`Update()`: it accepts `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"`, and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throws `MagratheaModelException` for anything else. The date part is taken as written — **no timezone conversion** — so prefer sending plain `"YYYY-MM-DD"` from clients to avoid off-by-one-day issues east of UTC. Existing models that declare a SQL `date` column as `"datetime"` keep working unchanged; the `"date"` type is picked up when objects are regenerated.
 
+By default, values loaded from the DB (`GetById()`, `LoadObjectFromTableRow()`, list queries) are **not** type-coerced — mysqli/PDO return every column as a string, so `int`/`boolean`/`float` properties come back as strings unless cast by hand. Set `protected $strictTypes = true;` on a model (or its Base class) to opt in: `int`/`boolean`/`float` values are cast to their native PHP type on load (`string`/`text`/`uuid`/`date`/`datetime` stay untouched, `null` stays `null`). A value that can't be cast throws `MagratheaModelException`. Off by default — existing models are unaffected. Requires MagratheaPHP2 `2.3.0`+.
+
 ### Using a model
 
 ```php
@@ -675,16 +677,14 @@ public function Create(array $data = []): array {
 
 ### Step 3: Cookie-based auth (opt-in)
 
-`GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `GetCookieName()` — it returns `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
+`GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `$cookieName` — it is `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
 
 ```php
 class AuthControl extends MagratheaApiControl {
 
     // Enables the cookie fallback in GetTokenInfo(); override on a shared
     // base ApiControl class if more than one controller needs it.
-    protected function GetCookieName(): ?string {
-        return "app_session";
-    }
+    protected ?string $cookieName = "app_session";
 
     public function Login(): array {
         // ... validate credentials, build $token as above ...
@@ -705,7 +705,7 @@ class AuthControl extends MagratheaApiControl {
 **Cookie auth rules:**
 - Header wins when both a header and a matching cookie are present
 - `SetAuthCookie()`/`ClearAuthCookie()` are `Secure` by default (the `$forceSecureCookie` instance property, defaults `true`) — for local `http://localhost` development, override `$forceSecureCookie` to `false` on your `ApiControl` subclass, or pass `forceSecure: false` per call
-- Two `ApiControl`s sharing a cookie need the *same* `GetCookieName()` **and** the same `$domain` passed to `SetAuthCookie()` — mismatched `Domain` scopes on the same cookie name is the one combination to avoid
+- Two `ApiControl`s sharing a cookie need the *same* `$cookieName` **and** the same `$domain` passed to `SetAuthCookie()` — mismatched `Domain` scopes on the same cookie name is the one combination to avoid
 
 ---
 
@@ -969,6 +969,21 @@ class ArticleAdmin extends AdminCrudObject {
 ### Bootstrap Icons reference
 
 Common values for `$icon`: `person`, `file-earmark-text`, `card-text`, `pencil`, `trash`, `search`, `newspaper`, `gear`, `box-arrow-right`.
+
+### CSRF protection
+
+The admin panel enforces a CSRF token on every authenticated POST request, automatically, with no opt-in/opt-out — this is not something you configure. Forms rendered through `AdminForm`/`AdminCrudObject` and AJAX calls made through the shared `ajax()`/`callAction()`/`callApi()`/`callFeature()` JS helpers already carry the token; nothing to do for standard CRUD features or forms.
+
+Only relevant if you write a raw `<form>` or a raw AJAX call bypassing those helpers:
+
+```php
+use Magrathea2\Admin\AdminCsrf;
+
+// inside a raw <form method="post">
+echo '<input type="hidden" name="magrathea_csrf_token" value="'.AdminCsrf::Instance()->GetToken().'" />';
+```
+
+Or, for a raw AJAX call, send the same value as an `X-Magrathea-CSRF-Token` header instead of a form field. A POST with a missing or invalid token is rejected (`AdminManager::PermissionDenied()`) before it reaches your code. GET requests are never checked.
 
 ---
 

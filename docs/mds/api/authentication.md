@@ -94,19 +94,17 @@ class UserApiControl extends MagratheaApiControl {
 
 `GetTokenInfo()` falls back to a cookie when no `Authorization` header is present — `Bearer`, then `Basic`, then a cookie. This lets a session be recognized without a client having to attach a header at all, which matters for scenarios a header can't cover, e.g. a session shared across sibling subdomains via a cookie scoped to a parent domain (`Domain=.example.com`).
 
-This fallback is **off by default** and does not affect any existing project. It only activates once a project overrides `GetCookieName()` in its own `ApiControl` subclass — the same opt-in convention already used by `GetSecret()`:
+This fallback is **off by default** and does not affect any existing project. It only activates once a project overrides `$cookieName` in its own `ApiControl` subclass — the same opt-in convention already used by `GetSecret()`:
 
 ```php
 class AuthControl extends MagratheaApiControl {
-    protected function GetCookieName(): ?string {
-        return "app_session";
-    }
+    protected ?string $cookieName = "app_session";
 }
 ```
 
-If `GetCookieName()` still returns `null` (the framework default), the cookie is never consulted and `Bearer`/`Basic` behave exactly as before. When a header **and** a matching cookie are both present, the header always wins.
+If `$cookieName` is still `null` (the framework default), the cookie is never consulted and `Bearer`/`Basic` behave exactly as before. When a header **and** a matching cookie are both present, the header always wins.
 
-Because `GetTokenInfo()` reads `GetCookieName()` off the instance handling the request, override it once on a shared base `ApiControl` class that every protected controller extends — not just on the login controller — so the fallback works consistently everywhere `$this->GetUserId()` / `$this->GetUserInfo()` is called.
+Because `GetTokenInfo()` reads `$cookieName` off the instance handling the request, override it once on a shared base `ApiControl` class that every protected controller extends — not just on the login controller — so the fallback works consistently everywhere `$this->GetUserId()` / `$this->GetUserInfo()` is called.
 
 ### Issuing the cookie on login
 
@@ -114,9 +112,7 @@ Because `GetTokenInfo()` reads `GetCookieName()` off the instance handling the r
 
 ```php
 class AuthControl extends MagratheaApiControl {
-    protected function GetCookieName(): ?string {
-        return "app_session";
-    }
+    protected ?string $cookieName = "app_session";
 
     public function Login(): array {
         $post = $this->GetPost();
@@ -151,7 +147,7 @@ class AuthControl extends MagratheaApiControl {
 
 ### Same name, same scope — sharing a cookie between APIs
 
-A cookie's identity to the browser is the triple `(name, Domain, Path)`, not "which API set it." Two `ApiControl`s using **different** `GetCookieName()` values are fully isolated from each other, even under the same domain. Two using the **same** name **and** the same `Domain` passed to `SetAuthCookie()` are reading/writing the literal same cookie — that's what makes cross-subdomain session sharing work. Mixing the same name with mismatched `Domain` scopes is the one combination to avoid: the browser may store them as distinct cookies that still collide under a single key when PHP parses `$_COOKIE`, since duplicate cookie names in one request produce unpredictable "last one wins" behavior there.
+A cookie's identity to the browser is the triple `(name, Domain, Path)`, not "which API set it." Two `ApiControl`s using **different** `$cookieName` values are fully isolated from each other, even under the same domain. Two using the **same** name **and** the same `Domain` passed to `SetAuthCookie()` are reading/writing the literal same cookie — that's what makes cross-subdomain session sharing work. Mixing the same name with mismatched `Domain` scopes is the one combination to avoid: the browser may store them as distinct cookies that still collide under a single key when PHP parses `$_COOKIE`, since duplicate cookie names in one request produce unpredictable "last one wins" behavior there.
 
 ---
 

@@ -41,6 +41,7 @@ abstract class MagratheaModel{
 	protected $relations = array();
 	protected $dbPk;
 	protected $dirtyValues = array();
+	protected $strictTypes = false;
 
 	/**
 	 * Checks if the object exists (id not null)
@@ -121,16 +122,56 @@ abstract class MagratheaModel{
 	}
 
 	/**
-	 * Receives an array with the columns and values and associates then internally into the object
+	 * Receives an array with the columns and values and associates then internally into the object.
+	 * When `$strictTypes` is enabled, values are cast to their declared `$dbValues` PHP type
+	 * (`int`/`boolean`/`float`) instead of being kept as the raw string the DB driver returns.
 	 * @param 	array 		$row 		mysql result for the object
+	 * @throws 	MagratheaModelException 	if `$strictTypes` is enabled and a value can't be cast to its declared type
 	 */
 	public function LoadObjectFromTableRow($row){
 		if(!is_array($row) && !is_object($row)) return;
+		if(!$this->strictTypes) {
+			foreach($row as $field => $value){
+				$field = strtolower($field);
+				if( property_exists($this, $field))
+					$this->$field = $value;
+			}
+			return;
+		}
+		$properties = $this->GetProperties();
 		foreach($row as $field => $value){
 			$field = strtolower($field);
-			if( property_exists($this, $field))
-				$this->$field = $value;
+			if(!property_exists($this, $field)) continue;
+			$this->$field = array_key_exists($field, $properties) ?
+				$this->CoerceValue($value, $properties[$field], $field) : $value;
 		}
+	}
+
+	/**
+	 * Casts a raw DB row value to its declared `$dbValues` PHP type. Used by `LoadObjectFromTableRow()`
+	 * when `$strictTypes` is enabled. `null` is always left as `null`; `string`/`text`/`uuid`/`date`/
+	 * `datetime` fields are left untouched since the DB driver already returns those as strings.
+	 * @param 	mixed 		$value 		raw value from the DB row
+	 * @param 	string 		$type 		declared Magrathea field type
+	 * @param 	string 		$field 		field name, for the exception message
+	 * @return 	mixed							coerced value
+	 * @throws 	MagratheaModelException		if the value can't be cast to the declared type
+	 */
+	protected function CoerceValue($value, $type, $field) {
+		if($value === null) return null;
+		switch($type) {
+			case "int":
+				if(!is_numeric($value)) throw new MagratheaModelException("Invalid int value for field [".$field."]: [".$value."]");
+				return (int)$value;
+			case "boolean":
+				if(!is_numeric($value) && !is_bool($value)) throw new MagratheaModelException("Invalid boolean value for field [".$field."]: [".$value."]");
+				return (bool)$value;
+			case "float":
+			case "double":
+				if(!is_numeric($value)) throw new MagratheaModelException("Invalid float value for field [".$field."]: [".$value."]");
+				return (float)$value;
+		}
+		return $value;
 	}
 	
 	/**
