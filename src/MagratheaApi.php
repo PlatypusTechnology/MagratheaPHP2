@@ -568,6 +568,8 @@ class MagratheaApi {
 			$httpStatus = $exCode;
 		} else if($exCode >= 1000 && $exCode <= 9999) {
 			$httpStatus = intval($exCode / 10);
+		} else if($exCode >= 10000 && $exCode <= 59999) {
+			$httpStatus = intval($exCode / 100);
 		} else {
 			$httpStatus = 500;
 		}
