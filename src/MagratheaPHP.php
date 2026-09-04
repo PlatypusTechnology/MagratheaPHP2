@@ -260,8 +260,8 @@ class MagratheaPHP extends Singleton {
 	* Gets Magrathea Version
 	* @return   string    version
 	*/
-	public static function Version(): string { 
-		return file_get_contents(__DIR__."/version");
+	public static function Version(): string {
+		return rtrim(file_get_contents(__DIR__."/version"), "\r\n");
 	}
 
 	/**

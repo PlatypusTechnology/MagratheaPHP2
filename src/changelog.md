@@ -1,3 +1,7 @@
+### 2.3.3
+2026-09
+	- **fix:** `MagratheaPHP::Version()` no longer returns the `version` file's trailing newline. The untrimmed `"2.3.2\n"` made `MinVersion()`'s `version_compare($magVersion, $version, ">=")` return `false` even when both versions were identical, since PHP compares the embedded `\n` as part of the string — every app hit "Magrathea version outdated" against its own exact version, with the `\n` invisible in the error message. Now strips trailing `\r\n` the same way `AppVersion()` already does
+
 ### 2.3.2
 2026-09
 	- **new:** `MagratheaApi::ReturnApiException()` gained a third exception-code→HTTP-status bucket for 5-digit codes (`10000`-`59999`), mapped as `intval($exCode / 100)` — giving `XXXYY` where `XXX` is the 3-digit HTTP status and `YY` is a 00-99 sub-code, i.e. 100 sub-codes per status instead of the existing 4-digit scheme's 10 (`4030`-`4039` etc). Purely additive: the new range sits above the existing `1000`-`9999` bucket with no overlap, so no 3-digit or 4-digit code changes meaning. Added because a consumer (guia.lol's API) exhausted its 403 sub-code bucket (4031-4038 in use, only 4039 free) and a 5-digit code previously fell through to the `else` branch, silently returning a misleading HTTP 500 instead of the intended status
