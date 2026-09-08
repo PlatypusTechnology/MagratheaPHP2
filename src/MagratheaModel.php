@@ -190,7 +190,7 @@ abstract class MagratheaModel{
 		if($this->dbValues[$this->dbPk] === "int") {
 			$sql->Where($this->dbTable.".".$this->dbPk." = ".$id);
 		} else {
-			$sql->Where($this->dbTable.".".$this->dbPk." = '".$id."'");
+			$sql->Where($this->dbTable.".".$this->dbPk." = '".Database::Instance()->Escape($id)."'");
 		}
 		if( $this->autoload && count($this->autoload) > 0 ) {
 			$tabs = array();

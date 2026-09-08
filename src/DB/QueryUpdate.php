@@ -78,7 +78,7 @@ class QueryUpdate extends Query {
 			array_push($setsArray, $field);
 		}
 		foreach ($this->fields as $field => $value) {
-			array_push($setsArray, $field." = '".$value."'");
+			array_push($setsArray, $field." = '".Database::Instance()->Escape($value)."'");
 		}
 		$this->sql .= implode(", ", $setsArray);
 		$sqlWhere = $this->where;

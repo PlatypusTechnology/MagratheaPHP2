@@ -148,6 +148,20 @@ $result = Database::Instance()->PrepareAndExecute(
 
 ---
 
+## Escaping
+
+### `Escape(mixed $value): string`
+Escapes a value for safe interpolation into a raw SQL string (wraps `mysqli::real_escape_string`, opening a connection if needed). This is what the query builder uses internally for `Query::Where(array)`/`WhereArray()`/`W()`, `QueryUpdate::Set()`/`SetArray()`, and `QueryInsert::Values()` — you only need to call it yourself when building a raw SQL fragment by hand.
+
+```php
+$safe = Database::Instance()->Escape($_GET["search"]);
+$sql = "SELECT * FROM products WHERE name LIKE '%$safe%'";
+```
+
+> Still prefer `PrepareAndExecute` over hand-built strings when possible.
+
+---
+
 ## Testing / Mock
 
 ### `Mock(): void`

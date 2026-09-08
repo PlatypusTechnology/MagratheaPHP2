@@ -152,7 +152,19 @@ class Database extends Singleton {
 	public function CloseConnectionThanks(){
 		$this->mysqli->close();
 	}
-	
+
+	/**
+	* Escapes a value for safe interpolation into a SQL string.
+	* @param 	mixed 		$value 		value to be escaped
+	* @return  	string 		escaped value
+	*/
+	public function Escape($value): string {
+		$this->OpenConnectionPlease();
+		$escaped = $this->mysqli->real_escape_string((string)$value);
+		$this->CloseConnectionThanks();
+		return $escaped;
+	}
+
 	/**
 	* Handle connection errors @todo
 	* @throws	MagratheaDbException

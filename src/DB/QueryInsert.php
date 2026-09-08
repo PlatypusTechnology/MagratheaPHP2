@@ -58,7 +58,8 @@ class QueryInsert extends Query {
 		$this->sql = "INSERT INTO `".$this->tables."`";
 		$this->sql .= " (`".implode('`, `', $this->fieldNames)."`) ";
 		$this->sql .= " VALUES ";
-		$this->sql .= " ('".implode('\', \'', $this->arrValues)."') ";
+		$escapedValues = array_map(fn($value) => Database::Instance()->Escape($value), $this->arrValues);
+		$this->sql .= " ('".implode('\', \'', $escapedValues)."') ";
 		return $this->sql;
 	}
 

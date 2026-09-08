@@ -238,7 +238,7 @@ $sql = "SELECT * FROM products WHERE name LIKE '%$safe%'";
 > Prefer `PrepareAndExecute` for user input when possible.
 
 ### `Query::BuildWhere(array $arr, string $condition): string`
-Static helper to build a WHERE clause string from an array.
+Static helper to build a WHERE clause string from an array. Values are escaped via `Database::Instance()->Escape()` before being quoted.
 
 ```php
 $where = Query::BuildWhere(["status" => "active", "role" => "admin"], "AND");
@@ -336,4 +336,5 @@ $total = Database::Instance()->QueryOne($query->CountSQL());
 
 - `Query` only builds SQL strings — it does **not** execute them. Use `Database::QueryAll()` etc. to run them.
 - When used with `MagratheaModelControl`, queries are built and executed together automatically.
-- `Query::Clean()` is a basic sanitizer. For full protection against SQL injection use `PrepareAndExecute`.
+- Values passed through `Where(array)`/`WhereArray()`/`W()`, `QueryUpdate::Set()`/`SetArray()`, and `QueryInsert::Values()` are escaped automatically via `Database::Escape()` before being quoted into the SQL string.
+- **Raw SQL strings are never escaped** — anything passed to `Where(string $whereSql)`, `SetRaw()`, `Table()`, `Order()`, `Group()`, `Join()`/`Inner()`/`Left()` is interpolated as-is. Never build these from untrusted input directly; use `Database::Instance()->Escape()` (or `Query::Clean()`) on any user-supplied fragment first, or use `PrepareAndExecute` instead.

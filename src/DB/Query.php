@@ -567,8 +567,8 @@ class Query {
 			if( !$first ){ $whereSql .= " ".$condition; $first = false; }
 			if($value === null)
 				$whereSql .= " `".$field."` is null ";
-			else 
-				$whereSql .= " `".$field."` = '".$value."' ";
+			else
+				$whereSql .= " `".$field."` = '".Database::Instance()->Escape($value)."' ";
 			$first = false;
 		}
 		return $whereSql;

@@ -1,3 +1,10 @@
+### 2.3.4
+2026-09
+	- **security fix:** SQL injection via unescaped values in `Query::BuildWhere()` and its siblings `QueryUpdate::SQL()` (`Set()`/`SetArray()`) and `QueryInsert::SQL()` (`Values()`) — all three interpolated raw string values directly into the SQL string with no escaping anywhere in the chain, so any string value passed through `Where(array)`/`WhereArray()`/`W()`, `Set()`/`SetArray()`, or `Values()` landed in raw SQL unescaped. `MagratheaModel::GetById()`'s non-`"int"`-typed-PK branch (e.g. `uuid` PKs) had the same root cause at its own call site. `Query::Clean()` existed as a sanitizer but was never actually called anywhere in the framework
+	- **new:** `Database::Escape(mixed $value): string` — wraps `mysqli::real_escape_string()` (opening a connection if needed), and is now the escaping used internally by all the call sites above. `DatabaseSimulate::Escape()` mirrors the same escaping rules without needing a live connection, for the `Database::Mock()` test path
+	- **note:** behavior-preserving for legitimate values (escaping a value with no special characters is a no-op) — regression tests added in `src/Tests/MagratheaTests/sqlInjectionTest.php`. Raw SQL strings (`Where(string $whereSql)`, `SetRaw()`, `Table()`, `Order()`, `Group()`, `Join()`/`Inner()`/`Left()`) are still never escaped and remain the caller's responsibility, same as before
+	- **note:** projects pinning `platypustechnology/magratheaphp2` to an exact version need their `composer.json` constraint bumped and `composer update` run separately — this fix does not propagate automatically
+
 ### 2.3.3
 2026-09
 	- **fix:** `MagratheaPHP::Version()` no longer returns the `version` file's trailing newline. The untrimmed `"2.3.2\n"` made `MinVersion()`'s `version_compare($magVersion, $version, ">=")` return `false` even when both versions were identical, since PHP compares the embedded `\n` as part of the string — every app hit "Magrathea version outdated" against its own exact version, with the `\n` invisible in the error message. Now strips trailing `\r\n` the same way `AppVersion()` already does

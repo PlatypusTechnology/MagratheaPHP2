@@ -120,7 +120,18 @@ class DatabaseSimulate extends Singleton {
 	public function CloseConnectionThanks(){
 		return $this->Simulate("closeConnection", "mysqli_close()", $this->connDetails);
 	}
-	
+
+	/**
+	* Escapes a value for safe interpolation into a SQL string.
+	* No live connection is used here, so this mirrors mysqli's real_escape_string
+	* escaping rules (backslash-escaping NUL, \n, \r, \, ', ", and Ctrl-Z) without needing one.
+	* @param 	mixed 		$value 		value to be escaped
+	* @return  	string 		escaped value
+	*/
+	public function Escape($value): string {
+		return addcslashes((string)$value, "\x00\n\r\\'\"\x1a");
+	}
+
 	/**
 	* Handle connection errors @todo
 	* @throws	MagratheaDbException
