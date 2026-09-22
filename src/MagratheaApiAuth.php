@@ -156,14 +156,10 @@ class MagratheaApiAuth extends MagratheaApiControl {
 	 * @throws MagratheaApiException if token is invalid or expired
 	 */
 	public function IsLogged(): bool {
-		try {
-			if($this->GetTokenInfo()) {
-				return $this->CheckExpire();
-			}
-			return false;
-		} catch(MagratheaApiException $ex) {
-			throw new MagratheaApiException($ex->getMessage(), 401);
+		if($this->GetTokenInfo()) {
+			return $this->CheckExpire();
 		}
+		return false;
 	}
 
 }

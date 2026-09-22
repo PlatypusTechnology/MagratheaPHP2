@@ -74,6 +74,15 @@ class AuthControl extends MagratheaApiControl {
 }
 ```
 
+A token that's *present but invalid* (expired, bad signature, malformed) doesn't reach the
+`if (!$payload)` check above — `GetTokenInfo()`/`jwtDecode()` throw `MagratheaApiException`
+directly: code `4010` for an expired token (with the expiry timestamp attached as
+`GetData()["expiredAt"]`), code `401` for anything else. `MagratheaApi::ExecuteUrl()`
+catches this automatically and returns the matching HTTP status, so most `ValidateToken()`
+implementations don't need to catch it themselves — only do so if you want to react
+differently to "expired" vs. "otherwise invalid" (e.g. a distinct "session expired" message
+in the client).
+
 ### Using the token payload in a controller
 
 ```php

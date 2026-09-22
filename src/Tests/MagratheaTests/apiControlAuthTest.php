@@ -16,8 +16,10 @@ namespace Magrathea2 {
 namespace {
 
 use Magrathea2\MagratheaApiControl;
+use Magrathea2\MagratheaApiAuth;
 use Magrathea2\Tests\TestsHelper;
 use Magrathea2\Config;
+use Magrathea2\Exceptions\MagratheaApiException;
 
 class CookieEnabledApiControl extends MagratheaApiControl {
 	protected ?string $cookieName = "test_session";
@@ -110,6 +112,80 @@ class MagratheaApiControlAuthTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEquals("test_session", $call["name"]);
 		$this->assertEquals("", $call["value"]);
 		$this->assertLessThan(time(), $call["options"]["expires"]);
+	}
+
+	public function testJwtDecodeThrowsMagratheaApiExceptionOnExpiredToken() {
+		TestsHelper::Print("Testing jwtDecode() translates an expired JWT into a MagratheaApiException(4010) instead of leaking Firebase\\JWT\\ExpiredException");
+		$control = new MagratheaApiControl();
+		$expiredAt = time() - 100;
+		$token = $control->jwtEncode(["id" => 42, "exp" => $expiredAt]);
+
+		try {
+			$control->jwtDecode($token);
+			$this->fail("Expected MagratheaApiException to be thrown");
+		} catch (MagratheaApiException $ex) {
+			$this->assertEquals(4010, $ex->getCode());
+			$this->assertEquals($expiredAt, $ex->GetData()["expiredAt"]);
+		}
+	}
+
+	public function testJwtDecodeThrowsMagratheaApiExceptionOnBadSignature() {
+		TestsHelper::Print("Testing jwtDecode() translates a bad-signature JWT into a MagratheaApiException(401) instead of leaking Firebase\\JWT\\SignatureInvalidException");
+		$control = new MagratheaApiControl();
+		$token = \Firebase\JWT\JWT::encode(["id" => 42, "exp" => time() + 3600], "a-totally-different-wrong-secret", "HS256");
+
+		try {
+			$control->jwtDecode($token);
+			$this->fail("Expected MagratheaApiException to be thrown");
+		} catch (MagratheaApiException $ex) {
+			$this->assertEquals(401, $ex->getCode());
+		}
+	}
+
+	public function testJwtDecodeThrowsMagratheaApiExceptionOnMalformedToken() {
+		TestsHelper::Print("Testing jwtDecode() translates a malformed token into a MagratheaApiException(401) instead of leaking \\UnexpectedValueException");
+		$control = new MagratheaApiControl();
+
+		try {
+			$control->jwtDecode("not-a-valid-jwt");
+			$this->fail("Expected MagratheaApiException to be thrown");
+		} catch (MagratheaApiException $ex) {
+			$this->assertEquals(401, $ex->getCode());
+		}
+	}
+
+	public function testIsLoggedPreservesExpiredTokenCode() {
+		TestsHelper::Print("Testing IsLogged() propagates CheckExpire()'s 4010 code instead of stomping it to 401");
+		$auth = new MagratheaApiAuth();
+		$token = $auth->jwtEncode(["id" => 42, "exp" => time() - 100]);
+		$_SERVER["HTTP_AUTHORIZATION"] = "Bearer ".$token;
+
+		try {
+			$auth->IsLogged();
+			$this->fail("Expected MagratheaApiException to be thrown");
+		} catch (MagratheaApiException $ex) {
+			$this->assertEquals(4010, $ex->getCode());
+		}
+	}
+
+	public function testIsLoggedPreservesInvalidTokenCode() {
+		TestsHelper::Print("Testing IsLogged() propagates jwtDecode()'s 401 code for an invalid token");
+		$auth = new MagratheaApiAuth();
+		$_SERVER["HTTP_AUTHORIZATION"] = "Bearer not-a-valid-jwt";
+
+		try {
+			$auth->IsLogged();
+			$this->fail("Expected MagratheaApiException to be thrown");
+		} catch (MagratheaApiException $ex) {
+			$this->assertEquals(401, $ex->getCode());
+		}
+	}
+
+	public function testIsLoggedReturnsFalseWhenNoTokenPresent() {
+		TestsHelper::Print("Testing IsLogged() still returns false (not an exception) when no Authorization header is present");
+		$auth = new MagratheaApiAuth();
+
+		$this->assertFalse($auth->IsLogged());
 	}
 
 }

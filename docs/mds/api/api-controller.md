@@ -136,6 +136,25 @@ $payload = $this->jwtDecode($token);
 echo $payload->user_id;
 ```
 
+Decode failures from the underlying `firebase/php-jwt` library are translated into
+`MagratheaApiException`, not left to propagate as raw library exceptions:
+- An expired token (`exp` in the past) throws code `4010`, with the token's `exp` claim
+  attached as `expiredAt` (`$ex->GetData()["expiredAt"]`) — the same code
+  `MagratheaApiAuth::CheckExpire()` uses for its own expiry check.
+- Anything else (bad signature, malformed segments, `nbf`/`iat` in the future, unsupported
+  algorithm) throws code `401`.
+
+```php
+try {
+    $payload = $this->jwtDecode($token);
+} catch (MagratheaApiException $ex) {
+    if ($ex->getCode() === 4010) {
+        $expiredAt = $ex->GetData()["expiredAt"] ?? null; // unix timestamp
+    }
+    throw $ex; // or handle inline
+}
+```
+
 ### `GetAuthorizationToken(): string`
 Extracts the Bearer token from the `Authorization` header. Throws `MagratheaApiException` if missing.
 
@@ -144,12 +163,15 @@ $token = $this->GetAuthorizationToken();
 ```
 
 ### `GetTokenInfo(string|false $token = false): object|false`
-Decodes the current request's Bearer token. Returns the payload object or `false` on failure.
+Decodes the current request's Bearer token. Returns `false` only when no token was found at
+all (no `Authorization` header, no matching cookie). If a token *was* found but fails to
+decode (expired, bad signature, malformed), it throws `MagratheaApiException` — via
+`jwtDecode()`, see above — rather than returning `false`.
 
 ```php
 $info = $this->GetTokenInfo();
 if (!$info) {
-    throw new MagratheaApiException("Invalid token", 401);
+    throw new MagratheaApiException("Invalid token", 401); // no token was present at all
 }
 ```
 

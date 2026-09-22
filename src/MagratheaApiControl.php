@@ -4,6 +4,9 @@ namespace Magrathea2;
 use Magrathea2\Exceptions\MagratheaApiException;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\Key;
+use \Firebase\JWT\ExpiredException;
+use \Firebase\JWT\SignatureInvalidException;
+use \Firebase\JWT\BeforeValidException;
 
 #######################################################################################
 ####
@@ -143,10 +146,22 @@ class MagratheaApiControl {
 	 * Decodes a JWT token.
 	 * @param string $token The JWT token to decode.
 	 * @return object The decoded payload as an object.
+	 * @throws MagratheaApiException Code 4010 if the token is expired; 401 for any other
+	 *                                decode failure (bad signature, malformed token, nbf/iat
+	 *                                in the future, unsupported algorithm, empty key).
 	 */
 	public function jwtDecode($token) {
 		if(!$this->GetSecret()) throw new MagratheaApiException("JWT key empty", 500);
-		return JWT::decode($token, new Key(strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType));
+		try {
+			return JWT::decode($token, new Key(strtr($this->GetSecret(), '-_', '+/'), $this->jwtEncodeType));
+		} catch (ExpiredException $ex) {
+			$apiEx = new MagratheaApiException("JWT token expired", 4010);
+			$payload = $ex->getPayload();
+			if(isset($payload->exp)) $apiEx->SetData(["expiredAt" => $payload->exp]);
+			throw $apiEx;
+		} catch (SignatureInvalidException | BeforeValidException | \UnexpectedValueException | \DomainException | \InvalidArgumentException $ex) {
+			throw new MagratheaApiException("Invalid JWT token: ".$ex->getMessage(), 401);
+		}
 	}
 	/**
 	 * Encodes a payload into a JWT token.

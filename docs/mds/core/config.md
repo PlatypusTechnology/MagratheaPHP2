@@ -196,6 +196,33 @@ Config::Instance()->SetConfig([
 
 ---
 
+## ConfigFile — arbitrary INI files
+
+**File:** `src/ConfigFile.php`
+**Namespace:** `Magrathea2`
+
+A lower-level, non-singleton counterpart to `Config`: it reads/writes *any* INI file you
+point it at (`SetPath()` + `SetFile()`), not just the app's `magrathea.conf`. It backs
+`Admin\ObjectManager`'s `magrathea_objects.conf` handling, among other internal uses.
+
+```php
+$fileControl = new \Magrathea2\ConfigFile();
+$fileControl->SetPath($dir)->SetFile("some.conf");
+$data = $fileControl->GetConfig(); // whole file, or "section" / "section/key" like Config::GetConfig()
+```
+
+`GetConfig()` throws `MagratheaConfigException` both when the file is missing and when it
+exists but fails to parse as valid INI (`parse_ini_file()` returning `false`) — the same
+exception type either way, so callers can't distinguish the two failure modes from the
+exception alone. An empty-but-valid file is not an error: it parses to `[]` and `GetConfig()`
+returns that empty array. `GetConfigSection($name)` has its own, separate re-parse of the
+file and does not benefit from this check — a malformed file there is indistinguishable
+from an empty one: both silently return `null` (its own `!$configSection` throw branch is
+unreachable, since the preceding `empty($configSection)` check already returns `null` for
+both cases).
+
+---
+
 ## Integration with MagratheaPHP
 
 `MagratheaPHP::Load()` calls `Config::Instance()->SetPath(...)->LoadFile()` internally.

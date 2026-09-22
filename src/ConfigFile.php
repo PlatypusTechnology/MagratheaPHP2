@@ -83,13 +83,17 @@ class ConfigFile {
 	*	Gets configuration
 	*	@param 	string 	$config_name 	Configuration to be got. If empty, returns all the configuration into the file
 	*									If an acceptable config name, returns its value
-	*	@return 	string|int|array	If `$config_name` is empty, returns all the configuration. Otherwise, 
+	*	@return 	string|int|array	If `$config_name` is empty, returns all the configuration. Otherwise,
 	*   @todo 	exception 704 on key does not exists
+	*	@throws 	MagratheaConfigException	if the config file exists but could not be parsed
 	*/
 	public function GetConfig($config_name="") {
 		if( is_null($this->configs) ){
 			$this->loadFile();
 			$this->configs = @parse_ini_file($this->GetPath(), true);
+			if( $this->configs === false ){
+				throw new MagratheaConfigException("There was an error trying to parse the config file - ".$this->GetPath());
+			}
 		}
 		if( empty($config_name) ){
 			return $this->configs;
