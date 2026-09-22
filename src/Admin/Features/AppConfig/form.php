@@ -17,7 +17,11 @@ if(!$crud["success"]) {
 		}
 	}
 } else {
-	MagratheaCache::Instance()->DeleteFile("settings");
+	try {
+		MagratheaCache::Instance()->DeleteFile("settings");
+	} catch(Exception $ex) {
+		AdminElements::Instance()->Alert("Config saved, but cache could not be cleared: ".$ex->getMessage(), 'warning');
+	}
 }
 
 if(!empty($crud["action"])) {
