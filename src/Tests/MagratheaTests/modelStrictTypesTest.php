@@ -12,11 +12,12 @@ class StrictTypesTestModel extends MagratheaModel {
 		"name" => "string",
 		"bio" => "text",
 		"price" => "float",
+		"amount" => "decimal",
 		"active" => "boolean",
 		"born_on" => "date",
 		"reference" => "uuid",
 	];
-	public $id, $name, $bio, $price, $active, $born_on, $reference, $created_at, $updated_at;
+	public $id, $name, $bio, $price, $amount, $active, $born_on, $reference, $created_at, $updated_at;
 	public $extra_joined_column;
 	public $strictTypes;
 	public function __construct(bool $strictTypes = false) {
@@ -40,6 +41,7 @@ class modelStrictTypesTest extends \PHPUnit\Framework\TestCase {
 			"name" => "Widget",
 			"bio" => "A widget.",
 			"price" => "9.99",
+			"amount" => "12345678901234567.89",
 			"active" => "1",
 			"born_on" => "2020-01-01",
 			"reference" => "0190f1a0-0000-7000-8000-000000000000",
@@ -106,5 +108,26 @@ class modelStrictTypesTest extends \PHPUnit\Framework\TestCase {
 		$this->expectException(MagratheaModelException::class);
 		$model = new StrictTypesTestModel(true);
 		$model->LoadObjectFromTableRow($this->row(["price" => "free"]));
+	}
+
+	function testDecimalKeepsExactStringInLooseMode() {
+		TestsHelper::Print("testing strictTypes=false leaves a decimal field as the exact string");
+		$model = new StrictTypesTestModel(false);
+		$model->LoadObjectFromTableRow($this->row());
+		$this->assertSame("12345678901234567.89", $model->amount);
+	}
+
+	function testDecimalKeepsExactStringInStrictMode() {
+		TestsHelper::Print("testing strictTypes=true never casts a decimal field (a float would round it)");
+		$model = new StrictTypesTestModel(true);
+		$model->LoadObjectFromTableRow($this->row());
+		$this->assertSame("12345678901234567.89", $model->amount);
+	}
+
+	function testStrictModeThrowsOnBadDecimal() {
+		TestsHelper::Print("testing strictTypes=true throws MagratheaModelException on a non-numeric decimal column");
+		$this->expectException(MagratheaModelException::class);
+		$model = new StrictTypesTestModel(true);
+		$model->LoadObjectFromTableRow($this->row(["amount" => "free"]));
 	}
 }

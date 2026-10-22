@@ -119,9 +119,12 @@ class CodeManager extends \Magrathea2\Singleton {
 				case "model-base": return $destinationPath."/Models/Base/".$fileName;
 				case "control": return $destinationPath."/Controls/".$fileName;
 				case "control-base": return $destinationPath."/Controls/Base/".$fileName;
+				// generated in the App\Controls namespace
+				case "admin":
+				case "api": return $destinationPath."/Controls/".$fileName;
 			}
 		}
-		return $destinationPath."/".$fileName."/default";
+		throw new MagratheaException("no destination for [".$fileData["type"]."] files in a [".$type."] structure");
 	}
 
 	/**

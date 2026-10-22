@@ -57,6 +57,8 @@ class AdminApi extends \Magrathea2\MagratheaApi {
 			} else {
 				return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 			}
+		} catch (\Error $err) {
+			return $this->ReturnInternalError($err);
 		}
 	}
 

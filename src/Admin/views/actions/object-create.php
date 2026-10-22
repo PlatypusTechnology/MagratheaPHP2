@@ -29,6 +29,13 @@ if($objManager->DoesObjectFileExists()) {
 	$alreadyExists = false;
 }
 
+// a select, not a checkbox: the whole $_POST is saved, and an absent key means "legacy object"
+if(!$alreadyExists) {
+	$strictTypes = "true";
+} else {
+	$strictTypes = empty($objectData["strict_types"]) ? "false" : "true";
+}
+
 $closeFn = @$_GET["onclose"];
 if($closeFn) {
 	$closeFn = $closeFn."(this);";
@@ -79,6 +86,10 @@ if (!hasColumn($fields, "updated_at")) {
 			<div class="col-6">
 				<?
 				$elements->Input("text", "object_name", "Object Name", $name);
+				$elements->Select("strict_types", "Strict types", [
+					"true" => "true (typed values on load)",
+					"false" => "false (values as the DB returns them)",
+				], $strictTypes);
 				?>
 			</div>
 		</div>

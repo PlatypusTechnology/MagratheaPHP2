@@ -227,15 +227,15 @@ Returns an array with internal state for debugging.
 
 ## Static Helpers
 
-### `Query::Clean(string $query): string`
-Escapes a value for safe SQL embedding (strips dangerous characters).
+### `Query::Clean(string $query): string` (deprecated)
+**Deprecated since 2.4.0: use `Database::Instance()->Escape()`.** Since 2.4.0 it just calls `Escape()`,
+so it needs a configured database. Before 2.4.0 it escaped quotes but **not backslashes**, so it didn't
+protect against SQL injection (`\'` came out as `\\'`, where the quote closes the string).
 
 ```php
-$safe = Query::Clean($_GET["search"]);
+$safe = Database::Instance()->Escape($_GET["search"]);
 $sql = "SELECT * FROM products WHERE name LIKE '%$safe%'";
 ```
-
-> Prefer `PrepareAndExecute` for user input when possible.
 
 ### `Query::BuildWhere(array $arr, string $condition): string`
 Static helper to build a WHERE clause string from an array. Values are escaped via `Database::Instance()->Escape()` before being quoted.
@@ -337,4 +337,4 @@ $total = Database::Instance()->QueryOne($query->CountSQL());
 - `Query` only builds SQL strings — it does **not** execute them. Use `Database::QueryAll()` etc. to run them.
 - When used with `MagratheaModelControl`, queries are built and executed together automatically.
 - Values passed through `Where(array)`/`WhereArray()`/`W()`, `QueryUpdate::Set()`/`SetArray()`, and `QueryInsert::Values()` are escaped automatically via `Database::Escape()` before being quoted into the SQL string.
-- **Raw SQL strings are never escaped** — anything passed to `Where(string $whereSql)`, `SetRaw()`, `Table()`, `Order()`, `Group()`, `Join()`/`Inner()`/`Left()` is interpolated as-is. Never build these from untrusted input directly; use `Database::Instance()->Escape()` (or `Query::Clean()`) on any user-supplied fragment first, or use `PrepareAndExecute` instead.
+- **Raw SQL strings are never escaped** — anything passed to `Where(string $whereSql)`, `SetRaw()`, `Table()`, `Order()`, `Group()`, `Join()`/`Inner()`/`Left()` is interpolated as-is. Never build these from untrusted input directly; use `Database::Instance()->Escape()` on any user-supplied fragment first, or, for a write, `PrepareAndExecute` (it never returns rows).

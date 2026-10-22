@@ -10,4 +10,5 @@ $vendorLoad = realpath($magratheaRoot."/vendor/autoload.php")   // standalone ch
 
 require($vendorLoad);
 
-Debugger::Instance()->SetType(Debugger::DEV);
+// DEV prints every exception, caught ones included: tests that need DEV set it themselves
+Debugger::Instance()->SetType(Debugger::NONE);

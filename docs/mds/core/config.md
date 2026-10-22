@@ -15,18 +15,23 @@ there is no section-inheritance or merging syntax.
 Place your config at:
 
 ```
-<appRoot>/config/magrathea.conf
+<AppPath's parent>/configs/magrathea.conf
 ```
 
+`MagratheaPHP::Load()` points `Config` at `MagratheaPHP::GetConfigRoot()`: the `configs`
+folder (plural) one level **above** `AppPath()`. With `AppPath("/var/www/my-app/app")`, the
+file is `/var/www/my-app/configs/magrathea.conf`.
+
 `[general]` holds cross-environment settings, including `use_environment` (which section
-is active by default when `SetEnvironment()` hasn't been called explicitly). Every other
-section is a flat, self-contained environment — nothing is inherited or merged between
-sections.
+is active by default when `SetEnvironment()` hasn't been called explicitly). It must name a
+section that exists, or every `Get()` throws `MagratheaConfigException` ("Could not find
+environment"). `MagratheaPHP`'s `Dev()`/`Prod()` don't change it: they only set the Debugger
+mode. Every other section is a flat, self-contained environment — nothing is inherited or
+merged between sections.
 
 ```ini
 [general]
-	use_environment = "default"
-	time_zone = "America/Sao_Paulo"
+	use_environment = "dev"
 
 [dev]
 	db_host = "localhost"
@@ -34,6 +39,7 @@ sections.
 	db_user = "root"
 	db_pass = "secret"
 	db_port = "3306"
+	timezone = "America/Sao_Paulo"
 	jwt_key = "a-very-long-random-string-here"
 
 [production]
@@ -42,8 +48,25 @@ sections.
 	db_user = "app_user"
 	db_pass = "$=DB_PASSWORD"
 	db_port = "3306"
+	timezone = "America/Sao_Paulo"
 	jwt_key = "$=JWT_SECRET"
 ```
+
+### Timezone
+
+`timezone` goes in each **environment** section (a copy in `[general]` is never read). It's a PHP
+timezone identifier (`America/Sao_Paulo`, `UTC`...):
+
+- `MagratheaPHP::Load()` passes it to `date_default_timezone_set()`, so `now()` and `date()` use it.
+  Without it, PHP uses php.ini's default (often UTC). An invalid name is ignored the same way: PHP
+  stays on its default.
+- With it, `MagratheaPHP::Connect()` also syncs MySQL's session `time_zone` to PHP's on every
+  connection, so `NOW()` and `CURRENT_TIMESTAMP` defaults agree with `now()`. Turn that off with
+  `db_sync_timezone = false` in the same section (see the Database page).
+
+`time_zone` (with an underscore) is **not** a config key: older samples and docs used it, and it was
+always ignored. The admin's Server page and the Bootstrap wizard's config step run a timezone check
+(`TimezoneCheck`) that flags it, along with invalid names and PHP/MySQL clocks out of sync.
 
 ### Environment variable interpolation
 
@@ -225,8 +248,8 @@ both cases).
 
 ## Integration with MagratheaPHP
 
-`MagratheaPHP::Load()` calls `Config::Instance()->SetPath(...)->LoadFile()` internally.
-You don't normally need to call `Config` directly during bootstrap.
+`MagratheaPHP::Load()` calls `Config::Instance()->SetPath(...)->LoadFile()` internally, and sets
+PHP's timezone from `timezone`. You don't normally need to call `Config` directly during bootstrap.
 
 ---
 

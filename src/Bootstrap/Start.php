@@ -3,6 +3,7 @@
 namespace Magrathea2\Bootstrap;
 use Exception;
 use Magrathea2\Admin\AdminDatabase;
+use Magrathea2\Config;
 use Magrathea2\Debugger;
 use Magrathea2\Logger;
 use Magrathea2\MagratheaPHP;
@@ -26,15 +27,76 @@ class Start extends \Magrathea2\Singleton {
 	private $structure = [];
 
 	/**
+	 * Actions that can be called through `?action=` (files in `views/actions/`)
+	 */
+	const ACTIONS = [
+		"database-test",
+		"install-admin",
+		"install-admin-preview",
+		"run-query",
+		"save-config",
+		"show-tables",
+		"user-reset",
+		"users-get",
+	];
+
+	/**
 	* Shows Bootstrap UI
+	* Only available when the active environment has `bootstrap_unlocked = true`;
+	* otherwise, a "locked" page is shown with a 403 status.
 	* @return 	void
 	*/
 	public function Load() {
+		if (!$this->IsUnlocked()) {
+			http_response_code(403);
+			$environment = $this->GetEnvironmentName();
+			include("views/locked.php");
+			return;
+		}
 		Debugger::Instance()->SetDev();
 		if (!$this->appPath) {
 			$this->appPath = MagratheaPHP::Instance()->appRoot;
 		}
 		include("views/index.php");
+	}
+
+	/**
+	 * Checks if bootstrap is unlocked:
+	 * the active environment section must have `bootstrap_unlocked = true`.
+	 * A missing key, a false value or an unreadable config means locked.
+	 * @return bool		is bootstrap unlocked?
+	 */
+	public function IsUnlocked(): bool {
+		try {
+			$unlocked = Config::Instance()->Get("bootstrap_unlocked");
+		} catch(\Exception $ex) {
+			return false;
+		}
+		return filter_var($unlocked, FILTER_VALIDATE_BOOLEAN);
+	}
+
+	/**
+	 * Gets the active environment's name, or null if config can't be read
+	 * @return string|null	environment name
+	 */
+	private function GetEnvironmentName(): ?string {
+		try {
+			return Config::Instance()->GetEnvironment();
+		} catch(\Throwable $ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Gets the file for an action, if it is a valid one
+	 * @param mixed $action		action name (from `$_GET["action"]`)
+	 * @return string|null		file path, or null for an unknown action
+	 */
+	public function GetActionFile($action): ?string {
+		if (!is_string($action) || !in_array($action, self::ACTIONS, true)) {
+			return null;
+		}
+		return __DIR__."/views/actions/".$action.".php";
 	}
 
 	/**

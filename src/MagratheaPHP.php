@@ -115,8 +115,8 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Sets the project's root namespace, used to scope autoloader errors.
-	 * Only classes within this namespace will trigger a MagratheaException when not found.
+	 * Sets the project's root namespace, used to scope autoloader hints.
+	 * In DEV, a class within this namespace that isn't found adds a "Could not find class" debug item.
 	 * @param string $namespace Root namespace of the project (e.g. "guialol").
 	 * @return MagratheaPHP
 	 */
@@ -201,6 +201,8 @@ class MagratheaPHP extends Singleton {
 
 	/**
 	 * Connects to the database using credentials from the configuration.
+	 * With a `timezone` in the config, the connection also sets MySQL's session time_zone to PHP's,
+	 * unless `db_sync_timezone = false`.
 	 * @return MagratheaPHP
 	 */
 	public function Connect() {
@@ -210,9 +212,11 @@ class MagratheaPHP extends Singleton {
 			$name = $config->Get("db_name");
 			$user = $config->Get("db_user");
 			$pass = $config->Get("db_pass");
-	
+			$port = $config->Get("db_port");
+
 			$db = Database::Instance();
-			$db->SetConnection($host, $name, $user, $pass);
+			$db->SetConnection($host, $name, $user, $pass, $port);
+			$db->SetTimezoneSync(TimezoneCheck::SyncState() === TimezoneCheck::SYNC_ON);
 			return $this;
 		} catch(Exception $ex) {
 			throw $ex;
@@ -239,13 +243,20 @@ class MagratheaPHP extends Singleton {
 	}
 
 	/**
-	 * Includes the Composer autoloader.
+	 * Includes the Composer autoloader: the framework's own `vendor/autoload.php` in a standalone checkout,
+	 * the project's when the framework is installed as a dependency.
+	 * Redundant: this class can only be loaded after that autoloader is registered.
+	 * @deprecated 2.4.0 	require vendor/autoload.php directly, will be removed in 3.0
+	 * @throws MagratheaException	when no autoload.php is found
 	 * @return void
 	 */
 	public static function LoadVendor(): void {
-		$vendorPath = realpath(__DIR__."/../../..");
-		$vendorLoad = $vendorPath."/autoload.php";
-		require($vendorLoad);
+		$vendorLoad = realpath(__DIR__."/../vendor/autoload.php")	// standalone checkout
+			?: realpath(__DIR__."/../../../autoload.php");			// installed as a dependency
+		if(!$vendorLoad) {
+			throw new MagratheaException("Composer's autoload.php not found");
+		}
+		require_once($vendorLoad);
 	}
 
 	/**

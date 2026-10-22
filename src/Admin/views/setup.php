@@ -41,7 +41,12 @@ $title = AdminManager::Instance()->GetTitle();
 					if ($post && @$post["action"] === "insert_user") {
 						$user = $post["admin_login"];
 						$pass = $post["admin_password"];
-						if(empty($user) || empty($pass)) {
+						if(!$admin->CanCreateFirstUser()) {
+							?>
+							<div class="error">Admin is already set up. Reload for Login Page.</div>
+							<?
+							$showForm = false;
+						} else if(empty($user) || empty($pass)) {
 							?>
 							<div class="error">Email and password cannot be empty</div>
 							<?

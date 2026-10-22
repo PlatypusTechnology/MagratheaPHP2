@@ -1,6 +1,5 @@
 [general]
 	use_environment = "dev"
-	time_zone = "America/Sao_Paulo"
 
 [dev]
 	db_host = "mag_sql"
@@ -10,9 +9,10 @@
 	logs_path = "/var/www/logs"
 	backups_path = "/var/www/backups"
 	cache_path = "/var/www/cache"
-	time_zone = "America/Sao_Paulo"
+	timezone = "America/Sao_Paulo"
 	app_url = "http://magrathea.localhost.com:8080"
 	jwt_key = ""
+	bootstrap_unlocked = true
 
 [production]
 	db_host = "mysql.platypusweb.com.br"

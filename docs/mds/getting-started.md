@@ -18,43 +18,35 @@ composer install
 
 ## Configuration File
 
-Create a `magrathea.conf` file (INI format) in your config directory:
+Create `configs/magrathea.conf` (INI format) one level **above** the folder you pass to
+`AppPath()`: with `AppPath(__DIR__ . "/app")`, that's `configs/` next to `app/`.
+
+Sections are **environments**, not topics. `[general]` says which one is active; each environment
+section has the full, flat set of keys (nothing is inherited between sections, and there's no
+`[section:environment]` syntax):
 
 ```ini
-[database]
-host     = localhost
-database = my_app_db
-username = root
-password = secret
-port     = 3306
+[general]
+	use_environment = "dev"
 
-[app]
-name    = My App
-version = 1.0.0
+[dev]
+	db_host = "localhost"
+	db_name = "my_app_db"
+	db_user = "root"
+	db_pass = "secret"
+	db_port = "3306"
+	timezone = "America/Sao_Paulo"
 
-[logs]
-path = /var/log/my_app/
+[production]
+	db_host = "db.myserver.com"
+	db_name = "my_app_prod"
+	db_user = "app_user"
+	db_pass = "$=DB_PASSWORD"
+	timezone = "America/Sao_Paulo"
 ```
 
-### Multi-environment config
-
-Append environment-specific sections using the format `[section:environment]`:
-
-```ini
-[database]
-host     = localhost
-database = my_app_db
-username = root
-password = secret
-
-[database:production]
-host     = db.myserver.com
-database = my_app_prod
-username = app_user
-password = $=DB_PASSWORD
-```
-
-The `$=VAR_NAME` syntax reads from environment variables.
+The `$=VAR_NAME` syntax reads from environment variables. `use_environment` must name a section
+that exists. See the [Configuration reference](core/config.md) for every key.
 
 ---
 
@@ -68,13 +60,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Magrathea2\MagratheaPHP;
 
-MagratheaPHP::LoadVendor(); // load Magrathea's own autoloader
-
 $app = MagratheaPHP::Instance()
-    ->AppPath(__DIR__)          // set app root
-    ->Dev()                     // enable dev mode (can be Prod() for production)
+    ->AppPath(__DIR__ . "/app") // app root; the config is read from ./configs/
+    ->Dev()                     // debug mode only (Prod() on servers); the environment comes from the config
     ->Load()                    // load configuration
-    ->Connect();                // connect to the database
+    ->Connect();                // DB credentials (the connection opens on the first query)
 ```
 
 ---
@@ -88,10 +78,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Magrathea2\MagratheaPHP;
 use Magrathea2\MagratheaApi;
 
-MagratheaPHP::LoadVendor();
-
 $app = MagratheaPHP::Instance()
-    ->AppPath(__DIR__)
+    ->AppPath(__DIR__ . "/app")
     ->Prod()
     ->Load()
     ->Connect();
@@ -196,6 +184,41 @@ $app->Debug();
 // Production — suppresses errors, logs to file
 $app->Prod();
 ```
+
+---
+
+## Setup Wizard (Bootstrap)
+
+`Magrathea2\Bootstrap\Start::Instance()->Load()` renders a setup wizard: folder structure, config
+editing, DB connection test, a raw SQL runner, admin install and admin password reset. That's a
+remote control for your server, so it's **locked by default** (since 2.4.0).
+
+It only opens when the **active environment's section** has the flag:
+
+```ini
+[dev]
+	db_host = "localhost"
+	; ...
+	bootstrap_unlocked = true
+```
+
+- Only the active environment counts. The flag in `[general]` or in another environment's section
+  does nothing, so a `[dev]` flag never unlocks `[production]` in the same file.
+- `true`, `1`, `on` and `yes` (quoted or not) unlock it. Anything else, or no flag at all, means
+  locked.
+- Locked, `Load()` answers **403** with a page that says "Bootstrap is locked" and the active
+  environment's name, nothing else.
+- The wizard can't unlock itself: the check runs before any step or action.
+- Only known actions can be called (`?action=run-query`, `save-config`, …). Any other `action`
+  value gets a **404**.
+
+The sample config (`src/Bootstrap/docs/magrathea.conf.sample`) has `bootstrap_unlocked = true` in
+`[dev]` only. Keep it out of production. If you really need the wizard there (e.g. to reset a
+locked-out admin password with `user-reset`), add the flag, do what you need, and remove it.
+
+**Known gap:** `Start::PreLoad()` copies the sample when there's no config file at all, and the
+copy comes up as `dev` + unlocked. It has no real DB credentials at that point, so the SQL runner
+has nothing to reach. Still, don't leave a wizard entry file deployed.
 
 ---
 

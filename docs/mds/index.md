@@ -16,7 +16,7 @@ MagratheaPHP2 is a lightweight, opinionated PHP framework designed around rapid 
 - An **ORM** (Model + ModelControl) for MySQL via MySQLi
 - A **fluent Query Builder** (SELECT, INSERT, UPDATE, DELETE)
 - A **RESTful API framework** with CORS, JWT, and caching out of the box
-- An **Admin Panel** system with pluggable features (CRUD, file editor, user management, etc.)
+- An **Admin Panel** system with pluggable features (CRUD, user management, an opt-in file editor, etc.)
 - **INI-based configuration** with multi-environment support
 - **File-based logging** and flexible debugging
 - **Email** (native + SMTP via PHPMailer)
@@ -34,6 +34,7 @@ MagratheaPHP2 is a lightweight, opinionated PHP framework designed around rapid 
 |------|-------------|
 | [MagratheaPHP](core/magrathea-php.md) | Main entry point, app bootstrap |
 | [Config](core/config.md) | INI-based configuration |
+| [TimezoneCheck](core/timezone.md) | PHP/MySQL timezone sync and troubleshooter |
 | [Singleton](core/singleton.md) | Base singleton pattern |
 | [MagratheaHelper](core/helper.md) | Utility / helper functions |
 | [Global Functions](core/global-functions.md) | Procedural helpers & autoloader |
@@ -80,11 +81,16 @@ MagratheaPHP2 is a lightweight, opinionated PHP framework designed around rapid 
 | [Design Patterns](advanced/patterns.md) | Patterns used across the framework |
 | [Testing](advanced/testing.md) | Built-in test utilities |
 
+### Migrations
+| File | Description |
+|------|-------------|
+| [2.4.0](migrations/migrate-2.4.0.md) | Upgrading a project from 2.3.5 to 2.4.0 |
+
 ---
 
 ## Minimum Requirements
 
-- PHP 8.0+
+- PHP 8.1+
 - MySQL / MariaDB
 - Composer
 

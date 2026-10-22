@@ -52,7 +52,7 @@ function switchCacheView(el) {
 }
 
 function clearCache() {
-	callFeature(cachefeatureId, "ClearCache")
+	callFeature(cachefeatureId, "ClearCache", "POST")
 		.then(rs => {
 			showOn(cacheRsContainer, rs);
 			reloadFiles();

@@ -34,24 +34,24 @@ class ProductApiControl extends MagratheaApiControl {
         return ProductControl::GetAll();
     }
 
-    public function Read(array $params = []): object|array {
+    public function Read($params = []): object|array {
         $id = $params["id"] ?? null;
         $product = ProductControl::GetRowWhere(["id" => $id]);
         if (!$product) throw new MagratheaApiException("Product not found", 404);
         return $product->ToJson();
     }
 
-    public function Create(array $data = []): object {
+    public function Create($data = []): object {
         $post = $this->GetPost();
         // validate, create, return
     }
 
-    public function Update(array $params): object {
+    public function Update($params): object {
         $put = $this->GetPut();
         // find, update, return
     }
 
-    public function Delete(array $params = []): bool {
+    public function Delete($params = []): bool {
         $id = $params["id"] ?? null;
         $product = ProductControl::GetRowWhere(["id" => $id]);
         if (!$product) throw new MagratheaApiException("Not found", 404);
@@ -156,7 +156,7 @@ try {
 ```
 
 ### `GetAuthorizationToken(): string`
-Extracts the Bearer token from the `Authorization` header. Throws `MagratheaApiException` if missing.
+Extracts the Bearer token from the `Authorization` header. Throws `MagratheaApiException` if missing (code 400, HTTP 401 via `SetStatus(401)`; before 2.4.0 the status was ignored and the response was HTTP 400).
 
 ```php
 $token = $this->GetAuthorizationToken();
@@ -208,15 +208,25 @@ These are meant to be **overridden** in subclasses. By default they throw `Excep
 
 ## Caching Methods
 
+See [MagratheaCache](../utilities/cache.md) for how the cache works.
+
 ### `Cache(string $name, string|null $data = null): void`
-Store a response in the file cache under the given name.
+Call it at the start of an action. On a cache hit it outputs the cached response and ends the script;
+on a miss it returns, and the action's successful response is saved under that key. `$data` is an
+optional key suffix (an id, a page number), **not** the response: the key becomes `"{$name}-{$data}"`.
+
+In DEV (`IsDev()`) it also logs `adding cache for [name/data] from (<uri> -><action>)` to the `Logger`;
+other environments don't log (before 2.4.0 it logged on every call, everywhere).
 
 ```php
 public function List(): array {
-    $this->Cache("products_list");
-    $result = ProductControl::GetAll();
-    $this->Cache("products_list", json_encode($result));
-    return $result;
+    $this->Cache("products_list");          // hit: served from disk, the code below never runs
+    return array_map(fn($p) => $p->ToArray(), ProductControl::GetAll());
+}
+
+public function View(array $params = []): array {
+    $this->Cache("product", $params["id"]); // one file per product: product-<id>.json
+    return (new Product($params["id"]))->ToArray();
 }
 ```
 
@@ -224,7 +234,7 @@ public function List(): array {
 Clear a specific cache entry.
 
 ```php
-public function Create(array $data = []): object {
+public function Create($data = []): object {
     // ... create product ...
     $this->CacheClear("products_list");
     return $product->ToJson();
@@ -272,7 +282,7 @@ class AuthApiControl extends MagratheaApiControl {
         $info  = $this->GetTokenInfo($token);
 
         if (!$info || !isset($info->user_id)) {
-            throw new MagratheaApiException("Unauthorized", 0, null, true);
+            throw new MagratheaApiException("Unauthorized", 401); // code 0 would be HTTP 500
         }
 
         // Store for later use in other methods

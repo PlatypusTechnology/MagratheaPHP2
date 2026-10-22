@@ -9,25 +9,21 @@ use Magrathea2\Exceptions\MagratheaException;
 * Class for Magrathea Api Errors
 */
 class MagratheaApiException extends MagratheaException {
-	public $status;
+	/** @var int|null HTTP status set with `SetStatus()`; null: `MagratheaApi` derives it from the code */
+	public $status = null;
 	public $code = 0;
 	public function __construct($message = "Magrathea Api Error", $code=0, $data=null, $kill=true, ?\Exception $previous = null) {
 		$this->code = $code;
-		if($kill) {
-			$this->killerError = true;
-			$this->status = 500;
-		} else {
-			$this->killerError = false;
-			$this->status = 200;
-		}
+		$this->killerError = (bool) $kill;
 		if($data) {
 			$this->_data = $data;
 		}
 		parent::__construct($message, $code, $previous);
 	}
 	/**
-	 * Set status
-	 * @param 	int		$status 	status (default: 500 for killer error; 200 for fail)
+	 * Sets the HTTP status of the error response, instead of the one derived from the code.
+	 * Only 400-599 is used; anything else falls back to the code.
+	 * @param 	int		$status 	HTTP status
 	 * @return MagratheaApiException
 	 */
 	public function SetStatus($st): MagratheaApiException {

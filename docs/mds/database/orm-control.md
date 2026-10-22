@@ -210,7 +210,9 @@ $results = ProductControl::GetMultipleObjects(
 Returns the model class name.
 
 ### `ShowAll(): void`
-Dumps all records to output (debug helper).
+Dumps all records to output as an HTML table (values escaped). Debug helper.
+
+> **Deprecated since 2.4.0**, to be removed in 3.0. Don't build anything on it.
 
 ---
 
@@ -244,10 +246,11 @@ echo json_encode([
 ## Full Example: Search & Filter
 
 ```php
+use Magrathea2\DB\Database;
 use Magrathea2\DB\Query;
 use App\Controls\ProductControl;
 
-$search = Query::Clean($_GET["q"] ?? "");
+$search = Database::Instance()->Escape($_GET["q"] ?? "");
 $minPrice = (float)($_GET["min"] ?? 0);
 
 $query = Query::Select()

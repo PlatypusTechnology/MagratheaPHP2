@@ -520,7 +520,12 @@ class ObjectManager extends \Magrathea2\Singleton {
 				$currentType = (strtolower($fieldType) == "date") ? "date" : "datetime";
 				break;
 			case "flo":
+			case "dou":
 				$currentType = "float";
+				break;
+			case "dec":
+				// exact numbers (money): kept as strings, never cast to float
+				$currentType = "decimal";
 				break;
 			default:
 				$currentType = "unknown";
@@ -534,7 +539,7 @@ class ObjectManager extends \Magrathea2\Singleton {
 	 * @return array
 	 */
 	public function GetTypesArr(): array {
-		$types = array("int", "boolean", "string", "text", "float", "datetime", "date");
+		$types = array("int", "boolean", "string", "text", "float", "decimal", "datetime", "date");
 		return array_combine($types, $types);
 	}
 
@@ -573,6 +578,9 @@ class ObjectManager extends \Magrathea2\Singleton {
 				return "text DEFAULT NULL";
 			case "float":
 				return "float DEFAULT NULL";
+			case "decimal":
+				// (10,2) is just a starting point
+				return "decimal(10,2) DEFAULT NULL /* adjust precision */";
 			case "datetime":
 				return "datetime NULL";
 			case "date":

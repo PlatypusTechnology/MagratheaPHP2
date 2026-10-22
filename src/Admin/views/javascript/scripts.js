@@ -160,7 +160,12 @@ function callAction(action, method="GET", data=null) {
 
 function callApi(object, fn, params=null) {
 	let url = getCurrentPage()+"?magrathea_api="+ucfirst(object)+"&magrathea_api_method="+ucfirst(fn);
-	return ajax("POST", url, params);
+	// API errors come with a 4xx/5xx status: callers read them from rs.success, so resolve them
+	return ajax("POST", url, params)
+		.catch(err => {
+			if(err && err.data && err.data.success === false) return err.data;
+			throw err;
+		});
 }
 
 function callFeature(feature, action=null, method="GET", data=null) {

@@ -3,25 +3,30 @@
 **Files:** `src/_Functions.php`, `src/_FunctionsDebug.php`
 **Namespace:** Global (no namespace)
 
-These files define procedural helper functions available globally (without `use` or namespace prefix) and register the framework's custom PSR-4 autoloader.
+These files define procedural helper functions available globally (without `use` or namespace prefix) and register the framework's custom autoloader (not PSR-4: it goes by class name, not by namespace path).
 
 ---
 
 ## Autoloader
 
-MagratheaPHP2 uses a custom `spl_autoload_register` callback. After you call `MagratheaPHP::LoadVendor()`, the autoloader scans all registered code folders to resolve class names.
+MagratheaPHP2 uses a custom `spl_autoload_register` callback. It's registered as soon as `vendor/autoload.php` is required (Composer loads `src/_Functions.php` as a `files` autoload), and it scans all registered code folders to resolve class names.
 
 ### How it works
 
-1. `MagratheaPHP::LoadVendor()` registers the autoloader.
-2. When PHP encounters an unknown class `App\Models\User`, the autoloader splits on `\\`, removes the root namespace if present, and looks for `User.php` inside each registered folder.
-3. Folders are registered with `AddCodeFolder()` (relative to app root) or `AddRootCodeFolder()` (absolute paths).
+1. Requiring `vendor/autoload.php` registers the autoloader (`src/_Functions.php`).
+2. When PHP encounters an unknown class `App\Models\User`, the autoloader takes the class's basename (`User`) and looks for `User.php` in **every** registered folder. The namespace doesn't choose the folder.
+3. One match: that file is loaded.
+4. Several matches (two `User.php` in different folders): it loads the one whose `namespace` declaration matches the requested class's namespace (`App\Models`, case-insensitive; a class with no namespace matches a file with no `namespace`). If none matches, the first folder's file is loaded, as before 2.4.0. In DEV, a debug item lists the files and the one loaded. The same file reached through two folder entries (e.g. `AddFeature("User")` plus `AddRootCodeFolder("features/User")`) counts once.
+5. No match: the autoloader returns without loading anything (since 2.4.0; it threw `MagratheaException` for app classes before), so `class_exists()` returns `false`, autoloaders registered after it still run, and `new X()` fails with PHP's own `Error: Class "X" not found`. In DEV, a class within the app namespace (`MagratheaPHP::AppNamespace()`) adds a "Could not find class [...]. Are the code folders correct?" debug item listing the folders.
+6. Folders are registered with `AddCodeFolder()` (paths used as given: a relative one resolves against the current working directory, not the app root), `AddRootCodeFolder()` (relative to the app root) or `AddFeature()` (`<appRoot>/features/<Name>` and its `Base`).
 
 ```php
 MagratheaPHP::Instance()
     ->AppPath(__DIR__)
-    ->AddCodeFolder("models", "controls", "services", "api");
+    ->AddRootCodeFolder("models", "controls", "services", "api"); // <appRoot>/models, ...
 ```
+
+Keep class basenames unique across code folders anyway: every lookup of a duplicated name reads the candidate files, and the DEV warning shows up on every request that loads it.
 
 ---
 
@@ -39,16 +44,12 @@ Useful for setting `created_at` / `updated_at` timestamps without importing a cl
 ---
 
 ### `arrToStr(array $array): string`
-Converts an array to a human-readable formatted string (uses `print_r` internally, wrapped for string return).
+Converts an array to a one-line string of `[key] = "value"` pairs, separated by `, `. Values are cast to string, so nested arrays print as `Array`.
 
 ```php
 $arr = ["a" => 1, "b" => 2];
 echo arrToStr($arr);
-// Array
-// (
-//     [a] => 1
-//     [b] => 2
-// )
+// [a] = "1", [b] = "2"
 ```
 
 ---
@@ -84,12 +85,21 @@ echo getClassNameOfClass("Magrathea2\\DB\\Database"); // "Database"
 
 ---
 
+### `fileDeclaresNamespace(string $file, string $namespace): bool`
+Returns `true` if the PHP file has a `namespace` declaration equal to `$namespace` (case-insensitive; any of them, if the file has several blocks). `""` means the global namespace: it matches a file with no `namespace` declaration. Unreadable files return `false`. Used by the autoloader to choose between files with the same name.
+
+```php
+fileDeclaresNamespace(__DIR__."/models/User.php", "App\\Models"); // true
+```
+
+---
+
 ### `magrathea_getTypesArr(): array`
 Returns the array of data types supported by the ORM field system:
 
 ```php
 $types = magrathea_getTypesArr();
-// ["int", "boolean", "string", "text", "float", "datetime", "date"]
+// ["int", "boolean", "string", "text", "float", "decimal", "datetime", "date"]
 ```
 
 Used internally by `MagratheaModel` when validating `$dbValues` field type declarations.

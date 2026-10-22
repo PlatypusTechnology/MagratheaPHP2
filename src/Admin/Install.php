@@ -122,7 +122,7 @@ class Install {
 	public function GetAdminCode() {
 		return <<<EOD
 		<?php
-		require "../vendor/autoload.php";
+		require __DIR__."/../vendor/autoload.php";
 
 		Magrathea2\MagratheaPHP::Instance()->AppPath(realpath(dirname(__FILE__)))->Load();
 		Magrathea2\Admin\AdminManager::Instance()->StartDefault();

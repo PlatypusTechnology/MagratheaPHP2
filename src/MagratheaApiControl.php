@@ -423,12 +423,15 @@ class MagratheaApiControl {
 
 	/**
 	 * Caches the current request's response.
+	 * Logs the call only in DEV: it runs on every request, cache hits included.
 	 * @param string $name Cache key/name.
 	 * @param string|null $data Specific cache identifier to be appended to the name.
 	 */
 	public function Cache($name, $data=null) {
-		$caller = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT|DEBUG_BACKTRACE_IGNORE_ARGS,2)[1]['function'];
-		Logger::Instance()->Log("adding cache for [".$name."/".$data."] from (".@$_REQUEST["REQUEST_URI"]." ->".$caller.")");
+		if(MagratheaPHP::Instance()->IsDev()) {
+			$caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
+			Logger::Instance()->Log("adding cache for [".$name."/".$data."] from (".@$_SERVER["REQUEST_URI"]." ->".$caller.")");
+		}
 		MagratheaCache::Instance()
 			->Type("json")
 			->Cache($name, $data);

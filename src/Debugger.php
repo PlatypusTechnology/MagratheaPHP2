@@ -3,6 +3,8 @@
 namespace Magrathea2;
 
 use Magrathea2\Errors\ErrorManager;
+use Magrathea2\Exceptions\MagratheaDBException;
+use Magrathea2\Exceptions\MagratheaException;
 
 #######################################################################################
 ####
@@ -36,11 +38,13 @@ class Debugger extends Singleton {
 	private $debugType = self::LOG;
 	private $queries = false;
 	private $oldDebugType = self::NONE;
+	private $captureDepth = 0;
+	private $captured = array();
 
 	/**
 	* Sets the debugger method
 	* It can be: *DEV*, *DEBUG*, *LOG*, *NONE* =>
-	* **Debugger::DEV** = Will print the debugs as it appears in the code
+	* **Debugger::DEV** = Will print the debugs as it appears in the code (in an API call, they go to the response's `_debug`)
 	* **Debugger::DEBUG** = Will store all the debugs and print it later
 	* **Debugger::LOG** = Will log queries and other debugs in the code
 	* **Debugger::ANALYSIS** = Will return the error with the API
@@ -167,9 +171,14 @@ class Debugger extends Singleton {
 				}
 				return;
 			case self::DEV:
-				echo "<pre>".$debug."</pre>";
-			case self::DEBUG:
+				if($this->IsCapturing()) $this->Capture($debug);
+				else echo "<pre>".$debug."</pre>";
 				array_push($this->debugItems, $debug);
+				break;
+			case self::DEBUG:
+				// stored items are printed at the end of the request, after the JSON: an API call collects them instead
+				if($this->IsCapturing()) $this->Capture($debug);
+				else array_push($this->debugItems, $debug);
 				break;
 		}
 	}
@@ -185,9 +194,13 @@ class Debugger extends Singleton {
 				Logger::Instance()->Log(var_dump($debug));
 				return;
 			case self::DEV:
-				echo "<pre>INFO: ".$debug."</pre>";
-			case self::DEBUG:
+				if($this->IsCapturing()) $this->Capture("INFO: ".$debug);
+				else echo "<pre>INFO: ".$debug."</pre>";
 				array_push($this->debugItems, "<pre>".$debug."</pre>");
+				break;
+			case self::DEBUG:
+				if($this->IsCapturing()) $this->Capture("INFO: ".$debug);
+				else array_push($this->debugItems, "<pre>".$debug."</pre>");
 				break;
 		}
 	}
@@ -223,6 +236,109 @@ class Debugger extends Singleton {
 	 */
 	public function Error($err){
 		$this->Add($err->getMessage());
+	}
+
+	/**
+	 * Starts collecting debug items for an API response (`MagratheaApi::ExecuteUrl()` calls it).
+	 * Until the matching `StopCapture()`, DEV and DEBUG collect items instead of printing them
+	 * (DEV: right away, DEBUG: at the end of the request), so they don't break the JSON;
+	 * `WithCaptured()` adds them to the response.
+	 * Calls nest: only the outermost one starts and ends the collection.
+	 * @return Debugger
+	 */
+	public function StartCapture(): Debugger {
+		if($this->captureDepth == 0) $this->captured = array();
+		$this->captureDepth++;
+		return $this;
+	}
+
+	/**
+	 * Ends a `StartCapture()`. The outermost one drops the collected items.
+	 * @return Debugger
+	 */
+	public function StopCapture(): Debugger {
+		if($this->captureDepth > 0) $this->captureDepth--;
+		if($this->captureDepth == 0) $this->captured = array();
+		return $this;
+	}
+
+	/**
+	 * Is the debugger collecting items for an API response?
+	 * @return bool
+	 */
+	public function IsCapturing(): bool {
+		return $this->captureDepth > 0;
+	}
+
+	/**
+	 * Items collected since `StartCapture()`, ready to be JSON-encoded:
+	 * exceptions as `{type, message, code, file, data?, query?, values?}`, anything else as it was added.
+	 * @return array<mixed>
+	 */
+	public function GetCaptured(): array {
+		return array_map(fn($item) => $this->CapturedItem($item), $this->captured);
+	}
+
+	/**
+	 * Adds the collected items to an API response, as `_debug`.
+	 * In DEBUG, the items stored before the call come first: `ShowAtShutdown()` doesn't print after a JSON response.
+	 * Only an associative array gets it: a list or a scalar would change shape.
+	 * Nothing collected, no `_debug`.
+	 * @param 	mixed 	$response 	response to be JSON-encoded
+	 * @return 	mixed 	the response, with `_debug` if it applies
+	 */
+	public function WithCaptured($response) {
+		$items = $this->captured;
+		if($this->debugType == self::DEBUG) $items = array_merge($this->debugItems, $items);
+		if(empty($items) || !is_array($response) || empty($response)) return $response;
+		if(array_keys($response) === range(0, count($response) - 1)) return $response;
+		$debug = array_map(fn($item) => $this->CapturedItem($item), $items);
+		if(json_encode($debug) === false) {
+			// a value that can't be encoded (invalid UTF-8, recursion) must not take the response down with it
+			$debug = ["_debug could not be JSON-encoded: ".json_last_error_msg()];
+		}
+		$response["_debug"] = $debug;
+		return $response;
+	}
+
+	private function Capture($debug) {
+		// the same exception can be added twice: it adds itself, then gets caught and passed to AddError()
+		if(is_object($debug) && in_array($debug, $this->captured, true)) return;
+		array_push($this->captured, $debug);
+	}
+
+	/**
+	 * Formats a collected item when it's read, not when it's added:
+	 * MagratheaException adds itself before its code and data are set.
+	 */
+	private function CapturedItem($item) {
+		if(!($item instanceof \Throwable)) return $item;
+		$rs = [
+			"type" => get_class($item),
+			"message" => $item->getMessage(),
+			"code" => $item->getCode(),
+			"file" => $item->getFile().":".$item->getLine(),
+		];
+		if($item instanceof MagratheaDBException) {
+			$rs["query"] = $item->query;
+			if($item->values !== null) $rs["values"] = $item->values;
+		}
+		if($item instanceof MagratheaException && $item->GetData() !== null) {
+			$rs["data"] = $item->GetData();
+		}
+		return $rs;
+	}
+
+	/**
+	 * In DEBUG, prints the stored items at the end of the request (a shutdown function calls it).
+	 * Not after a JSON response: the HTML would break it (an API response has them in `_debug`).
+	 * @param 	array|null 	$headers 	response headers (default: `headers_list()`)
+	 */
+	public function ShowAtShutdown(?array $headers = null) {
+		if($this->debugType != self::DEBUG) return;
+		$headers = $headers ?? headers_list();
+		if(!empty(preg_grep('/^content-type:\s*application\/json/i', $headers))) return;
+		$this->Show();
 	}
 
 	/**

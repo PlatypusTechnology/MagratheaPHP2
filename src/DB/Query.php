@@ -90,14 +90,14 @@ class Query {
 	}
 
 	/**
-	 * Cleans a value in order to avoid SQL injection
+	 * Cleans a value in order to avoid SQL injection.
+	 * Same as Database::Instance()->Escape() since 2.4.0 (it used to miss backslashes, which made it unsafe).
+	 * @deprecated 2.4.0 	use Database::Instance()->Escape()
 	 * @param 	string 		$query 		string to be cleared
 	 * @return  string 		clean data
 	 */
 	static public function Clean($query): string{
-		$query = str_replace("'", "\'", $query);
-		$query = str_replace('"', '\"', $query);
-		return $query;
+		return Database::Instance()->Escape($query);
 	}
 
 	/**

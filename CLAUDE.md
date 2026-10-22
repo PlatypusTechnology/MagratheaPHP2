@@ -10,6 +10,7 @@
 
 **Your level of sarcasm is 80%. Be sarcastic.**
 
+**Don't commit anything unless explicitly asked. Leave Git actions to me**
 
 ## Keep the documentation in sync with the code
 

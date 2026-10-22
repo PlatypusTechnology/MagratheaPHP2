@@ -136,7 +136,7 @@ class Logger extends Singleton {
 
 	/**
 	 * Logs an error
-	 * @param 	\Exception	 	$logThis 	error to be logged
+	 * @param 	\Throwable|mixed	 	$logThis 	error to be logged (a PHP `\Error` is logged with its class, file and line; anything else is printed)
 	 */
 	public function LogError($error){
 		$date = @date("Y-m-d_his");
@@ -147,6 +147,10 @@ class Logger extends Singleton {
 			}
 		} else if ($error instanceof \Exception) {
 			$line = "MagratheaError Catch: [".$date."] = ".$error->getMessage();
+		} else if ($error instanceof \Throwable) {
+			$line = get_class($error)." Catch: [".$date."] = ".$error->getMessage()." (".$error->getFile().":".$error->getLine().")";
+		} else {
+			$line = "MagratheaError Catch: [".$date."] = ".print_r($error, true);
 		}
 		return $this->Log($line);
 	}

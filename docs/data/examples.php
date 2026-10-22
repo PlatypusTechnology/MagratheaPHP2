@@ -28,7 +28,7 @@ Magrathea2\MagratheaPHP::Instance()
     ->Load();
 Magrathea2\Bootstrap\Start::Instance()->Load();
 PHP,
-		"note" => "The `die;` is intentional: it stops the script from running until you've reviewed the config for the target environment, then you delete the line.",
+		"note" => "The `die;` is intentional: it stops the script from running until you've reviewed the config for the target environment, then you delete the line. Since 2.4.0 the wizard is also locked unless the active environment's config section has `bootstrap_unlocked = true`.",
 	],
 
 	[
@@ -46,7 +46,7 @@ ini_set("display_errors", "1");
 Magrathea2\MagratheaPHP::Instance()
     ->MinVersion("2.1.19")
     ->AppPath(realpath(dirname(__FILE__)))
-    ->AddCodeFolder("admin", "api", "api/Authentication")
+    ->AddRootCodeFolder("admin", "api", "api/Authentication")
     ->AddFeature("Article")
     ->Load();
 PHP,
@@ -63,7 +63,6 @@ $article = new Article();
 $article->title      = "Hello World";
 $article->body       = "My first article.";
 $article->published  = true;
-$article->created_at = now();
 $id = $article->Save(); // returns new ID
 
 // Load by primary key
@@ -128,14 +127,11 @@ $sql = Query::Select()
 
 $rows = Database::Instance()->QueryAll($sql);
 
-// User input must always go through a prepared statement
-$result = Database::Instance()->PrepareAndExecute(
-    "SELECT * FROM articles WHERE title LIKE ?",
-    ["s"],
-    ["%{$_GET['search']}%"]
-);
+// User input in a hand-built fragment must be escaped
+$safe = Database::Instance()->Escape($_GET["search"]);
+$found = Database::Instance()->QueryAll("SELECT * FROM articles WHERE title LIKE '%$safe%'");
 PHP,
-		"note" => 'Never interpolate raw $_GET/$_POST into SQL — use PrepareAndExecute() or Query::Clean().',
+		"note" => 'Never interpolate raw $_GET/$_POST into SQL — use the builder\'s array forms (Where([...])), Database::Instance()->Escape(), or PrepareAndExecute() for writes.',
 	],
 
 	[
@@ -283,14 +279,13 @@ PHP,
 
 	[
 		"id" => "config-file",
-		"title" => "Writing config/magrathea.conf",
+		"title" => "Writing configs/magrathea.conf",
 		"source" => "skills.MD",
 		"topics" => ["core/config"],
 		"lang" => "ini",
 		"code" => <<<'PHP'
 [general]
-	use_environment = "default"
-	time_zone = "America/Sao_Paulo"
+	use_environment = "dev"
 
 [dev]
 	db_host = "localhost"
@@ -342,7 +337,7 @@ $prodHost = Config::Instance()->GetConfig("production/db_host");
 $prodSection = Config::Instance()->GetConfigSection("production");
 echo $prodSection["db_host"];
 PHP,
-		"note" => "Get() and GetConfig() are not interchangeable: Get() is environment-scoped, GetConfig() is not. This differs from skills.MD's simplified snippet - verified directly against src/Config.php.",
+		"note" => "Get() and GetConfig() are not interchangeable: Get() is environment-scoped, GetConfig() is not.",
 	],
 
 ];

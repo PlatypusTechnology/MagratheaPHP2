@@ -14,6 +14,7 @@ MagratheaPHP2 uses a typed exception hierarchy to make error handling precise an
 └── MagratheaException
     ├── MagratheaApiException
     ├── MagratheaDBException
+    │   └── MagratheaDBConnectionLostException
     ├── MagratheaConfigException
     └── MagratheaModelException
 ```
@@ -66,13 +67,15 @@ Returns the exception as a string.
 **File:** `src/Exceptions/MagratheaApiException.php`
 **Extends:** `MagratheaException`
 
-Thrown by API controllers and the API router. Carries an HTTP status code and optional data payload, making it straightforward to return structured error responses.
+Thrown by API controllers and the API router. Carries an error code, an optional HTTP status and an optional data payload, making it straightforward to return structured error responses.
+
+`MagratheaApi` sends it with the HTTP status from `SetStatus()` if it's 400-599, otherwise derived from the code: `404` → 404, `4031` → 403, `40312` → 403, anything that doesn't map to 400-599 → 500 (see `MagratheaApi`, "Error responses and HTTP status").
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `$status` | `int` | HTTP status code (e.g. 401, 404, 500) |
+| `$status` | `int\|null` | HTTP status set with `SetStatus()`; `null` (default): derived from the code |
 | `$code` | `int` | Application error code |
 
 ### Constructor
@@ -90,11 +93,14 @@ new MagratheaApiException(
 ### Methods
 
 #### `SetStatus(int $st): MagratheaApiException`
-Set the HTTP status code.
+Set the HTTP status of the response, independently of the code. Only 400-599 is used; any other value is ignored and the code decides. Before 2.4.0 this was stored and never read.
 
 ```php
-throw (new MagratheaApiException("Not Found", 404))->SetStatus(404);
+// code 400 stays in the body; the HTTP status is 401
+throw (new MagratheaApiException("Token missing", 400))->SetStatus(401);
 ```
+
+`$kill` (constructor) doesn't affect the status. It only matters in the admin API, where a killer error is sent with `ReturnApiException()` and a non-killer one with the shorter `ReturnFail()` body. (Before 2.4.0 it set `$status` to 500/200, which nothing read.)
 
 #### `FromException(\Exception $ex, ?int $code = null, ?array $data = null): MagratheaApiException` (static)
 Convert any exception into a `MagratheaApiException`.
@@ -114,7 +120,7 @@ use Magrathea2\Exceptions\MagratheaApiException;
 
 class ProductApiControl extends MagratheaApiControl {
 
-    public function Read(array $params = []): object|array {
+    public function Read($params = []): object|array {
         $id = $params["id"] ?? null;
 
         if (!$id) {
@@ -149,7 +155,13 @@ The API router catches `MagratheaApiException` and converts it to a JSON error r
 **File:** `src/Exceptions/MagratheaDBException.php`
 **Extends:** `MagratheaException`
 
-Thrown by the `Database` class on connection failures or query errors.
+Thrown by the `Database` class on connection failures or query errors. Since 2.4.0, every query error
+is one, whatever mysqli's error reporting mode:
+- its code is MySQL's error number (`1062`, `1146`…); 0 for errors that don't come from MySQL
+  (e.g. "DB not initialized", a failed connection);
+- with PHP 8.1+'s default reporting, mysqli's `mysqli_sql_exception` is `getPrevious()`.
+
+An API answers it with HTTP **500**, whatever its code: an errno isn't an HTTP status.
 
 ### Properties
 
@@ -188,6 +200,40 @@ try {
 } catch (MagratheaDBException $e) {
     Logger::Instance()->LogError($e);
     // Return 503 or similar
+}
+```
+
+---
+
+## MagratheaDBConnectionLostException
+
+**File:** `src/Exceptions/MagratheaDBConnectionLostException.php`
+**Extends:** `MagratheaDBException`
+
+Thrown by the `Database` query methods when the MySQL connection is gone. Its code is the MySQL errno:
+
+| Code | Meaning |
+|------|---------|
+| 2006 | Server has gone away: the statement was probably **not** executed |
+| 2013 | Lost connection during query: the statement **may have** executed |
+| 4031 | Disconnected by the server for inactivity (MySQL 8.0.24+, idle past `wait_timeout`): the statement was **not** executed |
+
+The failing query and values are attached (`$query`, `$values`), and the original `mysqli_sql_exception`,
+when mysqli threw one, is `getPrevious()`. The dead connection is already dropped when you catch it: the
+next query on the same `Database` instance opens a new connection. The framework never retries; see
+"Lost connections" in the Database page for when retrying is safe.
+
+```php
+use Magrathea2\Exceptions\MagratheaDBConnectionLostException;
+
+try {
+    $job->Save();
+} catch (MagratheaDBConnectionLostException $e) {
+    if ($e->getCode() === 2006 || $e->getCode() === 4031) {
+        $job->Save(); // the first attempt (probably) never ran
+    } else {
+        throw $e;     // 2013: it may have run; don't repeat a non-idempotent write
+    }
 }
 ```
 

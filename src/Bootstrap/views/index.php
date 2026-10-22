@@ -2,7 +2,12 @@
 	global $stepActive;
 	$action = @$_GET["action"];
 	if(!empty($action)) {
-		include("actions/".$action.".php");
+		$actionFile = \Magrathea2\Bootstrap\Start::Instance()->GetActionFile($action);
+		if(!$actionFile) {
+			http_response_code(404);
+			die("action not found");
+		}
+		include($actionFile);
 		die;
 	}
 	$stepActive = @$_GET["step"];

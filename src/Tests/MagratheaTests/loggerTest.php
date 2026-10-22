@@ -153,5 +153,18 @@ class loggerTest extends \PHPUnit\Framework\TestCase {
 		@unlink($queryFilePath);
 	}
 
-}
+	function testLogPhpError() {
+		$logger = $this->createTestLogger();
+		$logger->LogError(new \TypeError("wrong type"));
+		$line = $this->getLastLineOfFile($this->GetLogFile());
+		$this->assertStringContainsString("] = TypeError Catch: [", $line);
+		$this->assertStringContainsString("wrong type (".__FILE__.":", $line);
+	}
 
+	function testLogNonThrowable() {
+		$logger = $this->createTestLogger();
+		$logger->LogError(["message" => "last php error"]);
+		$this->assertStringContainsString("last php error", file_get_contents($this->GetLogFile()));
+	}
+
+}

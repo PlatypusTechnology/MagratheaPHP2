@@ -41,6 +41,7 @@ abstract class MagratheaModel{
 	protected $relations = array();
 	protected $dbPk;
 	protected $dirtyValues = array();
+	protected $loadedValues = null;
 	protected $strictTypes = false;
 
 	/**
@@ -124,7 +125,10 @@ abstract class MagratheaModel{
 	/**
 	 * Receives an array with the columns and values and associates then internally into the object.
 	 * When `$strictTypes` is enabled, values are cast to their declared `$dbValues` PHP type
-	 * (`int`/`boolean`/`float`) instead of being kept as the raw string the DB driver returns.
+	 * (`int`/`boolean`/`float`) instead of being kept as the raw string the DB driver returns
+	 * (`decimal` stays a string: it's only validated).
+	 * Marks the object as loaded: `Update()` will write only the fields that change after this.
+	 * It's meant for DB rows; use `Assign()` for input data.
 	 * @param 	array 		$row 		mysql result for the object
 	 * @throws 	MagratheaModelException 	if `$strictTypes` is enabled and a value can't be cast to its declared type
 	 */
@@ -136,6 +140,7 @@ abstract class MagratheaModel{
 				if( property_exists($this, $field))
 					$this->$field = $value;
 			}
+			$this->TakeSnapshot();
 			return;
 		}
 		$properties = $this->GetProperties();
@@ -145,12 +150,54 @@ abstract class MagratheaModel{
 			$this->$field = array_key_exists($field, $properties) ?
 				$this->CoerceValue($value, $properties[$field], $field) : $value;
 		}
+		$this->TakeSnapshot();
+	}
+
+	/**
+	 * Saves the current field values as the "loaded" state, compared by `Update()`.
+	 * A field holding a related model is saved as that model's id.
+	 */
+	protected function TakeSnapshot() {
+		$this->loadedValues = array();
+		foreach($this->dbValues as $field => $type) {
+			$value = property_exists($this, $field) ? $this->$field : null;
+			$this->loadedValues[$field] = $value instanceof MagratheaModel ? $value->GetID() : $value;
+		}
+	}
+
+	/**
+	 * After a successful save: the object matches the row again
+	 */
+	private function SavedState() {
+		$this->TakeSnapshot();
+		$this->dirtyValues = array();
+	}
+
+	/**
+	 * Checks if a field value changed since it was loaded.
+	 * null-aware, then compared as strings (bools as "1"/"0"), so `5` and `"5"` are the same value.
+	 * A related model is compared by its id; one without an id always changed (it'll be inserted).
+	 * @param 	mixed 		$loaded 		value in the snapshot
+	 * @param 	mixed 		$current 		current value
+	 * @return 	bool							did it change?
+	 */
+	private static function ValueChanged($loaded, $current): bool {
+		if($current instanceof MagratheaModel) {
+			if(empty($current->GetID())) return true;
+			$current = $current->GetID();
+		}
+		if($loaded === null || $current === null) return $loaded !== $current;
+		if(!is_scalar($loaded) || !is_scalar($current)) return true;
+		if(is_bool($loaded)) $loaded = $loaded ? "1" : "0";
+		if(is_bool($current)) $current = $current ? "1" : "0";
+		return (string)$loaded !== (string)$current;
 	}
 
 	/**
 	 * Casts a raw DB row value to its declared `$dbValues` PHP type. Used by `LoadObjectFromTableRow()`
 	 * when `$strictTypes` is enabled. `null` is always left as `null`; `string`/`text`/`uuid`/`date`/
 	 * `datetime` fields are left untouched since the DB driver already returns those as strings.
+	 * `decimal` fields must be numeric, but are returned unchanged: casting would round exact values.
 	 * @param 	mixed 		$value 		raw value from the DB row
 	 * @param 	string 		$type 		declared Magrathea field type
 	 * @param 	string 		$field 		field name, for the exception message
@@ -170,6 +217,10 @@ abstract class MagratheaModel{
 			case "double":
 				if(!is_numeric($value)) throw new MagratheaModelException("Invalid float value for field [".$field."]: [".$value."]");
 				return (float)$value;
+			case "decimal":
+				// exact numbers: validated, but never cast (a float would round them)
+				if(!is_numeric($value)) throw new MagratheaModelException("Invalid decimal value for field [".$field."]: [".$value."]");
+				return $value;
 		}
 		return $value;
 	}
@@ -279,7 +330,7 @@ abstract class MagratheaModel{
 			$type = $this->GetDataTypeFromField($fieldType);
 			array_push($arr_Types, $type);
 			array_push($arr_Fields, $field);
-			if( is_a($this->$field, "MagratheaModel") ) {
+			if( $this->$field instanceof MagratheaModel ) {
 				$arr_Values[$field] = $this->GetRelationId($this->$field);
 			} else {
 				if( $field == "created_at" || $field == "updated_at" ) {
@@ -316,7 +367,8 @@ abstract class MagratheaModel{
 			throw $ex;
 		}
 		$pk = $this->dbPk;
-		$this->$pk = $lastId;	
+		$this->$pk = $lastId;
+		$this->SavedState();
 		return $lastId;
 	}
 	/**
@@ -331,10 +383,15 @@ abstract class MagratheaModel{
 		} catch(\Exception $ex) {
 			throw $ex;
 		}
+		$this->SavedState();
 		return true;
 	}
 	/**
-	 * Updates the object in database
+	 * Updates the object in database.
+	 * A loaded object writes the fields changed since it was loaded (or set through `Set()`), plus `updated_at`.
+	 * An object that was never loaded writes the fields set through `Set()`, or all of them if there are none,
+	 * skipping `null` int/boolean fields.
+	 * An int/boolean field that is `null` or `""` is written as SQL NULL.
 	 * @return 	boolean	 		successfully updated
 	 */
 	public function Update(){
@@ -343,7 +400,13 @@ abstract class MagratheaModel{
 		$arr_Values = array();
 		$updates = array();
 		$pkField = $this->dbPk;
-		if(count($this->dirtyValues) > 0) {
+		if($this->loadedValues !== null) {
+			$updates = array_filter($this->dbValues, function($field) {
+				return $field == "updated_at"
+					|| array_key_exists($field, $this->dirtyValues)
+					|| self::ValueChanged(@$this->loadedValues[$field], $this->$field);
+			}, ARRAY_FILTER_USE_KEY);
+		} else if(count($this->dirtyValues) > 0) {
 			$updates = array_intersect_key($this->dbValues, $this->dirtyValues);
 		} else {
 			$updates = $this->dbValues;
@@ -353,18 +416,24 @@ abstract class MagratheaModel{
 			if( $field == "created_at" ) continue;
 
 			$t = $this->GetDataTypeFromField($type);
-			if ($t == "integer" && $this->$field === null) continue;
+			$value = $this->$field;
+			if( $t == "integer" ) {
+				// never-loaded objects: a null int means "not set", so sparse updates don't wipe int columns
+				if( $value === null && $this->loadedValues === null ) continue;
+				if( $value === "" ) $value = null;
+			}
 
-			$value = @$this->dirtyValues[$field] ?? $this->$field;
-			if( is_a($value, "MagratheaModel") ) {
+			if( $value instanceof MagratheaModel ) {
 				$arr_Values[$field] = $this->GetRelationId($value);
 			} else {
 				if( $field == "updated_at" ) {
 					$arr_Values[$field] = now();
 				} else if( $type == "date" ) {
-					$arr_Values[$field] = self::FormatDateValue($this->$field, $field);
+					$arr_Values[$field] = self::FormatDateValue($value, $field);
+				} else if( $t == "integer" ) {
+					$arr_Values[$field] = $value === null ? null : intval($value);
 				} else {
-					$arr_Values[$field] = ($type == "integer" || $type == "boolean") ? intval($this->$field) : $this->$field;
+					$arr_Values[$field] = $value;
 				}
 			}
 			array_push($arr_Types, $t);
@@ -373,8 +442,10 @@ abstract class MagratheaModel{
 		$query_run = "UPDATE ".$this->dbTable." SET ".implode(",", $arr_Fields)." WHERE `".$this->dbPk."`= ? ";
 
 		$arr_Values[$pkField] = $this->$pkField;
-		$arr_Types[$pkField] = $this->GetDataTypeFromField($pkField);
-		return Database::Instance()->PrepareAndExecute($query_run, $arr_Types, $arr_Values);
+		$arr_Types[$pkField] = $this->GetDataTypeFromField($this->dbValues[$pkField]);
+		$result = Database::Instance()->PrepareAndExecute($query_run, $arr_Types, $arr_Values);
+		$this->SavedState();
+		return $result;
 	}
 	/**
 	 * Deletes the object in database
@@ -475,8 +546,9 @@ abstract class MagratheaModel{
 	}
 
 	/**
-	 * Get (Magrathea) data type from field
-	 * @param 	string 		$field 		magrathea-related type
+	 * Get the bind category of a field type, for `PrepareAndExecute()`
+	 * @param 	string 		$field 		field type (`$dbValues` value, e.g. "int"), not the field name
+	 * @return 	string|null 	"integer", "decimal", "text" or "date"; null for an unknown type
 	 */
 	public static function GetDataTypeFromField($field){
 		switch($field){
@@ -494,6 +566,8 @@ abstract class MagratheaModel{
 			case "date":
 				return "date";
 			case "uuid":
+			case "decimal":
+				// "decimal" (exact numbers) binds as text: the "decimal" category above is float-ish
 				return "text";
 		}
 	}

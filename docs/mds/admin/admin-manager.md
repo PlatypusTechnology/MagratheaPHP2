@@ -224,11 +224,9 @@ use Magrathea2\Admin\AdminManager;
 use App\Admin\ProductAdminFeature;
 use App\Admin\OrderAdminFeature;
 
-MagratheaPHP::LoadVendor();
-
 MagratheaPHP::Instance()
     ->AppPath(__DIR__ . '/..')
-    ->AddCodeFolder("models", "controls", "admin")
+    ->AddRootCodeFolder("models", "controls", "admin")
     ->Prod()
     ->Load()
     ->Connect()

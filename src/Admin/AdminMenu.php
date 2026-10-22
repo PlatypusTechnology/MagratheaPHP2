@@ -252,10 +252,24 @@ class AdminMenu {
 		];
 	}
 
+	/**
+	 * creates a menu item for an admin feature
+	 * @param string $title			Title for the item
+	 * @param string $featureId	id of the feature that will be called
+	 * @return array					menu item
+	 */
+	public function FeatureItem($title, $featureId): array {
+		return [
+			'title' => $title,
+			'feature' => $featureId,
+			'active' => (@$_GET["magrathea_feature"] == $featureId),
+		];
+	}
+
 	public function Initialize() {
 		$this->adminUrls = AdminUrls::Instance();
 		$this->menuItems = [
-			"app-conf" => $this->SimpleItem("App Configuration","config-data"),
+			"app-conf" => $this->FeatureItem("App Configuration", "AdminFeatureAppConfig"),
 			"conf-file" => $this->SimpleItem("Configuration File", "config"),
 			"version" => $this->SimpleItem("Version", "version"),
 			"htaccess" => $this->SimpleItem(".htaccess", "htaccess"),
@@ -273,7 +287,7 @@ class AdminMenu {
 			"logs" => $this->SimpleItem("Logs", "logs"),
 			"structure" => $this->SimpleItem("Structure", "structure"),
 			"server" => $this->SimpleItem("Server", "server"),
-			"tools-file-editor" => $this->SimpleItem("File Editor", "file-editor"),
+			"tools-file-editor" => $this->FeatureItem("File Editor", "AdminFeatureFileEditor"),
 			"help-admin-demos" => $this->SimpleItem("Admin Elements", "demo-form"),
 			"help-admin-scripts" => $this->SimpleItem("Admin Scripts", "demo-scripts"),
 		];	

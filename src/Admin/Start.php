@@ -26,6 +26,11 @@ use Magrathea2\MagratheaPHP;
 class Start extends Singleton { 
 
 	protected $appPath;
+	private ?Exception $dbError = null;
+
+	const STATE_SETUP = "setup";
+	const STATE_READY = "ready";
+	const STATE_DB_ERROR = "db-error";
 
 	protected function Initialize() {
 		MagratheaPHP::Instance()->StartSession();
@@ -94,26 +99,106 @@ class Start extends Singleton {
 	}
 
 	/**
+	 * Gets the file for an admin page (`?magrathea_page=`, in `views/pages/`) or action
+	 * (`?magrathea_subpage=`, in `views/actions/`): a plain name of an existing file in that folder.
+	 * Anything else (`../`, sub-folders, a missing file) gets `null`, so the query string can't include
+	 * any other PHP file.
+	 * @param 	string 	$folder		"pages" or "actions"
+	 * @param 	mixed 	$name			name from the query string
+	 * @return 	string|null			file path, or null
+	 */
+	public function GetViewFile(string $folder, $name): ?string {
+		if (!in_array($folder, ["pages", "actions"], true)) return null;
+		if (!is_string($name) || $name === "" || $name === "." || $name === ".."
+			|| basename($name) !== $name || str_contains($name, "\\") || str_contains($name, "\0")) {
+			return null;
+		}
+		$file = __DIR__."/views/".$folder."/".$name.".php";
+		return is_file($file) ? $file : null;
+	}
+
+	/**
 	 * Loads Magrathea Admin
 	 */
 	public function Load(): void {
-		if ($this->IsStarted()) {
-			$this->ShouldLogout();
-			if($this->IsLoggedIn()) {
-				if(!AdminManager::Instance()->Auth()) {
-					$message = "Access Denied: User is not an admin!";
-					AdminManager::Instance()->ErrorPage($message);
-				}
-				$this->CheckCsrf();
-				$this->CheckApi();
-				$this->CheckFeature();
-				include ("views/index.php");
-			} else {
-				include ("views/login.php");
-			}
-		} else {
-			include ("views/setup.php");
+		$state = $this->GetInstallState();
+		if ($state === self::STATE_DB_ERROR) {
+			$this->DatabaseErrorPage();
 		}
+		if ($state === self::STATE_SETUP) {
+			include ("views/setup.php");
+			return;
+		}
+		$this->ShouldLogout();
+		if($this->IsLoggedIn()) {
+			if(!AdminManager::Instance()->Auth()) {
+				$message = "Access Denied: User is not an admin!";
+				AdminManager::Instance()->ErrorPage($message);
+			}
+			$this->CheckCsrf();
+			$this->CheckApi();
+			$this->CheckFeature();
+			include ("views/index.php");
+		} else {
+			include ("views/login.php");
+		}
+	}
+
+	/**
+	 * Checks what Admin should load:
+	 * - `STATE_SETUP` (first-run setup) only when there are no admin users at all;
+	 * - `STATE_DB_ERROR` if the database fails (never the setup form);
+	 * - `STATE_READY` otherwise. A missing `admin_install_date` is written on the way.
+	 * @return string		one of the STATE_* constants
+	 */
+	public function GetInstallState(): string {
+		try {
+			if (!$this->HasUsers()) return self::STATE_SETUP;
+			$this->EnsureInstallDate();
+			return self::STATE_READY;
+		} catch(Exception $ex) {
+			$this->dbError = $ex;
+			return self::STATE_DB_ERROR;
+		}
+	}
+
+	/**
+	 * Checks if the first super admin can be created (there are no users yet).
+	 * A database error means it can't.
+	 * @return bool
+	 */
+	public function CanCreateFirstUser(): bool {
+		try {
+			return $this->HasUsers() === false;
+		} catch(Exception $ex) {
+			return false;
+		}
+	}
+
+	/**
+	 * Writes the basic configs (`admin_install_date` and others) if `admin_install_date` is missing.
+	 * Existing values are never overwritten.
+	 */
+	protected function EnsureInstallDate(): void {
+		$configControl = new AppConfigControl();
+		if ($configControl->GetByKey("admin_install_date") !== null) return;
+		$install = new Install();
+		$install->SetBasicConfigs();
+	}
+
+	/**
+	 * Shows the database error page (exception details only in DEV) and dies
+	 */
+	private function DatabaseErrorPage(): void {
+		try {
+			Logger::Instance()->LogError($this->dbError);
+		} catch(\Throwable $ex) { }
+		http_response_code(500);
+		$message = "Database error: the admin can't be loaded right now.";
+		if (MagratheaPHP::Instance()->IsDev() && $this->dbError) {
+			$message .= "<br/>".htmlspecialchars($this->dbError->getMessage());
+		}
+		AdminManager::Instance()->ErrorPage($message);
 	}
 
 	public function ShouldLogout() {

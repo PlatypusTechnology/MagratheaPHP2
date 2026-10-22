@@ -33,8 +33,7 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 	public string $fullObjectName; 
 
 	public function __construct() {
-		$this->Initialize();
-		parent::__construct();
+		parent::__construct(); // runs Initialize() once
 		$this->SetClassPath(__DIR__);
 		$this->AddJs(__DIR__."/scripts.js");
 	}
@@ -44,18 +43,27 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 
 	/**
 	 * Sets the object for crud
-	 * @param MagratheaModel $object		Magrathea Model for admin
+	 * @param MagratheaModel 							$object		Magrathea Model for admin
+	 * @param MagratheaModelControl|null 	$control	its control; if null, "<model full class name>Control"
 	 * @return AdminCrudObject					itself
 	 */
-	public function SetObject(MagratheaModel $object): AdminCrudObject {
+	public function SetObject(MagratheaModel $object, ?MagratheaModelControl $control = null): AdminCrudObject {
 		$this->object = $object;
 		$this->fullObjectName = get_class($object);
 		$objName = $object->ModelName();
-		$controlName = $this->fullObjectName."Control";
 		$this->objectName = $objName;
 		if(empty($this->featureName)) $this->featureName = $this->objectName." CRUD";
 		if(empty($this->featureId)) $this->featureId = "CRUD".$this->objectName;
-		$this->SetControl(new $controlName());
+		if($control === null) {
+			$controlName = $this->fullObjectName."Control";
+			if(!class_exists($controlName)) {
+				throw new MagratheaModelException(
+					"Control [".$controlName."] not found for ".$this->fullObjectName.": pass the control to SetObject()"
+				);
+			}
+			$control = new $controlName();
+		}
+		$this->SetControl($control);
 		return $this;
 	}
 

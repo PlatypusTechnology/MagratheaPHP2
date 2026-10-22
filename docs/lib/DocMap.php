@@ -30,6 +30,7 @@ class DocMap {
 				"pages" => [
 					"magrathea-php" => ["title" => "MagratheaPHP", "md" => "core/magrathea-php.md", "src" => ["MagratheaPHP.php"]],
 					"config" => ["title" => "Config", "md" => "core/config.md", "src" => ["Config.php", "ConfigApp.php", "ConfigFile.php"]],
+					"timezone" => ["title" => "TimezoneCheck", "md" => "core/timezone.md", "src" => ["TimezoneCheck.php"]],
 					"singleton" => ["title" => "Singleton", "md" => "core/singleton.md", "src" => ["Singleton.php"]],
 					"helper" => ["title" => "MagratheaHelper", "md" => "core/helper.md", "src" => ["MagratheaHelper.php"]],
 					"global-functions" => ["title" => "Global Functions", "md" => "core/global-functions.md", "src" => ["_Functions.php"]],
@@ -78,7 +79,7 @@ class DocMap {
 				"title" => "Error Handling",
 				"icon" => "alert",
 				"pages" => [
-					"exceptions" => ["title" => "Exceptions", "md" => "exceptions/exceptions.md", "src" => ["Exceptions/MagratheaException.php", "Exceptions/MagratheaApiException.php", "Exceptions/MagratheaDBException.php", "Exceptions/MagratheaConfigException.php", "Exceptions/MagratheaModelException.php"]],
+					"exceptions" => ["title" => "Exceptions", "md" => "exceptions/exceptions.md", "src" => ["Exceptions/MagratheaException.php", "Exceptions/MagratheaApiException.php", "Exceptions/MagratheaDBException.php", "Exceptions/MagratheaDBConnectionLostException.php", "Exceptions/MagratheaConfigException.php", "Exceptions/MagratheaModelException.php"]],
 				],
 			],
 			"advanced" => [
@@ -86,7 +87,14 @@ class DocMap {
 				"icon" => "layers",
 				"pages" => [
 					"patterns" => ["title" => "Design Patterns", "md" => "advanced/patterns.md", "src" => []],
-					"testing" => ["title" => "Testing", "md" => "advanced/testing.md", "src" => ["Tests/MagratheaTests.php"]],
+					"testing" => ["title" => "Testing", "md" => "advanced/testing.md", "src" => ["Tests/TestsManager.php", "Tests/TestsHelper.php"]],
+				],
+			],
+			"migrations" => [
+				"title" => "Migrations",
+				"icon" => "upgrade",
+				"pages" => [
+					"migrate-2.4.0" => ["title" => "2.4.0", "md" => "migrations/migrate-2.4.0.md", "src" => []],
 				],
 			],
 		];

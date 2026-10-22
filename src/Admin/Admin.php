@@ -134,13 +134,13 @@ class Admin implements iAdmin {
 
 	/**
 	 * Sets the default features for the admin panel.
+	 * The File Editor is not a default feature: see LoadFileEditor().
 	 */
 	public function SetFeatures() {
 		$this->LoadAppConfig();
 		$this->LoadCache();
 		$this->LoadUser();
-		$this->LoadFileEditor();
-	}	
+	}
 
 	/**
 	 * Loads the AppConfig feature.
@@ -163,6 +163,8 @@ class Admin implements iAdmin {
 	}
 	/**
 	 * Loads the File Editor feature.
+	 * Opt-in (not loaded by SetFeatures()): it lets any logged admin user edit server files.
+	 * Call it from your Admin subclass's SetFeatures() to enable it.
 	 */
 	protected function LoadFileEditor() {
 		$this->AddFeature(new \Magrathea2\Admin\Features\FileEditor\AdminFeatureFileEditor());

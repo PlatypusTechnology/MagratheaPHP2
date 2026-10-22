@@ -32,6 +32,11 @@ class DatabaseSimulate extends Singleton {
 
 	private $count = 0;
 
+	private $transactionDepth = 0;
+	private $transactionFailed = false;
+
+	private $timezoneSync = false;
+
 	/**
 	* Just fake it!
 	* @return string  simulation
@@ -66,8 +71,9 @@ class DatabaseSimulate extends Singleton {
 	* @param 	string 	$database		database name
 	* @param 	string 	$username 		username for connection
 	* @param 	string 	$password		password for connection
+	* @param 	int|string|null 	$port 	port for connection (empty: mysqli's default)
 	* @return  	DatabaseSimulate
-	*/	
+	*/
 	public function SetConnection($host, $database, $username, $password, $port=null){
 		$this->connDetails = array(
             'hostspec' => $host,
@@ -75,7 +81,7 @@ class DatabaseSimulate extends Singleton {
             'username' => $username,
             'password' => $password,
 		);
-		if(!$port){
+		if($port){
 			$this->connDetails["port"] = $port;
 		}
 		return $this;
@@ -112,13 +118,45 @@ class DatabaseSimulate extends Singleton {
 	*/
 	public function OpenConnectionPlease(){
 		$conn = $this->Simulate("OpenConnection", "mysqli_connect()", $this->connDetails);
+		if($this->timezoneSync) {
+			$this->Simulate("query", "SET time_zone = '".date_default_timezone_get()."'");
+		}
 		return true;
+	}
+	/**
+	* Sets whether new connections set MySQL's session time_zone to PHP's (logged as a simulated query)
+	* @param 	bool 	$sync 		sync it?
+	* @return 	DatabaseSimulate
+	*/
+	public function SetTimezoneSync(bool $sync){
+		$this->timezoneSync = $sync;
+		return $this;
+	}
+	/**
+	* Nothing is really synced
+	* @return 	null
+	*/
+	public function GetSyncedTimezone(): ?array {
+		return null;
 	}
 	/**
 	* Already used you.. Bye.
 	*/
 	public function CloseConnectionThanks(){
 		return $this->Simulate("closeConnection", "mysqli_close()", $this->connDetails);
+	}
+	/**
+	* Closes this instance's connection now (simulated)
+	*/
+	public function Disconnect(): void {
+		$this->Simulate("Disconnect", "mysqli_close()", $this->connDetails);
+	}
+	/**
+	* Number of rows affected by the last query: always 0, nothing runs
+	* @return 	int
+	*/
+	public function LastAffectedRows(): int {
+		return 0;
 	}
 
 	/**
@@ -256,25 +294,66 @@ class DatabaseSimulate extends Singleton {
 
 	/**
 	* receives an array of queries and executes them all
-	*	@todo confirms if this is working properly
 	* @param 	array 		$query_array  	Array of queries to be executed
-	* @throws 	MagratheaDBException
+	* @return 	bool 		always true
 	*/
 	public function QueryTransaction($query_array){
+		if ($this->transactionDepth > 0) {
+			throw new MagratheaDBException("QueryTransaction() can't run inside Transaction(): run its queries directly in the Transaction() callback");
+		}
 		$this->OpenConnectionPlease();
 		foreach( $query_array as $query ){
 			$this->Simulate("query", $query);
 		}
 		$this->CloseConnectionThanks();
-		return null;
+		return true;
 	}
 	
 	/**
-	* Prepares and execute a query and returns the inserted id (if any)
-	* 	@todo validates types and avoids injection. Does it?
+	* Runs $fn inside a simulated transaction, with the same nesting and failure rules as Database::Transaction().
+	* "START TRANSACTION", "COMMIT" and "ROLLBACK" are logged as simulated queries.
+	* @param 	callable 	$fn 	function to run in the transaction
+	* @return 	mixed 		what $fn returns
+	* @throws 	MagratheaDBException 	if an inner call failed and its exception was caught
+	*/
+	public function Transaction(callable $fn): mixed {
+		if ($this->transactionDepth > 0) {
+			$this->transactionDepth++;
+			try {
+				return $fn();
+			} catch(\Throwable $ex) {
+				$this->transactionFailed = true;
+				throw $ex;
+			} finally {
+				$this->transactionDepth--;
+			}
+		}
+
+		$this->Simulate("Transaction", "START TRANSACTION");
+		$this->transactionDepth = 1;
+		$this->transactionFailed = false;
+		try {
+			$result = $fn();
+			if ($this->transactionFailed) {
+				throw new MagratheaDBException("transaction marked as failed by an inner call (its exception was caught): rolled back");
+			}
+			$this->Simulate("Transaction", "COMMIT");
+			return $result;
+		} catch(\Throwable $ex) {
+			$this->Simulate("Transaction", "ROLLBACK");
+			throw $ex;
+		} finally {
+			$this->transactionDepth = 0;
+			$this->transactionFailed = false;
+		}
+	}
+
+	/**
+	* Simulates a prepared statement: logs it and returns a fake insert id
 	* @param 	string 		$query 		Query to be executed
 	* @param 	array 		$arrTypes 	Array of types from the values to be inserted
 	* @param 	array 		$arrValues 	Array of values to be inserted
+	* @return 	int 		always 42
 	*/
 	public function PrepareAndExecute($query, $arrTypes, $arrValues){
 		$this->LogControl($query, $arrValues);
@@ -285,6 +364,7 @@ class DatabaseSimulate extends Singleton {
 			foreach ($arrTypes as $type) {
 				switch ($type) {
 					case "int":
+					case "integer":
 					case "boolean":
 						$params .= "i";
 						break;
@@ -304,17 +384,9 @@ class DatabaseSimulate extends Singleton {
 
 		$args = $arrValues;
 		array_unshift($args, $params);
-		try{
-			$this->Simulate("PrepareAndExecute", $query, $args);
-			$lastId = 42; // success!
-		} catch(Exception $err){
-			$this->ConnectionErrorHandle($err, $err);
-		}
+		$this->Simulate("PrepareAndExecute", $query, $args);
 		$this->CloseConnectionThanks();
-		if($lastId)
-			return $lastId;
-		else
-			return true;
+		return 42; // simulated insert id
 	}
 
 	/**

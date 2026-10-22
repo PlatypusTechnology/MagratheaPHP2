@@ -29,11 +29,11 @@ class AdminFeature {
 	public $featureClassPath = __DIR__;
 
 	public function __construct() {
-		$className = get_class($this);
-		if(empty($this->featureId)) {
-			$this->featureId = basename(str_replace('\\', '/', $className));
-		}
 		$this->Initialize();
+		// after Initialize(), so a feature can set its own id there (AdminCrudObject::SetObject() does)
+		if(empty($this->featureId)) {
+			$this->featureId = basename(str_replace('\\', '/', get_class($this)));
+		}
 	}
 
 	/**

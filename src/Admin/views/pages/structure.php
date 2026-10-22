@@ -2,7 +2,9 @@
 
 use Magrathea2\Admin\AdminDatabase;
 use Magrathea2\Admin\AdminElements;
+use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\AdminUrls;
+use Magrathea2\Admin\Features\Cache\AdminFeatureCache;
 use Magrathea2\Config;
 use Magrathea2\Logger;
 use Magrathea2\MagratheaCache;
@@ -10,6 +12,15 @@ use Magrathea2\MagratheaPHP;
 
 $pageTitle = "Structure";
 AdminElements::Instance()->Header($pageTitle);
+
+// the Cache feature's page, if it's loaded (an app can change its id: look it up by class)
+$cacheLink = "";
+foreach(AdminManager::Instance()->GetAdmin()->GetFeatures() as $feature) {
+	if($feature instanceof AdminFeatureCache) {
+		$cacheLink = "<a href='".$feature->GetSubpageUrl(null)."'>Cache</a>";
+		break;
+	}
+}
 
 function checkPathIsOk($p) {
 	$nok = "<span class='error'>&#9746;</span> ";
@@ -53,7 +64,7 @@ $table = [
 	[
 		"name" => "Cache",
 		"value" => MagratheaCache::Instance()->GetCachePath(),
-		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("cache")."'>Cache</a>",
+		"action" => $cacheLink,
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[

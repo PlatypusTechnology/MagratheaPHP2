@@ -7,9 +7,13 @@ description: How to correctly generate code using the MagratheaPHP2 framework. R
 
 This file teaches an AI assistant how to correctly generate code using the MagratheaPHP2 framework. It is a practical, task-oriented cookbook. Read it before writing any PHP code for a project that uses this framework.
 
+**This cookbook targets MagratheaPHP2 `2.4.0`.** Several behaviors described here (HTTP error statuses, one DB connection per request, `Transaction()`, `decimal`, the Bootstrap lock, the File Editor opt-in) don't exist in earlier versions; check the project's installed version (`vendor/platypustechnology/magratheaphp2/src/version`) before relying on them.
+
 Reference files:
 - `instructions.MD` — project structure and rules
-- `documentation/index.md` — full API reference
+- `docs/mds/index.md` in the framework's repository (not shipped in `vendor/`), or the docs site (https://www.platypusweb.com.br/magratheaphp2/docs/) — full API reference
+
+**Upgrading** a project from 2.3.5 to 2.4.0: follow the migration guide, `docs/mds/migrations/migrate-2.4.0.md` in the framework's repository (not shipped in `vendor/`), or https://www.platypusweb.com.br/magratheaphp2/docs/?p=migrations/migrate-2.4.0 . It's self-contained: each section has a `grep` to tell whether it applies and the exact change to make.
 
 ---
 
@@ -40,7 +44,7 @@ Reference files:
 
 **Every entry point starts the same way**, and in real projects this bootstrap lives in one shared file — conventionally `app/_inc.php` — that every entry point (`public/index.php`, `public/admin.php`) requires. Never skip any step.
 
-Real projects organize domain code as **features**, not flat `models/`/`controls`/ folders: one folder per table/domain under `app/features/<Name>/`, added via `->AddFeature(...)` (see §3–4 for what goes inside). Plain `->AddCodeFolder(...)` is still used for non-feature folders like `admin`, `api`, `shared`.
+Real projects organize domain code as **features**, not flat `models/`/`controls`/ folders: one folder per table/domain under `app/features/<Name>/`, added via `->AddFeature(...)` (see §3–4 for what goes inside). Plain `->AddRootCodeFolder(...)` is still used for non-feature folders like `admin`, `api`, `shared`.
 
 ```php
 <?php
@@ -52,9 +56,9 @@ ini_set("display_errors", "1");
 
 try {
     Magrathea2\MagratheaPHP::Instance()
-        ->MinVersion("2.1.19")                  // optional, pins a minimum framework version
+        ->MinVersion("2.4.0")                   // optional, pins a minimum framework version
         ->AppPath(realpath(dirname(__FILE__)))  // this folder (app/) becomes appRoot
-        ->AddCodeFolder(
+        ->AddRootCodeFolder(                    // relative to AppPath
             "admin",
             "api",
             "api/Authentication",
@@ -65,7 +69,8 @@ try {
             "Article", "Author",
         )
         ->Dev()                                 // or ->Prod() in production
-        ->Load();                               // reads config/magrathea.conf, relative to appRoot's parent
+        ->Load()                                // reads ../configs/magrathea.conf (AppPath's parent)
+        ->Connect();                            // DB credentials; the connection itself opens on the first query
 } catch (Exception $ex) {
     \Magrathea2\p_r($ex);
 }
@@ -81,27 +86,27 @@ require __DIR__ . "/../app/_inc.php";
 ```
 
 **Rules:**
-- `AppPath()` must be called before `Load()`; `config/magrathea.conf` is expected one level **above** `AppPath()` (i.e. sibling of `app/`, not inside it)
-- `AddCodeFolder()` paths are relative to `AppPath`
+- `AppPath()` must be called before `Load()`; `configs/magrathea.conf` (plural `configs`) is expected one level **above** `AppPath()` (i.e. `configs/` is a sibling of `app/`, not inside it)
+- `AddRootCodeFolder()` paths are relative to `AppPath`; `AddCodeFolder()` takes paths **as given** (absolute, or relative to the current working directory, i.e. the entry script's folder under a web server: `AddCodeFolder("admin")` from `public/index.php` means `public/admin`). Call both, and `AddFeature()`, after `AppPath()`
 - `AddFeature("Article", ...)` adds `<appRoot>/features/Article` and `<appRoot>/features/Article/Base` to the autoloader — see §3 for what lives in each
-- Use `->Dev()` locally, `->Prod()` on servers
+- The autoloader is **not** PSR-4: it looks for `<ClassName>.php` (the basename, without namespace) in every code folder. Give every class a basename that's unique across the code folders. With duplicates, it loads the file whose `namespace` matches (since 2.4.0; the first folder's before), and in DEV it adds a warning on every request that loads one. A class it can't find fails with PHP's own `Error: Class "…" not found` (since 2.4.0; `MagratheaException` before), so `class_exists()` is safe; in DEV, classes under `->AppNamespace("App")` also add a "Could not find class … Are the code folders correct?" debug item
+- Use `->Dev()` locally, `->Prod()` on servers. They only set the Debugger mode (DEV prints errors, LOG writes them to the log); they do **not** choose the config environment (see §2)
 - Call `->StartSession()` before any session use (admin panel, etc.)
-- `->Connect()` is optional in `_inc.php` — many projects let each request connect lazily; call it explicitly if you need the DB immediately
+- `->Connect()` (after `Load()`) is required before any DB use: it hands the config's `db_*` keys to `Database`; without it the first query throws `MagratheaDBException("DB not initialized")`. It doesn't open a connection: that happens on the first query, so calling it on every request is free
 
 ---
 
 ## 2. Configuration
 
-**Config file location:** `<appRoot>/config/magrathea.conf`
+**Config file location:** `configs/magrathea.conf`, in `AppPath()`'s **parent** folder (`MagratheaPHP::Instance()->GetConfigRoot()`), e.g. `my-app/configs/magrathea.conf` when `AppPath()` is `my-app/app`.
 
-Sections are named by **environment**, not by topic. `[general]` holds cross-environment settings, including `use_environment` (which section is active by default — usually overridden by `->Dev()` / `->Prod()`). Each environment section (`[dev]`, `[production]`, …) repeats the full flat set of keys it needs — there is no `[section:env]` override/inheritance syntax.
+Sections are named by **environment**, not by topic. `[general]` holds cross-environment settings, including `use_environment`: the name of the active section. It must name a section that exists, or every `Config::Instance()->Get()` throws "Could not find environment". The only other way to pick the environment is `Config::Instance()->SetEnvironment("production")` in code; `->Dev()`/`->Prod()` don't change it. Each environment section (`[dev]`, `[production]`, …) repeats the full flat set of keys it needs — there is no `[section:env]` override/inheritance syntax.
 
 ### Writing a config file
 
 ```ini
 [general]
-	use_environment = "default"
-	time_zone = "America/Sao_Paulo"
+	use_environment = "dev"
 
 [dev]
 	db_host = "localhost"
@@ -132,18 +137,27 @@ Sections are named by **environment**, not by topic. `[general]` holds cross-env
 
 Keys are quoted strings; indentation with a tab under each section header is the convention seen in real configs (not required by the parser, but keep it for consistency).
 
+**Timezone:** the key is `timezone`, in each environment section (never `time_zone`, which is ignored, and never in `[general]`, which `Get()` doesn't read). `Load()` sets it as PHP's timezone, and since 2.4.0 `Connect()` also sets MySQL's session `time_zone` to PHP's on every connection, so `NOW()`/`CURRENT_TIMESTAMP` agree with `now()`. `db_sync_timezone = false` in the same section turns that off. Always set `timezone`; if MySQL lacks its timezone tables, the offset (`-03:00`) is used instead, which doesn't follow DST. The admin's Server page shows a timezone check (`Magrathea2\TimezoneCheck::Run()`).
+
+**Bootstrap setup wizard** (`Magrathea2\Bootstrap\Start`, since 2.4.0): locked unless the **active** environment's section has `bootstrap_unlocked = true` (`true`/`1`/`on`/`yes`); locked, it answers 403. Put the flag in `[dev]` only, never in `[production]` (except temporarily, removed right after). In `[general]` it's ignored. Projects that don't use the wizard don't need it.
+
 ### Reading config in code
 
 ```php
 use Magrathea2\Config;
 
-// Read a single key from the active environment section
-$host = Config::Instance()->GetConfig("db_host");
+// Read a single key from the active environment section (null if missing)
+$host = Config::Instance()->Get("db_host");
 
-// Read the full active-environment section
-$env = Config::Instance()->GetConfigSection();
+// Read a key from a specific section: "section/key" (GetConfig() does NOT use the environment)
+$prodHost = Config::Instance()->GetConfig("production/db_host");
+
+// Read the full active-environment section (the section name is required)
+$env = Config::Instance()->GetConfigSection(Config::Instance()->GetEnvironment());
 echo $env["db_host"];
 ```
+
+`Get()` and `GetConfig()` resolve `$=ENV_VAR` values; `GetConfigSection()` returns them raw.
 
 **Never hardcode credentials.** Use `$=ENV_VAR_NAME` for secrets.
 
@@ -158,13 +172,15 @@ Each feature is **split into a generated `Base` class and a concrete class**:
 - `app/features/Article/Base/ArticleBase.php` — holds `$dbTable`, `$dbPk`, `$dbValues`, and FK **relations**. Marked as generated ("changes can be overwritten through the admin") because Magrathea's admin tooling can regenerate it from the DB schema — but hand-writing it in this exact shape is normal when that tooling isn't in play.
 - `app/features/Article/Article.php` — the concrete class, `extends Base\ArticleBase`, empty unless you add real business-logic methods.
 
+**Namespaces follow the feature, not the class kind** (the admin generator's default `feature` structure, with app namespace `App`): everything in `features/Article/` is `App\Article\…` (`App\Article\Article`, `App\Article\ArticleControl`, `App\Article\ArticleAdmin`), and everything in `features/Article/Base/` is `App\Article\Base\…`. Don't mix in `App\Models`/`App\Controls` namespaces unless the project already uses the generator's `mvc` structure: the CRUD admin (§14) finds the control as `<model class>Control` unless it's passed explicitly.
+
 ```php
 <?php
 // app/features/Article/Base/ArticleBase.php
 ## FILE GENERATED BY MAGRATHEA.
 ## This file was automatically generated and changes can be overwritten through the admin
 
-namespace App\Models\Base;
+namespace App\Article\Base;
 
 use Magrathea2\iMagratheaModel;
 use Magrathea2\MagratheaModel;
@@ -174,6 +190,7 @@ class ArticleBase extends MagratheaModel implements iMagratheaModel {
     public $id, $title, $body, $author_id, $published, $views;
     public $created_at, $updated_at;
     protected $autoload = null;
+    protected $strictTypes = true; // new models: typed values on load (see "Supported field types")
 
     public function __construct($id = 0) {
         $this->MagratheaStart();
@@ -204,7 +221,7 @@ class ArticleBase extends MagratheaModel implements iMagratheaModel {
     }
 
     public function GetControl() {
-        return new \App\Controls\Base\ArticleControlBase();
+        return new \App\Article\Base\ArticleControlBase();
     }
 
     // >>> relations:
@@ -224,9 +241,9 @@ class ArticleBase extends MagratheaModel implements iMagratheaModel {
 ```php
 <?php
 // app/features/Article/Article.php
-namespace App\Models;
+namespace App\Article;
 
-class Article extends \App\Models\Base\ArticleBase {
+class Article extends \App\Article\Base\ArticleBase {
 
     public function __construct($id = 0) {
         parent::__construct($id);
@@ -251,18 +268,28 @@ For simple internal tools without the feature/Base convention, a flat single-cla
 | `boolean` | bool (stored as TINYINT 0/1) |
 | `string` | string (VARCHAR etc.) |
 | `text` | string (TEXT column) |
-| `float` | float (DECIMAL/FLOAT) |
+| `float` | float (FLOAT/DOUBLE — approximate) |
+| `decimal` | string (DECIMAL — exact, e.g. money; never cast to float, even with `$strictTypes`). Requires `2.4.0`+ |
 | `datetime` | string in `Y-m-d H:i:s` format |
 | `date` | string in `Y-m-d` format (SQL DATE column) |
 | `uuid` | string (CHAR(36)), auto-generated UUIDv7 on insert if unset |
 
-`uuid` behaves the same way `created_at`/`updated_at` already do: declare `$this->dbValues["uuid"] = "uuid";` and the framework fills it in on `Insert()` (via `Uuid::V7()`) whenever the property is left empty. An explicitly pre-set value (e.g. from a fixture or migration) is respected and never overwritten. Nothing changes on `Update()` — UUIDs are immutable once assigned. Requires MagratheaPHP2 `2.1.30`+.
+Declare `$this->dbValues["uuid"] = "uuid";` and the framework fills it in on `Insert()` (via `Uuid::V7()`) whenever the property is left empty. An explicitly pre-set value (e.g. from a fixture or migration) is respected and never overwritten. Nothing changes on `Update()` — UUIDs are immutable once assigned. Requires MagratheaPHP2 `2.1.30`+.
 
 **Collision safety is not enforced in application code** — there is no pre-insert uniqueness check and no catch/retry on a duplicate-key error; `Uuid::V7()` relies purely on `random_bytes(10)` entropy. Always declare the `uuid` column `PRIMARY KEY`/`UNIQUE` in the DB schema so uniqueness is actually guaranteed, not just statistically likely.
 
 `date` (requires MagratheaPHP2 `2.2.2`+) normalizes its value to `Y-m-d` on `Insert()`/`Update()`: it accepts `"YYYY-MM-DD"`, `"YYYY-MM-DD HH:MM:SS"`, and ISO-8601 (`"YYYY-MM-DDTHH:MM:SS.sssZ"`), and throws `MagratheaModelException` for anything else. The date part is taken as written — **no timezone conversion** — so prefer sending plain `"YYYY-MM-DD"` from clients to avoid off-by-one-day issues east of UTC. Existing models that declare a SQL `date` column as `"datetime"` keep working unchanged; the `"date"` type is picked up when objects are regenerated.
 
-By default, values loaded from the DB (`GetById()`, `LoadObjectFromTableRow()`, list queries) are **not** type-coerced — mysqli/PDO return every column as a string, so `int`/`boolean`/`float` properties come back as strings unless cast by hand. Set `protected $strictTypes = true;` on a model (or its Base class) to opt in: `int`/`boolean`/`float` values are cast to their native PHP type on load (`string`/`text`/`uuid`/`date`/`datetime` stay untouched, `null` stays `null`). A value that can't be cast throws `MagratheaModelException`. Off by default — existing models are unaffected. Requires MagratheaPHP2 `2.3.0`+.
+By default, values loaded from the DB (`GetById()`, `LoadObjectFromTableRow()`, list queries) are **not** type-coerced — mysqli/PDO return every column as a string, so `int`/`boolean`/`float` properties come back as strings unless cast by hand. `protected $strictTypes = true;` on a model (or its Base class) casts `int`/`boolean`/`float` values to their native PHP type on load (`string`/`text`/`uuid`/`date`/`datetime` stay untouched, `null` stays `null`; `decimal` must be numeric but stays the exact string). A value that can't be cast throws `MagratheaModelException`. Declare SQL `DECIMAL` columns as `"decimal"`, never `"float"`: a strict `float` field rounds a large DECIMAL on load, and `Update()` writes the rounded value back. Do decimal math with `bcmath`, not `+`/`*`. Requires MagratheaPHP2 `2.3.0`+.
+
+**`$strictTypes = true` is recommended for new models**, generated or hand-written. The framework default stays `false`, so existing models are unaffected. Since 2.4.0 the admin's object generator emits the line for new objects (the object form's "Strict types" select, saved as `strict_types` in `magrathea_objects.conf`); objects created before 2.4.0 have no `strict_types` key, so regenerating their Base class doesn't add it. **Don't turn it on for an existing model without checking its API consumers**: its JSON changes from `"42"` to `42` and from `"1"` to `true`.
+
+`created_at`/`updated_at` (declared in every generated model's `$dbValues`) are **not** like `uuid`:
+- `Insert()` skips them while they're `null`, so the **DB** fills them (column `DEFAULT CURRENT_TIMESTAMP` or a trigger). The table's timestamp columns must have a default: `NOT NULL` with no default fails every insert; nullable stays `NULL`.
+- Assigning one before `Insert()` makes `Insert()` send it, but always as PHP's `now()`, never the assigned value. To insert rows with their original timestamps (imports), use `Query::Insert()`.
+- After `Insert()`, the object holds PHP's `now()` for both, not the stored row values; `GetById()` again if you need the DB's.
+- `Update()` writes `updated_at = now()` (PHP clock) and never `created_at` (exception: a never-loaded object updated after a `Set()` doesn't write `updated_at`). `Set()` ignores both.
+- Inserts use MySQL's clock, updates PHP's: they agree when the config has `timezone` (MySQL's session timezone is synced to PHP's since 2.4.0, unless `db_sync_timezone = false`).
 
 ### Using a model
 
@@ -272,7 +299,6 @@ $article = new Article();
 $article->title     = "Hello World";
 $article->body      = "My first article.";
 $article->published = true;
-$article->created_at = now();
 $id = $article->Save(); // returns new ID (or ->Insert() explicitly)
 
 // Load by PK
@@ -290,6 +316,12 @@ $article->Delete();
 return $article->ToArray();
 ```
 
+**What `Update()` writes** (since 2.4.0):
+- **Loaded object** (`new Article(42)`, `GetById()`, any Control query, or after its own `Insert()`/`Update()`): only the fields changed since then, by plain assignment or `Set()`/`Assign()`, plus `updated_at`. Other columns are left alone. `5`/`"5"` and `true`/`"1"` count as the same value; `null` only equals `null`.
+- **Never-loaded object** (`new Article(); $a->id = 42; … Update()`): with any `Set()`/`Assign()`, only those fields (plain assignments are dropped); otherwise every field, except `null` int/boolean fields (skipped). So for updates, load the object first (`new Article($id)`) instead of building one by hand.
+- **Clearing an int/boolean (e.g. a nullable FK):** on a loaded object, `$a->category_id = null; $a->Save();` writes SQL `NULL`. `""` (an empty form field) in an int/boolean field is always written as `NULL`, never `0`: a `NOT NULL` int column needs a real value.
+- `LoadObjectFromTableRow()` marks the object as loaded: use it for DB rows only, never for input (`$_POST`, `GetPut()`): use `Assign()`.
+
 ---
 
 ## 4. Creating a Control
@@ -302,12 +334,12 @@ Every model gets a companion Control class for static data access — same featu
 ## FILE GENERATED BY MAGRATHEA.
 ## This file was automatically generated and changes can be overwritten through the admin
 
-namespace App\Controls\Base;
+namespace App\Article\Base;
 
 use Magrathea2\MagratheaModelControl;
 
 class ArticleControlBase extends MagratheaModelControl {
-    protected static $modelNamespace = "App\\Models";
+    protected static $modelNamespace = "App\\Article";
     protected static $modelName = "Article";
     protected static $dbTable = "articles";
 }
@@ -316,15 +348,15 @@ class ArticleControlBase extends MagratheaModelControl {
 ```php
 <?php
 // app/features/Article/ArticleControl.php
-namespace App\Controls;
+namespace App\Article;
 
 use Magrathea2\DB\Query;
 
-class ArticleControl extends \App\Controls\Base\ArticleControlBase {
+class ArticleControl extends \App\Article\Base\ArticleControlBase {
 
-    // real query/business-logic methods go here, e.g.:
-    public function GetPublished() {
-        return $this->GetWhere(["published" => 1]);
+    // real query/business-logic methods go here; Control methods are static, e.g.:
+    public static function GetPublished() {
+        return static::GetWhere(["published" => 1]);
     }
 }
 ```
@@ -332,7 +364,7 @@ class ArticleControl extends \App\Controls\Base\ArticleControlBase {
 ### Using a control
 
 ```php
-use App\Controls\ArticleControl;
+use App\Article\ArticleControl;
 
 // All records
 $all = ArticleControl::GetAll();
@@ -354,7 +386,7 @@ $total = ArticleControl::QueryOne("SELECT COUNT(*) FROM articles WHERE published
 // Paginated (with total — costs an extra COUNT(*) query)
 $total = 0;
 $query = \Magrathea2\DB\Query::Select()
-    ->Obj(new \App\Models\Article())
+    ->Obj(new \App\Article\Article())
     ->Where(["published" => 1])
     ->Order("created_at DESC");
 $page = ArticleControl::RunPagination($query, $total, page: 0, limit: 10);
@@ -362,7 +394,7 @@ $page = ArticleControl::RunPagination($query, $total, page: 0, limit: 10);
 // Paginated for an API response — no COUNT(*) query, has_more computed via limit+1 trick.
 // Return the MagratheaPagination directly from a controller action; see §7.
 $query = \Magrathea2\DB\Query::Select()
-    ->Obj(new \App\Models\Article())
+    ->Obj(new \App\Article\Article())
     ->Where(["published" => 1])
     ->Order("created_at DESC");
 $pagination = ArticleControl::GetPagination($query, page: 0, limit: 10); // MagratheaPagination
@@ -389,13 +421,13 @@ $sql = Query::Select()
 
 // SELECT with model (auto-fills table and fields)
 $sql = Query::Select()
-    ->Obj(\App\Models\Article::class)
+    ->Obj(\App\Article\Article::class)
     ->Where(["published" => 1])
     ->SQL();
 
 // JOIN
 $sql = Query::Select()
-    ->Obj(\App\Models\Article::class)
+    ->Obj(\App\Article\Article::class)
     ->SelectExtra("u.name AS author_name")
     ->Inner("users u", "u.id = articles.author_id")
     ->Where(["articles.published" => 1])
@@ -426,19 +458,84 @@ $one  = Database::Instance()->QueryRow($sql);
 $val  = Database::Instance()->QueryOne($sql);
 ```
 
-**Always use `Query::Clean()` or `PrepareAndExecute()` for user input:**
+**Never interpolate user input into SQL unescaped.** The query builder's array forms (`Where([...])`, `SetArray()`, `Values()`) escape values for you. For a hand-built fragment, use `Database::Instance()->Escape()` (it wraps `mysqli::real_escape_string`). `Query::Clean()` is deprecated: since 2.4.0 it just calls `Escape()`, and before that it didn't escape backslashes, so it wasn't injection-safe.
 
 ```php
-$safe = Query::Clean($_GET["search"]);
-$sql  = "SELECT * FROM articles WHERE title LIKE '%$safe%'";
+$safe = Database::Instance()->Escape($_GET["search"]);
+$rows = Database::Instance()->QueryAll("SELECT * FROM articles WHERE title LIKE '%$safe%'");
+```
 
-// Better: prepared statement
-$result = Database::Instance()->PrepareAndExecute(
-    "SELECT * FROM articles WHERE title LIKE ?",
-    ["s"],
-    ["%{$_GET['search']}%"]
+`PrepareAndExecute()` is for **writes**: it returns the insert id (or `true`), never rows, so don't use it for a SELECT. Its types are Magrathea field types (`"int"`, `"boolean"`, `"float"`, `"string"`, `"text"`, …), not mysqli letters:
+
+```php
+$id = Database::Instance()->PrepareAndExecute(
+    "INSERT INTO articles (title, author_id) VALUES (?, ?)",
+    ["string", "int"],
+    [$post["title"], $userId]
 );
 ```
+
+Every DB error throws `MagratheaDBException` (since 2.4.0, whatever mysqli's error reporting mode): `getCode()` is MySQL's errno (`1062` duplicate entry…), `query`/`values` hold the statement, and mysqli's own exception is `getPrevious()`. That includes the model's `Insert()`/`Update()`/`Save()`/`Delete()`. Catch `MagratheaDBException`, never `mysqli_sql_exception`, and never check `if (!$obj->Insert())`. In an API it's always a 500; turn expected errors into a `MagratheaApiException`:
+
+```php
+use Magrathea2\Exceptions\MagratheaDBException;
+
+try {
+    $user->Insert();
+} catch (MagratheaDBException $ex) {
+    if ($ex->getCode() !== 1062) throw $ex;
+    throw new MagratheaApiException("Email already registered", 409);
+}
+```
+
+### Connections and long-running workers
+
+Since 2.4.0, each `Database` instance opens one connection on its first query and keeps it until the end of the request. Session state (`SET @var`, `GET_LOCK()`, temporary tables, `LAST_INSERT_ID()`) lasts the whole request. `CloseConnectionThanks()` does nothing anymore; `Database::Instance()->LastAffectedRows()` returns the rows affected by the last query.
+
+**CLI scripts that loop (workers, daemons) must call `Disconnect()` at the start of each job**, or the first query after an idle longer than MySQL's `wait_timeout` fails:
+
+```php
+use Magrathea2\DB\Database;
+use Magrathea2\Exceptions\MagratheaDBConnectionLostException;
+
+while (true) {
+    Database::Instance()->Disconnect(); // next query opens a fresh connection
+    $job = NextJob();
+    try {
+        ProcessJob($job);
+    } catch (MagratheaDBConnectionLostException $ex) {
+        // code 2006: statement probably not executed; 4031 (idle timeout): not executed;
+        // 2013: it may have executed.
+        // The framework never retries. Retry only if ProcessJob() is idempotent.
+        Requeue($job);
+    }
+}
+```
+
+`MagratheaDBConnectionLostException` extends `MagratheaDBException`; the dead connection is already dropped when it's thrown, so the next call reconnects. A second database is a subclass (`class ReportsDb extends Database {}` → `ReportsDb::Instance()`), with its own connection; models, controls and the query builder always use `Database::Instance()`.
+
+### Transactions
+
+Wrap related writes in `Database::Instance()->Transaction(fn)`: everything inside (model `Insert()`/`Update()`/`Delete()`, controls, raw queries, `SELECT … FOR UPDATE`) commits when the callback returns, or rolls back if it throws (the exception is rethrown unchanged). It returns the callback's result.
+
+```php
+$orderId = Database::Instance()->Transaction(function() use ($cart) {
+    $stock = Database::Instance()->QueryOne("SELECT stock FROM products WHERE id = 5 FOR UPDATE");
+    if ($stock < 1) throw new MagratheaApiException("Out of stock", 409);
+    $order = new Order();
+    $order->user_id = $cart->user_id;
+    $order->Insert();
+    Database::Instance()->Query("UPDATE products SET stock = stock - 1 WHERE id = 5");
+    return $order->id;
+});
+```
+
+**Rules:**
+- Nested `Transaction()` calls run inline (no savepoints): an inner throw rolls back everything, even if outer code catches it.
+- Never catch-and-continue DB exceptions inside the callback: after a lost connection, later queries would run on a new autocommit connection, outside the transaction.
+- No DDL (`CREATE`/`ALTER`/`TRUNCATE`) inside: MySQL commits implicitly.
+- Don't call `QueryTransaction()` inside it (it throws), and don't end the request (`die`, `Json()`) inside it.
+- Prefer it over `QueryTransaction(array $sql)`, which only takes fixed SQL strings.
 
 ---
 
@@ -490,7 +587,6 @@ class MyAppApi extends MagratheaApi {
 
 ```php
 <?php
-// shared bootstrap (bootstrap.php) sets up MagratheaPHP
 $api = require __DIR__ . '/api.php';
 $api->Run();
 ```
@@ -499,8 +595,7 @@ $api->Run();
 
 ```php
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
-// ... MagratheaPHP bootstrap ...
+require_once __DIR__ . '/../app/_inc.php'; // the shared bootstrap from §1
 return new \App\MyAppApi();
 ```
 
@@ -522,8 +617,8 @@ use Magrathea2\MagratheaApiControl;
 use Magrathea2\MagratheaPagination;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\DB\Query;
-use App\Controls\ArticleControl;
-use App\Models\Article;
+use App\Article\ArticleControl;
+use App\Article\Article;
 
 class ArticleApiControl extends MagratheaApiControl {
 
@@ -544,7 +639,7 @@ class ArticleApiControl extends MagratheaApiControl {
     }
 
     // GET /articles/:id
-    public function Read(array $params = []): array {
+    public function Read($params = []): array {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
             throw new MagratheaApiException("Article not found", 404);
@@ -553,7 +648,7 @@ class ArticleApiControl extends MagratheaApiControl {
     }
 
     // POST /articles
-    public function Create(array $data = []): array {
+    public function Create($data = []): array {
         $post = $this->GetPost(); // reads JSON or form body
 
         $article = new Article();
@@ -561,14 +656,13 @@ class ArticleApiControl extends MagratheaApiControl {
         $article->body       = $post["body"]       ?? "";
         $article->author_id  = $this->GetUserId(); // from JWT
         $article->published  = false;
-        $article->created_at = now();
         $article->Save();
 
         return $article->ToArray();
     }
 
     // PUT /articles/:id
-    public function Update(array $params = []): array {
+    public function Update($params = []): array {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
             throw new MagratheaApiException("Article not found", 404);
@@ -577,14 +671,13 @@ class ArticleApiControl extends MagratheaApiControl {
         $put = $this->GetPut();
         if (isset($put["title"])) $article->title = $put["title"];
         if (isset($put["body"]))  $article->body  = $put["body"];
-        $article->updated_at = now();
         $article->Save();
 
         return $article->ToArray();
     }
 
     // DELETE /articles/:id
-    public function Delete(array $params = []): bool {
+    public function Delete($params = []): bool {
         $article = ArticleControl::GetRowWhere(["id" => $params["id"]]);
         if (!$article) {
             throw new MagratheaApiException("Article not found", 404);
@@ -611,15 +704,17 @@ class ArticleApiControl extends MagratheaApiControl {
 <?php
 namespace App\Api;
 
-use Magrathea2\MagratheaApiControl;
+use Magrathea2\MagratheaApiAuth;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\Config;
-use App\Controls\UserControl;
+use App\User\UserControl;
 
-class AuthControl extends MagratheaApiControl {
+// The class passed to BaseAuthorization() must extend MagratheaApiAuth (a MagratheaApiControl
+// subclass); a plain MagratheaApiControl throws a TypeError there.
+class AuthControl extends MagratheaApiAuth {
 
     // GetSecret() already reads "jwt_key" from the active environment section
-    // by default (config/magrathea.conf) — only override it for a different key name.
+    // by default (configs/magrathea.conf) — only override it for a different key name.
     public function GetSecret(): string {
         return Config::Instance()->Get("jwt_key");
     }
@@ -649,7 +744,7 @@ class AuthControl extends MagratheaApiControl {
         $payload = $this->GetTokenInfo($token);    // decodes + verifies
 
         if (!$payload || !isset($payload->user_id)) {
-            throw new MagratheaApiException("Unauthorized", 0, null, true);
+            throw new MagratheaApiException("Unauthorized", 401); // code 0 would be HTTP 500
         }
 
         $this->userInfo = $payload; // store for downstream use
@@ -661,7 +756,7 @@ class AuthControl extends MagratheaApiControl {
 ### Step 2: Access user in other controllers
 
 ```php
-public function Create(array $data = []): array {
+public function Create($data = []): array {
     $userId = $this->GetUserId();       // int|null from token
     $info   = $this->GetUserInfo();     // full decoded payload object
     $role   = $info->role ?? "guest";
@@ -672,7 +767,7 @@ public function Create(array $data = []): array {
 **JWT rules:**
 - Always set `"exp"` in the payload
 - Never store passwords or sensitive PII in the token
-- Always override `GetSecret()` to use a config value, not a hardcoded string
+- The secret comes from the config (`jwt_key`, read by the default `GetSecret()`), never a hardcoded string
 - `GetAuthorizationToken()` throws if the header is missing — call it inside `try/catch` or rely on the route's auth parameter
 
 ### Step 3: Cookie-based auth (opt-in)
@@ -680,7 +775,7 @@ public function Create(array $data = []): array {
 `GetTokenInfo()` also falls back to a cookie after `Bearer`/`Basic`, but only once a project overrides `$cookieName` — it is `null` by default, so this is fully opt-in and doesn't change behavior for projects that don't touch it. Useful for sharing a session across sibling subdomains via a cookie scoped to a parent domain.
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
 
     // Enables the cookie fallback in GetTokenInfo(); override on a shared
     // base ApiControl class if more than one controller needs it.
@@ -715,6 +810,8 @@ class AuthControl extends MagratheaApiControl {
 
 Calling `$this->Cache($name, $data)` only *peeks*: if a cache file for that key already exists, it outputs it and kills execution (`die`) right there. It never writes anything itself. The actual write-to-disk happens automatically later, when the framework serializes the controller's return value to JSON — no second manual call is needed or correct.
 
+Only successful responses are cached. `CacheClear()`/`CacheClearPattern()` don't touch the key set by `Cache()`, so an action may call both. API calls in raw mode (`SetRaw()`, `Run(true)`, e.g. from tests) bypass the cache entirely: the action always runs and nothing is saved.
+
 ### In a controller (recommended pattern)
 
 ```php
@@ -731,11 +828,11 @@ public function View(array $params = []): array {
     // $data suffix keys the cache per-id
     $this->Cache("article", $params["id"]);
 
-    $article = new ArticleControl($params["id"]);
+    $article = new Article($params["id"]);
     return $article->ToArray();
 }
 
-public function Create(array $data = []): array {
+public function Create($data = []): array {
     // ... create ...
 
     // Invalidate related cache (same $name/$data used to build the key)
@@ -791,6 +888,12 @@ Debugger::Instance()->Add(["user_id" => $id, "role" => $role]);
 Debugger::Instance()->Show();
 ```
 
+In DEV, debug items (including every `MagratheaException`, even caught ones) print as `<pre>` where
+they're added; `->Debug()` mode is `Debugger::DEBUG`, not DEV: it stores them and prints them all at the
+end of the request (plus query logging). Inside API calls neither prints: the items go to the JSON
+response as `_debug` (since 2.4.0), which only DEV/DEBUG responses have. Never `echo`/`var_dump` in an
+endpoint to debug it: that breaks the JSON; use `Debugger::Instance()->Add(...)` and read `_debug`.
+
 ---
 
 ## 11. Sending Email
@@ -814,9 +917,22 @@ $mail->SetTo($user->email)
 ```php
 use Magrathea2\MagratheaMailSMTP;
 
-$mail = new MagratheaMailSMTP(); // uses [mail] section from config
-$mail->SetTo($user->email)->SetSubject("Reset")->SetHTMLMessage($html)->Send();
+use Magrathea2\Config;
+
+// SMTP settings are never read from the config automatically: pass them in
+$config = Config::Instance();
+$mail = new MagratheaMailSMTP();
+$mail->SetSMTP($config->Get("smtp_host"), $config->Get("smtp_port"), $config->Get("smtp_user"), $config->Get("smtp_pass"));
+$mail->SetFrom("noreply@myapp.com")
+     ->SetTo($user->email)
+     ->SetSubject("Reset")
+     ->SetHTMLMessage($html);
+if (!$mail->Send()) {
+    Logger::Instance()->Log("mail failed: " . $mail->GetError());
+}
 ```
+
+The `smtp_*` key names above are the project's choice (any names work). Port `587` uses STARTTLS, other ports SMTPS, unless `SetSMTPArray()` passes `smtp_encryption`. `Send()` returns `false` when validation fails (missing message or SMTP setting; `GetError()` says which); a failed SMTP send throws PHPMailer's exception.
 
 ---
 
@@ -829,19 +945,20 @@ The admin entry point bootstraps Magrathea (including `StartSession()`), then ha
 // public/admin.php
 
 use Magrathea2\Admin\AdminManager;
+use Magrathea2\MagratheaPHP;
 
-include("bootstrap.php");           // shared MagratheaPHP setup (no Run())
-include("../admin/MyAppAdmin.php"); // the Admin class
+require __DIR__ . "/../app/_inc.php"; // shared bootstrap from §1 (no Run())
+MagratheaPHP::Instance()->StartSession();
 
 try {
-    AdminManager::Instance()->Start(new \App\MyAppAdmin());
+    AdminManager::Instance()->Start(new \App\MyAppAdmin()); // app/admin/MyAppAdmin.php, autoloaded
 } catch (Exception $ex) {
     \Magrathea2\p_r($ex);
 }
 ```
 
 **Rules:**
-- `bootstrap.php` must call `->StartSession()` for admin auth to work
+- `->StartSession()` must run before `Start()` for admin auth to work (here, or in `_inc.php`)
 - `AdminManager::Instance()->Start()` handles auth, rendering, and routing — it does not return
 - Never call `Run()` on the API inside an admin entry point
 
@@ -858,7 +975,7 @@ namespace App;
 use Magrathea2\Admin\AdminMenu;
 use Magrathea2\Admin\Features\ApiExplorer\ApiExplorer;
 use Magrathea2\Admin\Features\AppConfig\AdminFeatureAppConfig;
-use App\Admin\ArticleAdmin;
+use App\Article\ArticleAdmin;
 
 class MyAppAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\iAdmin {
 
@@ -922,7 +1039,8 @@ class MyAppAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\iA
 **Key methods:**
 - `Initialize()` — title, primary color, logo path (called once on load)
 - `Auth($user)` — return `parent::Auth($user)` for default Magrathea auth
-- `SetFeatures()` — orchestrates LoadConfig / LoadFeatures / LoadApi; always call `parent::SetFeatures()` first
+- `SetFeatures()` — orchestrates LoadConfig / LoadFeatures / LoadApi; always call `parent::SetFeatures()` first (it loads App Config, Cache, Users and User Logs)
+- File Editor — **not** loaded by default since 2.4.0 (any logged-in admin can edit server files with it). Only if the project really needs it, add `$this->LoadFileEditor();` after `parent::SetFeatures()`. Don't add it by default
 - `LoadApi()` — creates `ApiExplorer`, calls `SetApi(new YourApiClass())`, adds feature
 - `LoadFeatures()` — calls `AddCrudFeature()` for each CRUD admin class
 - `BuildMenu()` — constructs the sidebar; use `CreateTitle()` for section headers, `AddFeaturesMenu()` to auto-include CRUD items, always end with `GetLogoutMenuItem()`
@@ -932,43 +1050,37 @@ class MyAppAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\iA
 
 ## 14. Admin Panel — CRUD Features
 
-Each model gets a companion CRUD admin class extending `AdminCrudObject`.
+Each model gets a companion CRUD admin class extending `AdminCrudObject` (the admin generator writes it as `features/Article/ArticleAdmin.php`). Configure it in `Initialize()` by handing it a model instance; there are no `$modelName`/`$controlName` properties.
 
 ```php
 <?php
-namespace App\Admin;
+// app/features/Article/ArticleAdmin.php
+namespace App\Article;
 
-use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
+class ArticleAdmin extends \Magrathea2\Admin\Features\CrudObject\AdminCrudObject {
+    public string $featureName = "Articles"; // menu/page title (default: "Article CRUD")
 
-class ArticleAdmin extends AdminCrudObject {
-    protected $modelName        = "Article";
-    protected $modelNamespace   = "App\\Models";
-    protected $controlName      = "ArticleControl";
-    protected $controlNamespace = "App\\Controls\\";
-    protected $label            = "Articles";
-    protected $icon             = "newspaper"; // Bootstrap Icons name
+    public function Initialize() {
+        $this->SetObject(new Article());
+    }
 }
 ```
 
-**The admin class folder must be registered with `AddCodeFolder()` in bootstrap.**
+**How `SetObject()` finds the control:** `SetObject($model, $control = null)`. Without a control, it instantiates `<model's full class name>Control`, so `App\Article\Article` → `App\Article\ArticleControl` (works in the feature layout from §3). If the control lives in another namespace (e.g. `App\Models\Article` + `App\Controls\ArticleControl`), pass it: `$this->SetObject(new Article(), new ArticleControl())`; otherwise `SetObject()` throws a `MagratheaModelException` naming the missing class. The feature id defaults to `CRUD<Model>` (`CRUDArticle`) and becomes the menu link (`?magrathea_feature=CRUDArticle`). The menu has no icons.
 
-### Field visibility / permissions
+### Permissions
 
-By default `AdminCrudObject` allows full CRUD. Override to restrict:
+By default `AdminCrudObject` allows everything to any logged-in admin. Override `HasPermission()`: it's called with the subpage about to run (`null` for the list page, then `"List"`, `"Form"`, `"Save"`, `"Delete"`); returning `false` shows the permission-denied page.
 
 ```php
-class ArticleAdmin extends AdminCrudObject {
-    // ... properties ...
+class ArticleAdmin extends \Magrathea2\Admin\Features\CrudObject\AdminCrudObject {
+    // ... Initialize() ...
 
-    public function CanCreate(): bool { return false; } // read-only list
-    public function CanEdit(): bool   { return false; }
-    public function CanDelete(): bool { return true;  }
+    public function HasPermission($action = null): bool {
+        return !in_array($action, ["Save", "Delete"]); // read-only
+    }
 }
 ```
-
-### Bootstrap Icons reference
-
-Common values for `$icon`: `person`, `file-earmark-text`, `card-text`, `pencil`, `trash`, `search`, `newspaper`, `gear`, `box-arrow-right`.
 
 ### CSRF protection
 
@@ -1009,6 +1121,21 @@ try {
 }
 ```
 
+The code sets the HTTP status of the error response: `404` → 404, `4031` → 403 (4 digits: code / 10, for
+app sub-codes), `40312` → 403 (5 digits: code / 100). Code `0`, or anything that doesn't map to 400-599
+(e.g. MySQL's `1062`), gives **500**, so never throw code 0 for an expected error. To send a status that
+differs from the code: `(new MagratheaApiException("Token missing", 400))->SetStatus(401)`. Exceptions that
+aren't `MagratheaApiException` get the same mapping; code 0 → 500 with `{"message": ...}`. A DB error
+(`MagratheaDBException`, whose code is MySQL's errno) is always 500: to answer a duplicate entry with a
+409, catch it and throw a `MagratheaApiException` (see §5).
+
+A PHP `\Error` in an action (`TypeError`, calling an undefined method...) becomes a JSON 500, logged with
+`Logger::LogError()`; the client gets the message only in DEV ("Internal Server Error" otherwise). Don't
+catch `\Error`s in controllers just to return JSON: the router already does.
+
+Every error response is a real 4xx/5xx (since 2.4.0). Client code must read errors in the HTTP client's
+error path (axios `catch`, jQuery `.fail`), not by checking `success === false` in the success handler.
+
 ### Global exception handler (optional, add to entry point)
 
 ```php
@@ -1046,11 +1173,12 @@ use Magrathea2\Config;
 
 class MyTest extends TestCase {
     protected function setUp(): void {
-        Database::Instance()->Mock();
+        Database::Instance()->Mock(); // queries go to DatabaseSimulate, no MySQL needed
+        // same shape as magrathea.conf: [general] + one flat environment section
         Config::Instance()->SetConfig([
-            "database" => ["host" => "localhost", "database" => "test"],
-            "jwt"      => ["secret" => "test-secret"],
-        ]);
+            "general" => ["use_environment" => "test"],
+            "test"    => ["db_host" => "localhost", "db_name" => "test", "jwt_key" => "test-secret"],
+        ])->SetEnvironment("test");
     }
 }
 ```
@@ -1062,49 +1190,54 @@ class MyTest extends TestCase {
 ```
 my-app/
 ├── composer.json
-├── config/
-│   └── magrathea.conf
-├── models/
-│   └── Article.php
-├── controls/
-│   └── ArticleControl.php
-├── api/
-│   ├── AuthControl.php
-│   └── ArticleApiControl.php
-├── admin/
-│   ├── MyAppAdmin.php        ← Admin class
-│   ├── ArticleAdmin.php      ← CRUD feature
-│   └── logo.svg
-├── public/
-│   ├── bootstrap.php         ← shared MagratheaPHP setup (returns nothing)
+├── configs/
+│   └── magrathea.conf        ← AppPath's parent + /configs
+├── app/                      ← AppPath
+│   ├── _inc.php              ← shared bootstrap (§1), no output
+│   ├── features/
+│   │   └── Article/          ← namespace App\Article
+│   │       ├── Article.php
+│   │       ├── ArticleControl.php
+│   │       ├── ArticleAdmin.php       ← CRUD feature
+│   │       └── Base/         ← namespace App\Article\Base
+│   │           ├── ArticleBase.php
+│   │           └── ArticleControlBase.php
+│   ├── api/                  ← namespace App / App\Api
+│   │   ├── MyAppApi.php      ← extends MagratheaApi
+│   │   ├── AuthControl.php
+│   │   └── ArticleApiControl.php
+│   └── admin/
+│       ├── MyAppAdmin.php    ← Admin class
+│       └── logo.svg
+├── public/                   ← web root
 │   ├── api.php               ← returns new MyAppApi() (importable)
 │   ├── index.php             ← require api.php → Run()
 │   └── admin.php             ← AdminManager::Start(new MyAppAdmin())
-├── MyAppApi.php              ← extends MagratheaApi
 ├── cache/
 ├── logs/
 └── vendor/
 ```
 
-**`public/bootstrap.php`** — shared setup, no output:
+**`app/_inc.php`** — shared setup, no output (full version in §1):
 
 ```php
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
-use Magrathea2\MagratheaPHP;
+require __DIR__ . "/../vendor/autoload.php";
 
-MagratheaPHP::LoadVendor();
-MagratheaPHP::Instance()
-    ->AppPath(__DIR__ . '/..')
-    ->AddCodeFolder("models", "controls", "api", "admin")
-    ->Prod()->Load()->Connect()->StartSession();
+Magrathea2\MagratheaPHP::Instance()
+    ->AppPath(realpath(__DIR__))   // app/ → configs are read from ../configs/
+    ->AddRootCodeFolder("admin", "api")
+    ->AddFeature("Article")
+    ->Prod()
+    ->Load()
+    ->Connect();
 ```
 
 **`public/api.php`** — importable, returns the configured API:
 
 ```php
 <?php
-require_once __DIR__ . "/bootstrap.php";
+require_once __DIR__ . "/../app/_inc.php";
 return new \App\MyAppApi();
 ```
 
@@ -1121,7 +1254,8 @@ $api->Run();
 ```php
 <?php
 use Magrathea2\Admin\AdminManager;
-require __DIR__ . "/bootstrap.php";
+require __DIR__ . "/../app/_inc.php";
+\Magrathea2\MagratheaPHP::Instance()->StartSession();
 
 try {
     AdminManager::Instance()->Start(new \App\MyAppAdmin());
@@ -1135,9 +1269,9 @@ try {
 ## 18. Checklist Before Delivering Code
 
 ### Bootstrap
-- [ ] `MagratheaPHP::LoadVendor()` is called first
+- [ ] `vendor/autoload.php` is required first (`MagratheaPHP::LoadVendor()` can't do it: the class isn't loadable before the autoloader; it's deprecated, don't call it)
 - [ ] `AppPath()` is set with `__DIR__` or an absolute path
-- [ ] All class folders registered with `AddCodeFolder()` (including `admin/` for admin panels)
+- [ ] All class folders registered with `AddRootCodeFolder()` (or absolute paths in `AddCodeFolder()`), including `admin/` for admin panels
 - [ ] `->Load()->Connect()` is called before any DB operation
 - [ ] `->StartSession()` called when admin panel is used
 - [ ] Mode is `->Dev()` for local, `->Prod()` for server
@@ -1146,13 +1280,15 @@ try {
 - [ ] `$dbTable` is set
 - [ ] `$dbValues` includes all columns with correct types
 - [ ] `$dbPk` is set if primary key is not `"id"`
-- [ ] Each `$dbValues` field has an explicit typed public property declaration
+- [ ] Each `$dbValues` field has a public property declaration (untyped, as the generator writes it)
 - [ ] No `#[\AllowDynamicProperties]` attribute used
 - [ ] If the project uses UUIDs as external ids, the field is declared as `"uuid"` type, not hand-rolled
+- [ ] New models declare `protected $strictTypes = true;`; existing ones only after checking API consumers
+- [ ] SQL `DECIMAL` columns are `"decimal"`, not `"float"`
 
 ### Controls
 - [ ] `$modelName`, `$modelNamespace`, `$dbTable` are all set
-- [ ] Namespace matches the actual file location
+- [ ] Same namespace as its model (`App\Article\ArticleControl` for `App\Article\Article`), matching the feature folder
 
 ### API Class
 - [ ] Extends `MagratheaApi`
@@ -1161,7 +1297,7 @@ try {
 - [ ] `Run()` is NOT called inside the class — only in the HTTP entry point
 
 ### API Controllers
-- [ ] Every controller extends `MagratheaApiControl`
+- [ ] Every controller extends `MagratheaApiControl`, except the class passed to `BaseAuthorization()`, which extends `MagratheaApiAuth`
 - [ ] All error cases throw `MagratheaApiException`, not generic exceptions
 - [ ] User input never directly interpolated into SQL
 - [ ] `GetPost()` / `GetPut()` used (not `$_POST` directly)
@@ -1176,12 +1312,17 @@ try {
 
 ### Admin CRUD Features
 - [ ] Extends `AdminCrudObject`
-- [ ] `$modelName`, `$modelNamespace`, `$controlName`, `$controlNamespace` all set
-- [ ] `$label` and `$icon` set for UI
+- [ ] `Initialize()` calls `$this->SetObject(new Model())` with `<Model>Control` in the model's namespace, or `SetObject(new Model(), new ModelControl())` otherwise
+- [ ] Optional: `public string $featureName` for the title, `HasPermission($action)` to restrict
+
+### Admin Class (security)
+- [ ] File Editor not loaded (`LoadFileEditor()`) unless the project really needs it
 
 ### Config
 - [ ] Secrets use `$=ENV_VAR` — never hardcoded
-- [ ] Config file at `config/magrathea.conf` relative to `AppPath`
+- [ ] Config file at `configs/magrathea.conf` in `AppPath`'s **parent** folder
+- [ ] `[general] use_environment` names a section that exists
+- [ ] `bootstrap_unlocked = true`, if present, is only in `[dev]`
 
 ### General
 - [ ] `now()` used for datetime fields

@@ -1,6 +1,7 @@
 <?php
 
 use Magrathea2\Tests\TestsManager;
+use Magrathea2\Exceptions\MagratheaException;
 
 $testManager = TestsManager::Instance();
 
@@ -9,24 +10,29 @@ $testManager = TestsManager::Instance();
 //echo MagratheaPHP::Instance()->magRoot;
 
 
-$file = @$_POST["file"];
-if ($file) {
-	$fn = @$_POST["fn"];
-	if ($fn) {
-		echo "<span class='test-desc'>Testing function [".$testManager::TestFolderPrint($file)."::".$fn."]</span>";
-		$response = $testManager->RunFunction($file, $fn);
-	} else {
-		echo "<span class='test-desc'>Testing file [".$testManager::TestFolderPrint($file)."]</span>";
-		$response = $testManager->RunFile($file);
+// TestsManager only runs paths inside the registered test folders
+try {
+	$file = @$_POST["file"];
+	if ($file) {
+		$fn = @$_POST["fn"];
+		if ($fn) {
+			$response = $testManager->RunFunction($file, $fn);
+			echo "<span class='test-desc'>Testing function [".htmlspecialchars($testManager::TestFolderPrint($file)."::".$fn)."]</span>";
+		} else {
+			$response = $testManager->RunFile($file);
+			echo "<span class='test-desc'>Testing file [".htmlspecialchars($testManager::TestFolderPrint($file))."]</span>";
+		}
+		printResponse($response);
 	}
-	printResponse($response);
-}
 
-$folder = @$_POST["folder"];
-if ($folder) {
-	echo "<span class='test-desc'>Testing folder [".$testManager::TestFolderPrint($folder)."]</span>";
-	$response = $testManager->RunFolder($folder);
-	printResponse($response);
+	$folder = @$_POST["folder"];
+	if ($folder) {
+		$response = $testManager->RunFolder($folder);
+		echo "<span class='test-desc'>Testing folder [".htmlspecialchars($testManager::TestFolderPrint($folder))."]</span>";
+		printResponse($response);
+	}
+} catch(MagratheaException $ex) {
+	echo "<span class='test-desc'>".htmlspecialchars($ex->getMessage())."</span>";
 }
 
 
@@ -34,7 +40,7 @@ if ($folder) {
 function printResponse($response) {
 	echo '<pre class="code">';
 	foreach ($response as $line) {
-		echo $line . PHP_EOL;
+		echo htmlspecialchars($line) . PHP_EOL;
 	}
 	echo '</pre>';
 }

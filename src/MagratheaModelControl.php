@@ -308,10 +308,12 @@ abstract class MagratheaModelControl{
 	}
 
 	/**
-	 * Show all elements from an object
+	 * Show all elements from an object (debug helper: prints an HTML table)
+	 * @deprecated 2.4.0 	debug helper, will be removed in 3.0
 	 */
 	public static function ShowAll(){
-		$baseObj = new static::$modelName();
+		$modelName = static::GetModelName();
+		$baseObj = new $modelName();
 		$all = static::GetAll();
 		$properties = $baseObj->GetProperties();
 		echo "<table class='magratheaShowAll'>";
@@ -323,11 +325,10 @@ abstract class MagratheaModelControl{
 		foreach ($all as $i) {
 			echo "<tr>";
 			foreach ($properties as $key => $value) {
-				echo "<td>".$i->$key."</td>";
+				echo "<td>".htmlspecialchars((string)$i->$key)."</td>";
 			}
 			echo "</tr>";
 		}
-		echo "</tr>";
 		echo "</table>";
 	}
 

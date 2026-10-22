@@ -72,6 +72,15 @@ class sqlInjectionTest extends \PHPUnit\Framework\TestCase {
 		$this->assertStringContainsString("'x\\', (SELECT password FROM users LIMIT 1))-- '", $sql);
 	}
 
+	function testCleanEscapesBackslashes() {
+		TestsHelper::Print("testing Query::Clean() escapes a backslash, so a \\' payload can't close the string");
+		$malicious = "x\\' OR 1=1 -- ";
+		$clean = Query::Clean($malicious);
+		$this->assertSame(Database::Instance()->Escape($malicious), $clean);
+		// backslash escaped (\\) and quote escaped (\'): 2.3.5 returned x\\' OR, where the quote closes the string
+		$this->assertSame("x\\\\\\' OR 1=1 -- ", $clean);
+	}
+
 	function testGetByIdEscapesNonIntPrimaryKey() {
 		TestsHelper::Print("testing MagratheaModel::GetById() escapes a non-int PK value before it reaches SQL");
 		Debugger::Instance()->SetDebug()->LogQueries(true);

@@ -68,8 +68,17 @@ Write a line to the log file. Throws `Exception` if the file is not writable.
 Logger::Instance()->Log("User 42 logged in from 192.168.1.1");
 ```
 
-### `LogError(\Exception $error): void`
-Write a formatted exception entry (message + stack trace) to the log.
+### `LogError(mixed $error): void`
+Write one line for an error to the log (no stack trace):
+
+| `$error` | Line |
+|----------|------|
+| `MagratheaException` | `<class> Catch: [<date>] = <message>`, plus the SQL for a `MagratheaDBException` |
+| other `\Exception` | `MagratheaError Catch: [<date>] = <message>` |
+| PHP `\Error` (`TypeError`, ...) | `<class> Catch: [<date>] = <message> (<file>:<line>)` |
+| anything else (e.g. `error_get_last()`'s array) | `MagratheaError Catch: [<date>] = <print_r of it>` |
+
+Before 2.4.0, a PHP `\Error` or a non-exception (so `LogLastError()` too) wrote a line with no message.
 
 ```php
 try {

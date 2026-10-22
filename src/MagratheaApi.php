@@ -4,6 +4,7 @@ namespace Magrathea2;
 
 use Magrathea2\Authorization\AuthApi;
 use Magrathea2\Exceptions\MagratheaApiException;
+use Magrathea2\Exceptions\MagratheaDBException;
 
 #######################################################################################
 ####
@@ -164,11 +165,11 @@ class MagratheaApi {
 
 	/**
 	 * Defines the base authorization handler.
-	 * @param MagratheaApiControl $authClass The class containing authorization methods.
-	 * @param string|null         $function  The name of the default authorization method.
+	 * @param MagratheaApiAuth $authClass The class containing authorization methods.
+	 * @param string|null      $function  The name of the default authorization method.
 	 * @return MagratheaApi itself for method chaining.
 	 */
-	public function BaseAuthorization(MagratheaApiControl $authClass, ?string $function): MagratheaApi {
+	public function BaseAuthorization(MagratheaApiAuth $authClass, ?string $function): MagratheaApi {
 		$this->authClass = $authClass;
 		$this->baseAuth = $function;
 		return $this;
@@ -435,11 +436,24 @@ class MagratheaApi {
 
 	/**
 	 * Finds the matching endpoint for a given URL and method, and executes it.
+	 * In DEV, debug items added meanwhile aren't printed (they'd break the JSON):
+	 * the response gets them as `_debug`.
 	 * @param string $fullUrl The full request URL path.
 	 * @param string $method  The HTTP request method.
 	 * @return mixed The result of the endpoint execution.
 	 */
 	public function ExecuteUrl($fullUrl, $method="GET") {
+		// raw mode returns data instead of printing it: a cache hit or save would print and die
+		MagratheaCache::Instance()->Bypass($this->returnRaw);
+		Debugger::Instance()->StartCapture();
+		try {
+			return $this->ExecuteRoute($fullUrl, $method);
+		} finally {
+			Debugger::Instance()->StopCapture();
+		}
+	}
+
+	private function ExecuteRoute($fullUrl, $method) {
 		$url = explode("/", $fullUrl);
 		$url = array_filter($url);
 
@@ -465,13 +479,15 @@ class MagratheaApi {
 			if($auth && $this->authClass) {
 				if(!$this->authClass->$auth($params)) {
 					$data = $this->authClass->authenticationErrorData;
-					$this->ReturnError(401, "Authorization Failed! (".$auth." = false)", $data, 401);
+					return $this->ReturnError(401, "Authorization Failed! (".$auth." = false)", $data, 401);
 				}
 			}
 		} catch(MagratheaApiException $ex) {
 			return $this->ReturnApiException($ex);
 		} catch (\Exception $ex) {
 			return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
+		} catch (\Error $err) {
+			return $this->ReturnInternalError($err);
 		}
 
 		if($control != null && !method_exists($control, $fn)) {
@@ -488,6 +504,8 @@ class MagratheaApi {
 			} else {
 				return $this->ReturnError($ex->getCode(), $ex->getMessage(), $ex);
 			}
+		} catch (\Error $err) {
+			return $this->ReturnInternalError($err);
 		}
 	}
 
@@ -510,12 +528,14 @@ class MagratheaApi {
 
 	/**
 	 * Outputs a JSON response and terminates the script.
+	 * In DEV, an associative-array response gets the debug items collected during the call as `_debug`.
 	 * @param array<mixed>|object $response The data to be encoded as JSON.
 	 * @param int                 $code     The HTTP status code to send.
 	 * @return mixed The raw response if `returnRaw` is true.
 	 */
 	public function Json($response, int $code=200){
 		if($this->returnRaw) return $response;
+		$response = Debugger::Instance()->WithCaptured($response);
 		header('Content-Type: application/json');
 		if($code != 200) {
 			$phrases = array(
@@ -561,22 +581,49 @@ class MagratheaApi {
 			"debug_level" => Debugger::Instance()->GetTypeDesc(),
 		];
 		if($debugType == Debugger::DEV || $debugType == Debugger::ANALYSIS) {
-			$data["stacktrace"] = debug_backtrace();
-		}
-		$exCode = $exception->getCode();
-		if($exCode >= 100 && $exCode <= 599) {
-			$httpStatus = $exCode;
-		} else if($exCode >= 1000 && $exCode <= 9999) {
-			$httpStatus = intval($exCode / 10);
-		} else if($exCode >= 10000 && $exCode <= 59999) {
-			$httpStatus = intval($exCode / 100);
-		} else {
-			$httpStatus = 500;
+			$data["stacktrace"] = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		}
 		return $this->Json(array(
 			"success" => false,
 			"data" => $data,
-		), $httpStatus);
+		), $this->HttpStatusFromException($exception));
+	}
+
+	/**
+	 * Maps an error code to an HTTP status:
+	 * 3 digits as is (404), 4 digits / 10 (4031 → 403), 5 digits / 100 (40312 → 403).
+	 * Anything that doesn't map to a 400-599 status gives 500.
+	 * @param mixed $code The error code (exception codes can be strings, e.g. PDO's).
+	 * @return int The HTTP status.
+	 */
+	private function HttpStatusFromCode($code): int {
+		$code = is_numeric($code) ? intval($code) : 0;
+		if($code >= 1000 && $code <= 9999) {
+			$status = intval($code / 10);
+		} else if($code >= 10000 && $code <= 59999) {
+			$status = intval($code / 100);
+		} else {
+			$status = $code;
+		}
+		return ($status >= 400 && $status <= 599) ? $status : 500;
+	}
+
+	/**
+	 * HTTP status for an exception: the status set with `MagratheaApiException::SetStatus()`
+	 * if it's a 400-599 status, otherwise the one mapped from the exception's code.
+	 * A database error is always 500: its code is MySQL's errno (4031 would map to 403).
+	 * @param \Throwable $exception
+	 * @return int The HTTP status.
+	 */
+	private function HttpStatusFromException(\Throwable $exception): int {
+		if($exception instanceof MagratheaDBException || $exception instanceof \mysqli_sql_exception) {
+			return 500;
+		}
+		if($exception instanceof MagratheaApiException) {
+			$status = is_numeric($exception->status) ? intval($exception->status) : 0;
+			if($status >= 400 && $status <= 599) return $status;
+		}
+		return $this->HttpStatusFromCode($exception->getCode());
 	}
 
 	/**
@@ -584,10 +631,11 @@ class MagratheaApi {
 	 * @param int          $code    The error code.
 	 * @param string       $message The error message.
 	 * @param mixed|null   $data    Additional error data.
-	 * @param int          $status  The HTTP status code.
+	 * @param int|null     $status  The HTTP status code; null derives it from `$data` if it's an exception (see `HttpStatusFromException()`), otherwise from `$code` (4031 → 403, 500 if it doesn't map to 400-599).
 	 * @return mixed
 	 */
-	public function ReturnError($code=500, $message="", $data=null, $status=200) {
+	public function ReturnError($code=500, $message="", $data=null, ?int $status=null) {
+		$status = $status ?? ($data instanceof \Throwable ? $this->HttpStatusFromException($data) : $this->HttpStatusFromCode($code));
 		$debugType = Debugger::Instance()->GetType();
 		$data = [
 			"type" => "unknown error",
@@ -598,12 +646,41 @@ class MagratheaApi {
 			"debug_level" => Debugger::Instance()->GetTypeDesc(),
 		];
 		if($debugType == Debugger::DEV || $debugType == Debugger::ANALYSIS) {
-			$data["stacktrace"] = debug_backtrace();
+			$data["stacktrace"] = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		}
 		return $this->Json(array(
 			"success" => false,
 			"data" => $data,
 		), $status);
+	}
+
+	/**
+	 * Returns a PHP `\Error` (`TypeError`, `Error`, ...) thrown by an action as a JSON 500, and logs it.
+	 * The message can show paths and signatures: clients get it only in DEV,
+	 * otherwise "Internal Server Error". The log always has it, with file and line.
+	 * @param \Error $error The error.
+	 * @return mixed
+	 */
+	protected function ReturnInternalError(\Error $error) {
+		try {
+			Logger::Instance()->LogError($error);
+		} catch(\Throwable $logError) {
+			// an unwritable logs_path must not hide the error, nor break the response
+			error_log(get_class($error).": ".$error->getMessage()." (".$error->getFile().":".$error->getLine().")");
+		}
+		if(MagratheaPHP::Instance()->IsDev()) {
+			$rs = [
+				"message" => $error->getMessage(),
+				"error" => get_class($error),
+				"file" => $error->getFile().":".$error->getLine(),
+			];
+		} else {
+			$rs = [ "message" => "Internal Server Error" ];
+		}
+		return $this->Json(array(
+			"success" => false,
+			"data" => $rs,
+		), 500);
 	}
 
 	/**
@@ -635,27 +712,31 @@ class MagratheaApi {
 
 	/**
 	 * Returns a failure JSON response.
+	 * An exception is sent as `{message, code?, data?}` (`data` only for `MagratheaApiException`),
+	 * with the HTTP status from its code (500 for code 0). Anything else is sent as is, with HTTP 200.
 	 * @param mixed $data The error data or exception.
 	 * @return mixed
 	 */
 	public function ReturnFail($data) {
-		if(is_a($data, MagratheaApiException::class)) {
+		$status = 200;
+		if($data instanceof \Throwable) {
 			$rs = [
 				"message" => $data->getMessage()
 			];
 			if($data->getCode() != 0) {
 				$rs["code"] = $data->getCode();
 			}
-			if(!empty($data->GetData())) {
+			if($data instanceof MagratheaApiException && !empty($data->GetData())) {
 				$rs["data"] = $data->GetData();
 			}
+			$status = $this->HttpStatusFromException($data);
 		} else {
 			$rs = $data;
 		}
 		return $this->Json(array(
 			"success" => false,
 			"data" => $rs
-		));
+		), $status);
 	}
 
 	/**

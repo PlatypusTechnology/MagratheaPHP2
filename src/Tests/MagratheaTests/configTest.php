@@ -43,7 +43,7 @@ class configTest extends \PHPUnit\Framework\TestCase {
 		TestsHelper::Print("testing magratheaConfig checking required fields...");
 		$env = Config::Instance()->GetConfig("general/use_environment");
 		$compress_js = Config::Instance()->GetConfig($env."/db_host");
-		$compress_css = Config::Instance()->GetConfig($env."/time_zone");
+		$compress_css = Config::Instance()->GetConfig($env."/timezone");
 		$this->assertNotNull($compress_js);
 		$this->assertNotNull($compress_css);
 	}

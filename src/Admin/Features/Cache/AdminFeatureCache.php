@@ -42,15 +42,38 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 		include(__DIR__."/index.php");
 	}
 
-	public function View() {
+	/**
+	 * Gets the cache file posted as `file`: a plain file name of an existing file directly inside the cache path.
+	 * Anything else (`../`, sub-folders, a missing file) throws, so the admin can't read, write or delete
+	 * files outside the cache folder.
+	 * @return array		["name" => file name, "path" => full path]
+	 * @throws MagratheaException	invalid file
+	 */
+	private function GetPostedCacheFile(): array {
 		$file = @$_POST["file"];
-		if(!$file) throw new MagratheaException("invalid file");
+		if(!is_string($file) || $file === "" || $file === "." || $file === ".."
+			|| basename($file) !== $file || str_contains($file, "\\") || str_contains($file, "\0")) {
+			throw new MagratheaException("invalid file");
+		}
+		$cachePath = MagratheaCache::Instance()->GetCachePath();
+		$filePath = realpath(MagratheaHelper::EnsureTrailingSlash($cachePath).$file);
+		if(!$filePath || !is_file($filePath) || dirname($filePath) !== realpath($cachePath)) {
+			throw new MagratheaException("invalid file");
+		}
+		return ["name" => $file, "path" => $filePath];
+	}
+
+	public function View() {
+		$cacheFile = $this->GetPostedCacheFile();
+		$file = $cacheFile["name"];
+		$filePath = $cacheFile["path"];
 		include(__DIR__."/view.php");
 	}
 
 	public function Edit() {
-		$file = @$_POST["file"];
-		if(!$file) throw new MagratheaException("invalid file");
+		$cacheFile = $this->GetPostedCacheFile();
+		$file = $cacheFile["name"];
+		$filePath = $cacheFile["path"];
 		include(__DIR__."/edit.php");
 	}
 
@@ -59,10 +82,8 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 	}
 
 	public function Save() {
-		$file = $_POST["file"];
+		$filePath = $this->GetPostedCacheFile()["path"];
 		$data = $_POST["content"];
-		$path = MagratheaCache::Instance()->GetCachePath();
-		$filePath = MagratheaHelper::EnsureTrailingSlash($path).$file;
 		$f=fopen($filePath,'w');
 		$success = fwrite($f,$data);
 		fclose($f);
@@ -75,11 +96,11 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 	}
 
 	public function Remove() {
-		$file = $_POST["file"];
+		$file = $this->GetPostedCacheFile()["name"];
 		$success = MagratheaCache::Instance()->DeleteFile($file, false);
 		$elements = AdminElements::Instance();
 		if($success) {
-			$elements->Alert("File deleted [".$file."]", "success");
+			$elements->Alert("File deleted [".htmlspecialchars($file)."]", "success");
 		} else {
 			Logger::Instance()->LogLastError();
 			$elements->Alert("Error removing file", "danger");
@@ -87,6 +108,12 @@ class AdminFeatureCache extends AdminFeature implements iAdminFeature {
 	}
 
 	public function ClearCache() {
+		// POST only: admin CSRF tokens are checked on POST, so a GET link can't purge the cache
+		if(@$_SERVER["REQUEST_METHOD"] !== "POST") {
+			http_response_code(405);
+			AdminElements::Instance()->Alert("Clearing the cache requires a POST request", "danger");
+			return;
+		}
 		$deletedFiles = MagratheaCache::Instance()->RemoveAllCache();
 		AdminElements::Instance()->Alert("Cache purged!", "success");
 	}

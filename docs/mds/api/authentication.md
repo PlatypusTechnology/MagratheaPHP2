@@ -32,12 +32,15 @@ echo $result["token"];
 
 ## JWT in the API Layer
 
-For full JWT workflow in API controllers, use the methods on `MagratheaApiControl`:
+For full JWT workflow in API controllers, use the methods on `MagratheaApiControl`. The class
+holding the auth methods (`AuthControl` below) extends `MagratheaApiAuth`, a `MagratheaApiControl`
+subclass: `MagratheaApi::BaseAuthorization()` only accepts a `MagratheaApiAuth`, and passing a plain
+`MagratheaApiControl` throws a `TypeError`. Other controllers extend `MagratheaApiControl`.
 
 ### Encoding (login endpoint)
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
 
     public function Login(): array {
         $post = $this->GetPost();
@@ -57,7 +60,7 @@ class AuthControl extends MagratheaApiControl {
 ### Decoding (protected endpoint)
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
 
     // Used as base authorization for all protected routes
     public function ValidateToken(): bool {
@@ -65,7 +68,7 @@ class AuthControl extends MagratheaApiControl {
         $payload = $this->GetTokenInfo($token);
 
         if (!$payload) {
-            throw new MagratheaApiException("Unauthorized", 0, null, true);
+            throw new MagratheaApiException("Unauthorized", 401); // code 0 would be HTTP 500
         }
 
         $this->userInfo = $payload;
@@ -106,7 +109,7 @@ class UserApiControl extends MagratheaApiControl {
 This fallback is **off by default** and does not affect any existing project. It only activates once a project overrides `$cookieName` in its own `ApiControl` subclass — the same opt-in convention already used by `GetSecret()`:
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
     protected ?string $cookieName = "app_session";
 }
 ```
@@ -120,7 +123,7 @@ Because `GetTokenInfo()` reads `$cookieName` off the instance handling the reque
 `SetAuthCookie()` writes the session cookie, deriving its expiry from the JWT's own `exp` claim so the cookie never outlives (or underlives) the token:
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
     protected ?string $cookieName = "app_session";
 
     public function Login(): array {
@@ -145,7 +148,7 @@ class AuthControl extends MagratheaApiControl {
 Because the cookie defaults to `HttpOnly`, client-side JS cannot delete it — logout needs a real server round-trip:
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
     // ...
     public function Logout(): array {
         $this->ClearAuthCookie(".example.com"); // domain must match SetAuthCookie()
@@ -228,7 +231,7 @@ Client                    API
 The default algorithm is `HS256` (HMAC-SHA256), controlled by `$jwtEncodeType` on `MagratheaApiControl`. To change it:
 
 ```php
-class AuthControl extends MagratheaApiControl {
+class AuthControl extends MagratheaApiAuth {
     public string $jwtEncodeType = "RS256";
 }
 ```

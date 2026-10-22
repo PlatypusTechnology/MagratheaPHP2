@@ -11,19 +11,22 @@ The framework ships with built-in test utilities to help you write unit tests fo
 
 | File | Description |
 |------|-------------|
-| `src/Tests/TestsManager.php` | Test runner and assertion manager |
-| `src/Tests/TestsHelper.php` | Assertion helpers |
-| `src/Tests/phpUnitBootstrap.php` | PHPUnit bootstrap for database and framework setup |
+| `src/Tests/TestsManager.php` | Runs PHPUnit test folders/files from the admin's "Tests" page |
+| `src/Tests/TestsHelper.php` | Two tiny helpers: `Debug()` (sets the Debugger to `NONE`) and `Print()` (a no-op) |
+| `src/Tests/phpUnitBootstrap.php` | PHPUnit bootstrap: loads Composer's autoloader and sets the Debugger to `NONE` |
 
 ---
 
 ## PHPUnit Bootstrap
 
-The `phpUnitBootstrap.php` file initializes the framework for test runs. Reference it in your `phpunit.xml`:
+`phpUnitBootstrap.php` sets `error_reporting(E_ALL)`, requires `vendor/autoload.php` (it works both in a
+framework checkout and installed under `vendor/`) and sets the Debugger to `NONE`, because DEV prints every
+`MagratheaException` when it's created, caught ones included. It doesn't load any config or connect to a
+database. Use it, or your own bootstrap, in `phpunit.xml`:
 
 ```xml
 <!-- phpunit.xml -->
-<phpunit bootstrap="vendor/magrathea/magrathea-php2/src/Tests/phpUnitBootstrap.php">
+<phpunit bootstrap="vendor/platypustechnology/magratheaphp2/src/Tests/phpUnitBootstrap.php">
     <testsuites>
         <testsuite name="Application">
             <directory>tests/</directory>
@@ -36,7 +39,7 @@ The `phpUnitBootstrap.php` file initializes the framework for test runs. Referen
 
 ## Mocking the Database
 
-For unit tests that shouldn't hit a real database, use `Database::Mock()`:
+For unit tests that shouldn't hit a real database, call `Mock()` on the instance:
 
 ```php
 use Magrathea2\DB\Database;
@@ -44,21 +47,27 @@ use Magrathea2\DB\Database;
 class ProductControlTest extends \PHPUnit\Framework\TestCase {
 
     protected function setUp(): void {
-        Database::Instance()->Mock(); // disable real queries
+        Database::Instance()->Mock(); // Database::Instance() is now a DatabaseSimulate
     }
 }
 ```
 
-For integration tests, use `Database::Instance()->SetConfig(...)` to point to a test database:
+`Mock()` replaces the `Database` singleton with `DatabaseSimulate` for the rest of the PHP process (there's
+no un-mock; code that kept the old instance in a variable keeps using it). The simulator never connects:
+- every query is recorded with `Debugger::AddQuery()`;
+- `QueryAll()`/`QueryRow()` return `[]`, `QueryOne()` and `Query()` return `null`;
+- `PrepareAndExecute()` returns `42`, so a model's `Insert()` gets `42` as its id;
+- `Escape()` escapes without a connection, so the query builder works;
+- `Transaction()` follows the real rules and records `START TRANSACTION`/`COMMIT`/`ROLLBACK`.
+
+It can't return rows: anything that needs data back needs a real test database.
+
+For integration tests, point the connection at a test database. It opens on the first query and stays open
+for the rest of the process (one connection per `Database` instance):
 
 ```php
 protected function setUp(): void {
-    Database::Instance()->SetConnectionArray([
-        "host"     => "localhost",
-        "database" => "test_db",
-        "username" => "root",
-        "password" => "",
-    ])->OpenConnectionPlease();
+    Database::Instance()->SetConnection("localhost", "test_db", "root", "");
 }
 ```
 
@@ -66,20 +75,18 @@ protected function setUp(): void {
 
 ## Mocking Configuration
 
+`SetConfig()` replaces the whole parsed config. Give it the same shape as `magrathea.conf`: a
+`[general]` section plus one flat section per environment.
+
 ```php
 use Magrathea2\Config;
 
 Config::Instance()->SetConfig([
-    "database" => [
-        "host"     => "localhost",
-        "database" => "test_db",
-        "username" => "root",
-        "password" => "",
-    ],
-    "app" => [
-        "name" => "Test App",
-    ],
-]);
+    "general" => ["use_environment" => "test"],
+    "test"    => ["db_host" => "localhost", "db_name" => "test_db", "jwt_key" => "test-secret"],
+])->SetEnvironment("test");
+
+Config::Instance()->Get("db_name"); // "test_db"
 ```
 
 ---
@@ -165,17 +172,46 @@ class ProductApiControlTest extends TestCase {
 }
 ```
 
+### Calling an endpoint in raw mode
+
+To test routing, authorization and error handling too, register the routes on a `MagratheaApi` in raw mode
+and call `ExecuteUrl()`. It returns the response array instead of printing JSON:
+
+```php
+public function testListRoute(): void {
+    \Magrathea2\DB\Database::Instance()->Mock();
+    $api = (new MagratheaApi())->SetRaw();
+    $api->Add("GET", "products", new ProductApiControl(), "List");
+
+    $rs = $api->ExecuteUrl("products", "GET");
+    $this->assertTrue($rs["success"]);
+    $this->assertEquals([], $rs["data"]); // the simulator returns no rows
+}
+```
+
+An unknown route reads `$_SERVER["REQUEST_METHOD"]`, so set it in the test before checking for the 404.
+
+- Raw mode bypasses the response cache: a cached action always runs and returns its data (2.4.0+).
+- A protected route whose auth method returns `false` returns the 401 error array and never runs the
+  action (2.4.0+), so authenticate first in tests of protected endpoints.
+
 ---
 
 ## Testing the Query Builder
 
-The query builder doesn't execute SQL — it just builds strings. This makes it very easy to test:
+The query builder doesn't execute SQL, it builds strings. String values are escaped through
+`Database::Instance()->Escape()`, which opens a connection, so mock the database first (the simulator
+escapes without one):
 
 ```php
 use Magrathea2\DB\Query;
 use PHPUnit\Framework\TestCase;
 
 class QueryBuilderTest extends TestCase {
+
+    protected function setUp(): void {
+        \Magrathea2\DB\Database::Instance()->Mock();
+    }
 
     public function testBasicSelect(): void {
         $sql = Query::Select()
@@ -230,33 +266,42 @@ class MailTest extends TestCase {
 
 ---
 
-## TestsManager (Built-in Runner)
+## TestsManager (the admin's Tests page)
 
-The `TestsManager` provides a lightweight assertion runner without PHPUnit, useful for integration health checks:
+`TestsManager` is a singleton behind the admin's "Tests" page: it lists test folders, their `*Test.php` files
+and their `test*` methods, and runs them by shelling out to the framework's `phpunit.phar` with
+`phpUnitBootstrap.php`. It's not an assertion library, and it doesn't run anything by itself.
 
 ```php
 use Magrathea2\Tests\TestsManager;
 
-$tests = new TestsManager();
+// e.g. in your Admin subclass, so the folder shows up on the Tests page
+TestsManager::Instance()->AddTest([__DIR__ . "/../tests"], "App tests");
 
-$tests->Add("Database connects", function() {
-    Database::Instance()->OpenConnectionPlease();
-    return true;
-});
-
-$tests->Add("Config loads", function() {
-    $host = Config::Instance()->GetConfig("database/host");
-    return !empty($host);
-});
-
-$tests->Run();
-// Outputs pass/fail for each registered test
+// the same calls the Tests page makes
+$output = TestsManager::Instance()->RunAllTests();                                  // every registered folder
+$output = TestsManager::Instance()->RunFolder(__DIR__ . "/../tests");             // array of output lines
+$output = TestsManager::Instance()->RunFile(__DIR__ . "/../tests/OrderTest.php");
+$output = TestsManager::Instance()->RunFunction(__DIR__ . "/../tests/OrderTest.php", "testTotal");
 ```
+
+- `AddTest(array $folders, $name = null)`: without `$name`, the test is named after its first folder
+  (`"/app/tests/models"` → `"models"`). Before 2.4.0 it read an undefined variable and got an empty name.
+- `RunAllTests()` runs every folder of every registered test, in the order they were added, and returns all
+  their output lines (`RunFolder()`'s, one folder after the other). Before 2.4.0 it did nothing.
+- `AddMagrathaTests()` (sic) registers the framework's own suites; `Admin` calls it on start.
+- The commands need `exec()` and the `phpunit.phar` at the framework's root.
+- **Only registered folders (2.4.0+).** `RunFolder()` and `GetTestsFromFolder()` take a registered test folder
+  or a folder inside one; `RunFile()`, `RunFunction()` and `GetMethodsFromTest()` take a `*Test.php` file inside
+  one. Paths are resolved with `realpath()` first, so `../` and symlinks pointing out are rejected. Anything else
+  throws `MagratheaException("invalid test path")`; a `RunFunction()` name that isn't letters, digits and `_`
+  throws `"invalid test function"`. Every argument is passed to the shell with `escapeshellarg()`. Folders you
+  pass to `AddTest()` are trusted: don't register `/` or your app's root.
 
 ---
 
 ## Notes
 
-- The framework's mock system (`MockClass`, `Mock()`, `Simulate()`) is designed to make unit testing practical without a running database.
+- The framework's mocks are `Database::Instance()->Mock()`, `Singleton::MockClass()` (replace any singleton's instance), `ConfigApp::Mock()` and `MagratheaMail::Simulate()`.
 - Prefer integration tests (real database, test schema) over mock-heavy unit tests for critical data paths.
 - Always run tests against a dedicated test database — never the production database.

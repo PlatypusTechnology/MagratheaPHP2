@@ -28,7 +28,7 @@ class objectManagerTest extends \PHPUnit\Framework\TestCase {
 
 	function testGetObjects() {
 		$objects = ObjectManager::Instance()->GetObjectList();
-		$this->assertEquals(["Actor", "Movie", "Studio"], $objects);
+		$this->assertEquals(["Actor", "Movie", "Review", "Studio"], $objects);
 	}
 
 	function testGetObjectData() {
@@ -91,5 +91,18 @@ class objectManagerTest extends \PHPUnit\Framework\TestCase {
 		$mirrorRel = ObjectManager::Instance()->GetRelationByName($addStatus["names"][0]);
 		$this->assertCount(0, $mirrorRel);
 	}
-}
 
+	function testGetTypeForNumericColumns() {
+		$objManager = ObjectManager::Instance();
+		$this->assertEquals("decimal", $objManager->GetType("decimal(10,2)"));
+		$this->assertEquals("float", $objManager->GetType("double"));
+		$this->assertEquals("float", $objManager->GetType("float"));
+		$this->assertContains("decimal", $objManager->GetTypesArr());
+		$this->assertContains("decimal", \Magrathea2\magrathea_getTypesArr());
+	}
+
+	function testSQLTypeForDecimal() {
+		$sqlType = new \ReflectionMethod(ObjectManager::class, "GetSQLTypeFromType");
+		$this->assertEquals("decimal(10,2) DEFAULT NULL /* adjust precision */", $sqlType->invoke(ObjectManager::Instance(), "decimal"));
+	}
+}

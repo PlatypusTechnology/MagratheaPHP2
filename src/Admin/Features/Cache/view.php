@@ -3,21 +3,22 @@
 include(__DIR__."/prettyfi.php");
 
 use Magrathea2\Admin\AdminElements;
-use Magrathea2\MagratheaCache;
-use Magrathea2\MagratheaHelper;
 
+// $file (name) and $filePath (validated) come from AdminFeatureCache::View()
 $elements = AdminElements::Instance();
-$path = MagratheaCache::Instance()->GetCachePath();
-$filePath = MagratheaHelper::EnsureTrailingSlash($path).$file;
 
 $content = file_get_contents($filePath);
 $pretty = prettyPrint($content);
+
+// cached responses hold user data: always escape (file names too, they can come from route params)
+$fileHtml = htmlspecialchars($file);
+$fileJs = htmlspecialchars(json_encode($file));
 
 ?>
 
 <div class="card">
 	<div class="card-header">
-		<?=$file?>
+		<?=$fileHtml?>
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">
@@ -32,16 +33,16 @@ $pretty = prettyPrint($content);
 			<div class="col-sm-6 right">
 				<?
 				$elements
-					->Button("edit", "editCacheFile('".$file."')", ["btn-success", "label-margin", "mt-0", "mb-1"]);
+					->Button("edit", "editCacheFile(".$fileJs.")", ["btn-success", "label-margin", "mt-0", "mb-1"]);
 				$elements
-					->Button("delete", "deleteCache('".$file."')", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
+					->Button("delete", "deleteCache(".$fileJs.")", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
 				?>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-sm-12">
-				<pre class="cache-view pretty-cache"><?=$pretty?></pre>
-				<pre class="cache-view raw-cache" style="display: none;"><?=$content?></pre>
+				<pre class="cache-view pretty-cache"><?=htmlspecialchars($pretty)?></pre>
+				<pre class="cache-view raw-cache" style="display: none;"><?=htmlspecialchars($content)?></pre>
 			</div>
 		</div>
 	</div>

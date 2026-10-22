@@ -22,15 +22,16 @@ $tableData = [];
 foreach ($files as $file) {
 	$date = date("Y-m-d h:i:s",filemtime($path.$file));
 	$size = MagratheaHelper::FormatSize(filesize($path.$file));
+	// file names can come from route params (Cache("article", $id)): escape them
+	$fileJs = htmlspecialchars(json_encode($file));
 	array_push($tableData,
 	[
-		"_file" => $file,
+		"_file" => htmlspecialchars($file),
 		"_size" => $size,
 		"_date" => $date,
-		"_actions" => function($row) {
-			$f = $row["_file"];
-			$actions = '<a class="action" onclick="viewCacheFile(\''.$f.'\')">view</a>';
-			$actions .= '<a class="action" onclick="deleteCache(\''.$f.'\')">delete</a>';
+		"_actions" => function($row) use ($fileJs) {
+			$actions = '<a class="action" onclick="viewCacheFile('.$fileJs.')">view</a>';
+			$actions .= '<a class="action" onclick="deleteCache('.$fileJs.')">delete</a>';
 			return $actions;
 		}
 	]);

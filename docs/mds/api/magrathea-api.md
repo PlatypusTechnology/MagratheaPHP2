@@ -16,7 +16,6 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Magrathea2\MagratheaPHP;
 use Magrathea2\MagratheaApi;
 
-MagratheaPHP::LoadVendor();
 MagratheaPHP::Instance()->AppPath(__DIR__)->Prod()->Load()->Connect();
 
 $api = new MagratheaApi();
@@ -90,12 +89,25 @@ Set the full list of accepted request headers.
 ### `SetRaw(): MagratheaApi`
 Disable JSON encoding of responses — return raw output.
 
-### `BaseAuthorization(MagratheaApiControl $authClass, ?string $function): MagratheaApi`
-Set a default authorization check applied to all protected routes.
+Raw mode (`SetRaw()`, `Run(true)`) also bypasses the response cache: `ExecuteUrl()` calls
+`MagratheaCache::Instance()->Bypass()`, so a cached action always runs and returns fresh data, and
+nothing is saved. Before 2.4.0, a cache hit or save in raw mode printed the JSON and ended the script.
+
+### `BaseAuthorization(MagratheaApiAuth $authClass, ?string $function): MagratheaApi`
+Set a default authorization check applied to all protected routes. `$authClass` must extend
+`MagratheaApiAuth` (see the Authentication page); a plain `MagratheaApiControl` throws a
+`TypeError`. Before 2.4.0 the parameter was typed `MagratheaApiControl`, but a plain control failed
+anyway when it was stored.
 
 ```php
 $api->BaseAuthorization(new AuthControl(), "ValidateToken");
 ```
+
+When a protected route's auth method returns `false`, the request stops there: the response is a
+`401` error (`code` 401, `"Authorization Failed! (<method> = false)"`, with the auth class's
+`authenticationErrorData` as `error`) and the action is never called. This holds in raw mode too
+(`Run(true)`, `SetRaw()`, `ExecuteUrl()`), where the error array is returned instead of printed.
+Before 2.4.0, raw mode ran the action anyway after building the error.
 
 ---
 
@@ -207,7 +219,8 @@ $result = $api->ExecuteUrl("/products/1", "GET");
 These are typically called from within controllers, but can also be called directly.
 
 ### `Json(array|object $response, int $code = 200): mixed`
-Output a JSON response with an HTTP status code.
+Output a JSON response with an HTTP status code. In DEV and DEBUG, an associative-array response also
+gets `_debug` (see [DEV and DEBUG: debug items go to `_debug`](#dev-and-debug-debug-items-go-to-debug)).
 
 ```php
 $api->Json(["error" => "Not found"], 404);
@@ -242,21 +255,91 @@ Return a standardized failure response:
 {"success": false, "data": ...}
 ```
 
-### `ReturnError(int $code = 500, string $message = "", mixed $data = null, int $status = 200): mixed`
-Return a standardized error response.
+An exception (any `\Throwable`) is sent as `{"message": ..., "code": ...}` (`code` only when it isn't 0),
+plus `"data"` for a `MagratheaApiException` with data, and the HTTP status comes from the exception
+(see [Error responses and HTTP status](#error-responses-and-http-status)): 500 for code 0. Anything
+else is sent as `data` as is, with HTTP **200**.
+
+### `ReturnError(int $code = 500, string $message = "", mixed $data = null, ?int $status = null): mixed`
+Return a standardized error response. With no `$status`, the HTTP status is derived from `$data` when
+it's an exception (as in [Error responses and HTTP status](#error-responses-and-http-status)), otherwise
+from `$code`; an explicit `$status` is sent as given.
 
 ```php
-$api->ReturnError(401, "Unauthorized");
+$api->ReturnError(404, "Not here");          // HTTP 404
+$api->ReturnError(4031, "Plan expired");     // HTTP 403
+$api->ReturnError(1062, "Duplicate entry");  // HTTP 500 (doesn't map to 400-599)
+$api->ReturnError(4031, "Soft fail", null, 200); // HTTP 200, explicit
 ```
 
 ### `Return404(): mixed`
-Return a 404 response.
+Return a 404 response (HTTP 404).
+
+### `ReturnInternalError(\Error $error): mixed` (protected)
+Sends a PHP `\Error` (`TypeError`, `Error`, ...) thrown by an action or an auth method as HTTP 500, and
+logs it with `Logger::LogError()` (class, message, file and line); if the Logger can't write, it goes
+to PHP's `error_log()`. The client gets the details only in DEV:
+
+```json
+// DEV
+{"success": false, "data": {"message": "...must be of type int, string given...", "error": "TypeError", "file": "/var/www/app/Api/X.php:40"}}
+// any other mode
+{"success": false, "data": {"message": "Internal Server Error"}}
+```
+
+Before 2.4.0 these weren't caught: PHP's fatal error page was sent instead of JSON. `AdminApi` does the
+same (it runs in LOG mode, so its clients always get the generic message).
 
 ### `ReturnApiException(MagratheaApiException $exception): mixed`
-Return an error response derived from an exception.
+Return an error response derived from an exception, with the HTTP status from the exception.
+
+When the debugger is `DEV` or `ANALYSIS`, `ReturnError()` and `ReturnApiException()` add a
+`stacktrace` to `data`. Each frame has `file`, `line`, `function`, `class` and `type`, but no `args`
+(since 2.4.0), so config arrays, passwords and keys passed down the call chain never reach the
+response. In other debug modes there's no `stacktrace` at all.
 
 ### `Cache(array $data): void`
 Store and immediately return a cached response.
+
+### Error responses and HTTP status
+
+Every error response has a 4xx/5xx HTTP status (since 2.4.0; before, everything except
+`ReturnApiException()` and the 401 of a failed authorization was sent as HTTP 200). The body is
+unchanged: `{"success": false, "data": ...}`.
+
+The status comes from the error code:
+
+| Code | HTTP status | Example |
+|------|-------------|---------|
+| 3 digits | the code | `404` → 404 |
+| 4 digits | code / 10 | `4031` → 403 (sub-codes 0-9) |
+| 5 digits, 10000-59999 | code / 100 | `40312` → 403 (sub-codes 00-99) |
+| anything else, or a result outside 400-599 | 500 | `0`, `1062` (`106`), `2001` (`200`), `7000` (`700`), `"23000"` |
+
+For a `MagratheaApiException`, a status set with `SetStatus()` wins if it's 400-599; otherwise the
+code decides. Whether it's a "killer" error (`$kill`) doesn't change the status.
+
+A database error (`MagratheaDBException`, including `MagratheaDBConnectionLostException`, or a raw
+`mysqli_sql_exception`) is always **500** (since 2.4.0): its code is MySQL's errno, not a status, and
+some errnos would map to a 4xx (MySQL's `4031` → 403, MariaDB's `4025` → 402).
+
+What `ExecuteUrl()` sends:
+
+| Case | Response | HTTP status |
+|------|----------|-------------|
+| no route | `ReturnError(404, ...)` | 404 |
+| auth method returned `false` | `ReturnError(401, ...)` | 401 |
+| action method doesn't exist | `ReturnError(500, ...)` | 500 |
+| `MagratheaApiException` | `ReturnApiException()` | `SetStatus()` or from the code |
+| other exception, code 0 | `ReturnFail()`: `{message}` | 500 |
+| other exception, code ≠ 0 | `ReturnError(code, message, exception)` | from the code (500 for a DB error) |
+| PHP `\Error` (`TypeError`, ...) in the action or the auth method | `ReturnInternalError()` | 500 |
+
+In raw mode (`Run(true)`, `SetRaw()`) nothing is sent: the response array is returned, without the status.
+
+Clients that don't reject on 4xx/5xx (`fetch()`) see no difference. axios, jQuery `$.ajax`, Angular
+`HttpClient` and similar send these responses to their error handler, where the body is in
+`error.response.data` (axios) / `jqXHR.responseJSON` (jQuery).
 
 ---
 
@@ -283,6 +366,38 @@ Enable endpoint debugging — outputs route resolution info.
 ```php
 $api->Debug()->Run();
 ```
+
+### DEV and DEBUG: debug items go to `_debug`
+
+In DEV, the `Debugger` prints every debug item as `<pre>` where it's added, including every
+`MagratheaException` when it's created, even ones that are caught. In DEBUG (`->Debug()`) it prints them
+all at the end of the request. In an API response that HTML would break the JSON, so while `ExecuteUrl()`
+runs (and so `Run()`), DEV and DEBUG collect the items instead, and the response gets them as `_debug`
+(since 2.4.0). In DEBUG, `_debug` starts with the items stored before the call, and nothing is printed
+after a JSON response:
+
+```json
+{
+  "success": true,
+  "data": {"id": 7},
+  "_debug": [
+    {"type": "Magrathea2\\Exceptions\\MagratheaException", "message": "caught one", "code": 42, "file": "/var/www/app/Api/X.php:40", "data": {"id": 7}},
+    {"type": "Magrathea2\\Exceptions\\MagratheaDBException", "message": "Duplicate entry...", "code": 0, "file": "...", "query": "INSERT ...", "values": ["..."]},
+    "a string passed to Debugger::Add()",
+    "INFO: from Debugger::Info()"
+  ]
+}
+```
+
+- Only in DEV and DEBUG, and only when there's something to send: other modes never have `_debug`.
+- Only on associative-array responses: a list or a scalar passed to `Json()` is sent unchanged.
+- Exceptions are `{type, message, code, file, data?, query?, values?}` (`query`/`values` for
+  `MagratheaDBException`); other items go in as they were added. No stack trace.
+- A cache save (`Cache()` in the action) sends `_debug` in that response but never writes it to the
+  cache file; a cache hit sends the file as is, without `_debug`.
+- Raw mode (`Run(true)`, `SetRaw()`) returns the data without `_debug`.
+- `_debug` can hold SQL and its values (`->Debug()` logs every query): don't run a public server in
+  DEV or DEBUG.
 
 ---
 
@@ -314,10 +429,9 @@ use Magrathea2\MagratheaApi;
 use App\Api\ProductApiControl;
 use App\Api\AuthControl;
 
-MagratheaPHP::LoadVendor();
 MagratheaPHP::Instance()
     ->AppPath(__DIR__)
-    ->AddCodeFolder("models", "controls", "api")
+    ->AddRootCodeFolder("models", "controls", "api")
     ->Prod()
     ->Load()
     ->Connect();

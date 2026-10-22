@@ -3,12 +3,22 @@
 use Magrathea2\Admin\AdminCsrf;
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminManager;
+use Magrathea2\Admin\Start;
 
+// only plain names of files in views/actions/ and views/pages/
 $magrathea_subpage = @$_GET["magrathea_subpage"];
 if(!empty($magrathea_subpage)) {
-	include("actions/".$magrathea_subpage.".php");
+	$actionFile = Start::Instance()->GetViewFile("actions", $magrathea_subpage);
+	if(!$actionFile) {
+		http_response_code(404);
+		die("action not found");
+	}
+	include($actionFile);
 	die;
 }
+$page = @$_GET["magrathea_page"];
+$pageFile = $page ? Start::Instance()->GetViewFile("pages", $page) : null;
+if($page && !$pageFile) http_response_code(404);
 ?>
 
 <!DOCTYPE html>
@@ -35,9 +45,16 @@ if(!empty($magrathea_subpage)) {
 			<div id="page-content-wrapper">
 				<?php
 					$gotSomething = false;
-					$page = @$_GET["magrathea_page"];
 					if($page) {
-						include("pages/".$page.".php");
+						if($pageFile) {
+							include($pageFile);
+						} else {
+							AdminElements::Instance()->Alert(
+								"Page not found [".htmlspecialchars(is_string($page) ? $page : "")."]",
+								"danger",
+								true
+							);
+						}
 						$gotSomething = true;
 					} else {
 						$feature = @$_GET["magrathea_feature"];

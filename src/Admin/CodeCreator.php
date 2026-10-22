@@ -105,6 +105,19 @@ class CodeCreator extends \Magrathea2\Singleton {
 			return $object."ControlBase";
 		}
 	}
+	/**
+	 * returns full object control name with namespace
+	 * @param string 	$obj 		object name
+	 * @return string
+	 */
+	private function GetFullControlName($object): string {
+		if($this->namespace) {
+			$middle = ($this->structure == "mvc" ? "Controls" : $object);
+			return "\\".$this->namespace."\\".$middle."\\".$object."Control";
+		} else {
+			return $object."Control";
+		}
+	}
 
 	/**
 	 * comment for the header of the file
@@ -208,6 +221,11 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code .= "\tpublic \$".implode(", $", $obj_fields).";\n";
 		$code .= "\tpublic \$created_at, \$updated_at;\n";
 		$code .= "\tprotected \$autoload = ".(count($relations_autoload) == 0 ? "null" : "array(".implode(", ", $relations_autoload).")").";\n";
+		// "strict_types" is "1" for true, "" for false (parse_ini_file); absent = legacy object.
+		// never emit "= false": it would shadow the framework's default
+		if(!empty($data["strict_types"])) {
+			$code .= "\tprotected \$strictTypes = true;\n";
+		}
 		if(count($autoload_objs) > 0) {
 			$code .= "\tpublic \$".implode(", $", $autoload_objs).";\n";
 		}
@@ -239,7 +257,7 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code .= "\t}\n";
 
 		$code .= "\n\tpublic function GetControl() {";
-		$code .= "\n\t\treturn new \\".$this->GetNamespace($object, true)."\\".$object."ControlBase();";
+		$code .= "\n\t\treturn new ".$this->GetFullControlBaseName($object)."();";
 		$code .= "\n\t}";
 
 		$code .= "\n\n\t// >>> relations:\n".$relations_functions."\n";
@@ -329,7 +347,7 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code .= "class ".$object."Admin extends \Magrathea2\Admin\Features\CrudObject\AdminCrudObject {\n";
 		$code .= "\tpublic string \$featureName = \"".$object." CRUD\";\n\n";
 		$code .= "\tpublic function Initialize() {\n";
-		$code .= "\t\t\$this->SetObject(new ".$object."());\n";
+		$code .= "\t\t\$this->SetObject(new ".$this->GetFullObjName($object, false)."(), new ".$this->GetFullControlName($object)."());\n";
 		$code .= "\t}\n";
 		$code .= "}\n";
 		return $code;
@@ -349,12 +367,12 @@ class CodeCreator extends \Magrathea2\Singleton {
 		$code .= "namespace ".$this->GetNamespace($object, false, true).";\n\n";
 
 		$code .= "/**\n";
-		$code .= "* @property ".$object."Control \$service\n";
+		$code .= "* @property ".$this->GetFullControlName($object)." \$service\n";
 		$code .= "*/\n";
 		$code .= "class ".$object."Api extends \Magrathea2\MagratheaApiControl {\n";
 		$code .= "\tpublic function __construct() {\n";
-		$code .= "\t\t\$this->model = get_class(new ".$object."());\n";
-		$code .= "\t\t\$this->service = new ".$object."Control();\n";
+		$code .= "\t\t\$this->model = get_class(new ".$this->GetFullObjName($object, false)."());\n";
+		$code .= "\t\t\$this->service = new ".$this->GetFullControlName($object)."();\n";
 		$code .= "\t}\n\n";
 		$code .= "}\n";
 		return $code;

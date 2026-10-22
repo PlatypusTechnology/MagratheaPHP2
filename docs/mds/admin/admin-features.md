@@ -16,14 +16,14 @@ All features extend the `AdminFeature` class (and, by convention, implement `iAd
 | Property | Type | Description |
 |----------|------|-------------|
 | `$featureName` | `string` | Display name in the menu (defaults to `"Unknown"`) |
-| `$featureId` | `string` | Unique identifier used in URLs and menu highlighting (defaults to `"some-feature"`; falls back to the class's basename if left empty) |
-| `$featureIcon` | `mixed` | Bootstrap icon name, or `null` for no icon |
+| `$featureId` | `string` | Unique identifier used in URLs and menu highlighting (defaults to `"some-feature"`; if it's still empty after `Initialize()`, it becomes the class's basename) |
+| `$featureIcon` | `mixed` | Put in the menu item as `icon`, but the menu doesn't render icons |
 | `$featureClassPath` | `string` | Absolute directory the default `Index()` includes `index.php` from — set it via `SetClassPath()` |
 
 ### Key Methods
 
 #### `Initialize(): void`
-Hook called at the end of the constructor. Override to set up properties, register JS/CSS, etc. — no-op by default.
+Hook called once by the constructor, before the `$featureId` fallback. Override to set up properties, register JS/CSS, etc. — no-op by default. (Before 2.4.0, `AdminCrudObject` subclasses had it called twice.)
 
 #### `AddJs(string $file): AdminFeature` / `AddCSS(string $file): AdminFeature`
 Register a JS/CSS file (absolute path) with `AdminManager` so it's loaded on every admin page. Both return `$this` for chaining.
@@ -69,13 +69,17 @@ Manages database-stored application configuration (via `ConfigApp`). Allows admi
 **Path:** `src/Admin/Features/Cache/`
 
 Allows admin users to:
-- View all cache files
-- Clear individual cache entries
-- Clear all cache at once
-- Clear by pattern
+- List the files in the cache folder (`cache_path`)
+- View (raw or pretty-printed), edit and delete a cache file
+- Clear all cache at once (`ClearCache`, POST only since 2.4.0)
+
+Since 2.4.0, `View`/`Edit`/`Save`/`Remove` only accept a plain file name of an existing file
+directly inside the cache folder (no `../`, sub-folders or symlinks pointing outside; anything
+else throws "invalid file"), and cached content and file names are HTML-escaped when shown.
+Before, any logged-in admin could write or delete any file the web server can reach.
 
 **Menu item:** "Cache"
-**Feature ID:** `cache`
+**Feature ID:** `AdminFeatureCache`
 
 ---
 
@@ -89,44 +93,46 @@ The most powerful built-in feature. Automatically generates a full CRUD interfac
 
 ```php
 <?php
-namespace App\Admin;
+// features/Product/ProductAdmin.php (what the admin's code generator writes)
+namespace App\Product;
 
 use Magrathea2\Admin\Features\CrudObject\AdminCrudObject;
 
-class ProductAdminFeature extends AdminCrudObject {
-    // Model to manage
-    protected $modelName      = "Product";
-    protected $modelNamespace = "App\\Models";
+class ProductAdmin extends AdminCrudObject {
+    // Optional: title in the menu and page header (default: "Product CRUD")
+    public string $featureName = "Products";
 
-    // Control class for DB queries
-    protected $controlName      = "ProductControl";
-    protected $controlNamespace = "App\\Controls\\";
-
-    // Display settings
-    protected $label = "Products";
-    protected $icon  = "box";        // Bootstrap icon name
-
-    // Columns to show in the list view
-    protected $listFields = ["id", "name", "price", "active"];
-
-    // Fields shown in create/edit forms
-    protected $formFields = ["name", "description", "price", "stock", "active"];
+    public function Initialize() {
+        $this->SetObject(new \App\Product\Product(), new \App\Product\ProductControl());
+    }
 }
 ```
 
 ```php
-// Register it
-$admin->AddFeaturesArray([new ProductAdminFeature()]);
+// Register it in your Admin subclass (AddCrudFeature() also puts it in AddFeaturesMenu())
+public function SetFeatures() {
+    parent::SetFeatures();
+    $this->AddCrudFeature(new \App\Product\ProductAdmin());
+}
 ```
 
-This generates these admin routes automatically:
+**`SetObject(MagratheaModel $object, ?MagratheaModelControl $control = null)`** stores the model,
+sets `featureName` (if empty) to `"<Model> CRUD"` and `featureId` (if empty) to `"CRUD<Model>"`, and
+sets the control. Pass the control when the model and its control live in different namespaces
+(the generator's `mvc` structure: `App\Models\Product` and `App\Controls\ProductControl`). Without
+it, `SetObject()` instantiates `<model's full class name>Control`: `App\Product\Product` →
+`App\Product\ProductControl`, which works when both share a namespace (the default `feature`
+structure). If that class doesn't exist, it throws a `MagratheaModelException` naming the class it
+looked for. `SetControl()` can replace the control afterwards.
 
-| Route | Description |
-|-------|-------------|
-| `/admin/products` | List all products |
-| `/admin/products/new` | Create form |
-| `/admin/products/{id}` | View/edit |
-| `/admin/products/{id}/delete` | Delete confirmation |
+There are no properties to choose columns or form fields: the list shows every field except
+`created_at`/`updated_at` (`Columns()`), and the form is built from the model's field types
+(`Fields()`). Override those methods to change them.
+
+**Pages.** Everything is under the feature's URL, `?magrathea_feature=CRUDProduct` (the
+`featureId`); `magrathea_feature_subpage` selects `List`, `Form` (with `id`), `Save` or `Delete`
+(both POST, with `id`). `HasPermission($action)` receives that subpage name (`null` for the main
+page): override it to restrict, e.g. `return $action !== "Delete";`.
 
 ---
 
@@ -136,9 +142,18 @@ This generates these admin routes automatically:
 
 Provides a browser-based file viewer and editor for server-side files. Useful for editing config files, templates, or scripts without SSH access.
 
-**Feature ID:** `file_editor`
+**Feature ID:** `AdminFeatureFileEditor`
 
-> **Security note:** Restrict this feature to trusted admin users only. It grants write access to files on the server.
+**Not loaded by default** (since 2.4.0). Enable it from your `Admin` subclass:
+
+```php
+public function SetFeatures() {
+    parent::SetFeatures();
+    $this->LoadFileEditor();
+}
+```
+
+> **Security note:** any logged-in admin user can use it (`HasEditPermission()` only checks that someone is logged in), and it grants write access to files on the server. A leaked admin password becomes code execution. Don't enable it in production unless you have to.
 
 ---
 
