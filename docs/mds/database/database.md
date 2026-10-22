@@ -70,7 +70,7 @@ column defaults, `ON UPDATE CURRENT_TIMESTAMP` and triggers fired by this connec
 zone as PHP's `now()`.
 
 - **On by default** when the active environment has `timezone`. `db_sync_timezone = false` (or `0`,
-  `off`, `no`) in the same section turns it off. Without `timezone`, it's off whatever
+  `off`, `no`, quoted or not) in the same section turns it off. Without `timezone`, it's off whatever
   `db_sync_timezone` says.
 - The zone sent is `date_default_timezone_get()`, not the raw config value: if `timezone` is invalid,
   PHP stays on its default zone and MySQL is synced to that one.

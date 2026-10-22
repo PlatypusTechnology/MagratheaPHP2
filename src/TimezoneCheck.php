@@ -34,7 +34,8 @@ class TimezoneCheck {
 	/**
 	* Is the MySQL session timezone synced with PHP's?
 	* On by default when the active environment has a `timezone`;
-	* `db_sync_timezone = false` (or `""`, `"0"`) turns it off.
+	* `db_sync_timezone = false` (or `0`, `off`, `no`, empty; quoted or not) turns it off.
+	* A value that isn't a boolean keeps the default (on).
 	* @return 	string 		SYNC_ON, SYNC_OFF or SYNC_NO_TIMEZONE
 	*/
 	public static function SyncState(): string {
@@ -42,7 +43,9 @@ class TimezoneCheck {
 		if(empty($config->Get("timezone"))) return self::SYNC_NO_TIMEZONE;
 		$sync = $config->Get("db_sync_timezone");
 		if($sync === null) return self::SYNC_ON;
-		return in_array($sync, ["", "0", 0], true) ? self::SYNC_OFF : self::SYNC_ON;
+		// parse_ini_file turns an unquoted false into "", but a quoted "false" stays a string
+		$off = filter_var($sync, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === false;
+		return $off ? self::SYNC_OFF : self::SYNC_ON;
 	}
 
 	/**
