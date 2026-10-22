@@ -15,51 +15,48 @@ whether it applies to your project (**Applies if**), what changed, and what to d
 | 3 | Failed API authorization no longer runs the action in raw mode | Only for raw-mode callers relying on the bug | Authenticate in tests that call protected endpoints |
 | 4 | DEV/ANALYSIS error `stacktrace` frames no longer include `args` | No | None, unless a tool parses `args` |
 | 5 | Admin File Editor is no longer loaded by default | Yes, for admins that use it | Opt in with `$this->LoadFileEditor()` |
-| 5b | `Query::Clean()` escapes backslashes (it was injection-unsafe); deprecated | Rarely | Prefer `Database::Instance()->Escape()` |
-| 5c | Admin Cache feature only touches files inside the cache folder; "clear cache" is POST only; cached content is escaped | No | None, unless custom code calls its actions |
-| 5d | Admin Tests page only runs/reads test files inside registered test folders; shell arguments are escaped | No | None, unless code calls `TestsManager` with paths outside `AddTest()` folders |
-| 5e | Admin `?magrathea_page=`/`?magrathea_subpage=` only accept names of the admin's own page/action files; anything else is 404 | No | None, unless links use names that aren't files in `views/pages/` or `views/actions/` |
-| 6 | New `Database::Transaction(callable $fn)` | No | None (optional: use it) |
-| 7 | `QueryTransaction()` rolls back on failure; success returns `true` | No | None |
-| 8 | Cache files are written atomically (temp file + rename) | No | None, unless the cache dir isn't writable |
-| 9 | `Cache()` logs "adding cache for …" only in DEV | No | None, unless something reads those log lines |
-| — | Raw-mode API calls bypass the response cache | Only for raw callers relying on cached data | None in practice |
-| — | `CacheClear()` no longer changes the key set by `Cache()` | No | None |
-| 10 | API errors are sent with real 4xx/5xx HTTP statuses (were 200) | **Yes**, for clients that read `success: false` in the success handler | Move error handling to the HTTP client's error path **before** upgrading |
-| 10 | `MagratheaApiException::SetStatus()` is honored (it was ignored) | Only where it's called | Check `SetStatus()` calls; a missing token is now HTTP 401 (was 400) |
-| 11 | PHP `\Error`s in actions become a logged JSON 500 (were a fatal error page) | No | None |
-| 12 | Codes that map outside 400-599 give HTTP 500 | Only for code `2001`-style statuses | None in practice |
-| 13 | `BaseAuthorization()` takes a `MagratheaApiAuth` (was typed `MagratheaApiControl`) | No (a plain control never worked) | Auth classes extend `MagratheaApiAuth` |
-| 14 | DEV/DEBUG API responses carry debug items in `_debug` instead of printed HTML | No (DEV/DEBUG only) | None |
-| 14 | DB query errors reach the Debugger once (LOG wrote them twice) | No | None |
-| 15 | `created_at`/`updated_at` handling is unchanged, only documented (DB default on insert, PHP `now()` on update) | No | None |
-| 16 | `Update()` on a loaded object writes only the fields that changed, plain assignments included | Only for code that fills objects from input with `LoadObjectFromTableRow()` | Use `Assign()` there |
-| — | A model object assigned to a field is saved as its id (it wrote `1` or the object's text) | No (it never worked) | None |
-| 17 | `Update()` writes SQL `NULL` for a nulled int/boolean on a loaded object, and for `""` always | Yes, where code nulls an int it didn't mean to clear, or sends `""` to a `NOT NULL` int | Check int assignments and forms posting empty ints |
-| 18 | Requires PHP 8.1+ (`composer.json`) | Yes, on PHP 8.0 | Upgrade PHP first |
-| 18 | Failed writes (`PrepareAndExecute()`, model `Insert()`/`Update()`/`Delete()`) throw with mysqli reporting off; they printed `got error! ` and returned `null` | Only with reporting off, or code checking `if (!$obj->Insert())` | Catch `MagratheaDBException` instead of checking the return value |
-| 18b | DB errors are always `MagratheaDBException` (code = MySQL errno, mysqli's exception as `getPrevious()`); mysqli's `mysqli_sql_exception` used to come out as is | Yes, for code catching `mysqli_sql_exception` | Catch `MagratheaDBException` |
-| 18b | API answers DB errors with HTTP 500, whatever the errno | No | None |
-| 18b | DB exceptions carry the failed statement's values, so DEV/DEBUG output (`_debug`, Debugger) shows them | No (DEV/DEBUG only) | None |
-| 18 | `QueryMulti($q, false)`/`ImportFile($f, false)` keep going after a failed statement with PHP 8.1+'s default reporting | No (it never worked) | None |
-| 19 | Model writes bind int/boolean fields (and int PKs in `Update()`/`Delete()`) as integers; they were strings | Only for int PKs above `PHP_INT_MAX` | Declare those fields as `"string"` |
-| 20 | One shared connection per request instead of one per query | Yes, for long-running CLI workers | Call `Database::Instance()->Disconnect()` at the start of each job |
-| — | `QueryMulti()` returns SELECT rows (they were always empty) | No | None |
-| — | `db_port` from the config is now used (it was ignored) | Only if `db_port` is wrong | Check `db_port` or remove it |
-| 21 | The timezone key is `timezone`; `time_zone` (old samples) was always ignored, and still is | No, until you rename it | Rename `time_zone` → `timezone`: that turns on item 22 too |
-| 22 | With `timezone` set, MySQL's session `time_zone` is synced to PHP's (`db_sync_timezone`, default on) | **Yes**, if MySQL runs in another zone: `TIMESTAMP` values read back shifted, `NOW()` changes | Run the timezone checks; `db_sync_timezone = false` to opt out |
-| 23 | Autoloader: with two files of the same name in the code folders, the one whose `namespace` matches is loaded (was the first one); DEV warns | Only with duplicate class names, and then it loads different code | Check duplicates; rename them |
-| 24 | A missing class no longer throws `MagratheaException` from the autoloader; PHP's `Error: Class not found` instead | Only for code catching `MagratheaException` around `new X()` / `class_exists()` | Catch `\Error`, or check `class_exists()` first |
-| 25 | `MagratheaModelControl::ShowAll()` works with namespaced models (it failed with `Class not found`) and escapes values; deprecated (removed in 3.0) | No | None (stop calling it) |
-| — | `MagratheaPHP::LoadVendor()` is deprecated (removed in 3.0); it also finds the autoloader in a standalone checkout; `TestsManager` no longer calls it | No | None (stop calling it) |
-| 26 | New `decimal` field type for SQL `DECIMAL` (exact, kept as a string); the generator detects `DECIMAL` → `decimal`, `DOUBLE` → `float` | No, until a field is re-typed | Re-type `float` fields on `DECIMAL` columns, checking API consumers on strict models |
-| 27 | The admin's object form has a "Strict types" select; new objects generate with `$strictTypes = true` | No (objects created before 2.4.0 are unchanged) | None |
-| 27b | Code generator's `mvc` structure: CRUD admin, API and Base `GetControl()` fixed; `SetObject()` takes an optional control | No (they never worked under `mvc`) | Regenerate `mvc` Base models; fix hand-made `mvc` CRUD admins |
-| 27c | `AdminCrudObject` subclasses run `Initialize()` once (it ran twice) | No | None, unless an `Initialize()` relied on running twice |
+| 6 | `Query::Clean()` escapes backslashes (it was injection-unsafe); deprecated | Rarely | Prefer `Database::Instance()->Escape()` |
+| 7 | Admin Cache feature only touches files inside the cache folder; "clear cache" is POST only; cached content is escaped | No | None, unless custom code calls its actions |
+| 8 | Admin Tests page only runs/reads test files inside registered test folders; shell arguments are escaped | No | None, unless code calls `TestsManager` with paths outside `AddTest()` folders |
+| 9 | Admin `?magrathea_page=`/`?magrathea_subpage=` only accept names of the admin's own page/action files; anything else is 404 | No | None, unless links use names that aren't files in `views/pages/` or `views/actions/` |
+| 10 | New `Database::Transaction(callable $fn)` | No | None (optional: use it) |
+| 11 | `QueryTransaction()` rolls back on failure; success returns `true` | No | None |
+| 12 | Cache files are written atomically (temp file + rename) | No | None, unless the cache dir isn't writable |
+| 13 | `Cache()` logs "adding cache for …" only in DEV | No | None, unless something reads those log lines |
+| 14 | Raw-mode API calls bypass the response cache | Only for raw callers relying on cached data | None in practice |
+| 15 | `CacheClear()` no longer changes the key set by `Cache()` | No | None |
+| 16 | API errors are sent with real 4xx/5xx HTTP statuses (were 200) | **Yes**, for clients that read `success: false` in the success handler | Move error handling to the HTTP client's error path **before** upgrading |
+| 17 | `MagratheaApiException::SetStatus()` is honored (it was ignored) | Only where it's called | Check `SetStatus()` calls; a missing token is now HTTP 401 (was 400) |
+| 18 | PHP `\Error`s in actions become a logged JSON 500 (were a fatal error page) | No | None |
+| 19 | Codes that map outside 400-599 give HTTP 500 | Only for code `2001`-style statuses | None in practice |
+| 20 | `BaseAuthorization()` takes a `MagratheaApiAuth` (was typed `MagratheaApiControl`) | No (a plain control never worked) | Auth classes extend `MagratheaApiAuth` |
+| 21 | DEV/DEBUG API responses carry debug items in `_debug` instead of printed HTML; DB query errors reach the Debugger once (LOG wrote them twice) | No (DEV/DEBUG/LOG only) | None |
+| 22 | `created_at`/`updated_at` handling is unchanged, only documented (DB default on insert, PHP `now()` on update) | No | None |
+| 23 | `Update()` on a loaded object writes only the fields that changed, plain assignments included | Yes, silently: input loaded with `LoadObjectFromTableRow()` isn't saved; display-only assignments are; other processes' changes aren't overwritten | Use `Assign()` for input; check assignments before `Save()` |
+| 24 | A model object assigned to a field is saved as its id (it wrote `1` or the object's text) | No (it never worked) | None |
+| 25 | `Update()` writes SQL `NULL` for a nulled int/boolean on a loaded object, and for `""` always | Yes, where code nulls an int it didn't mean to clear, or sends `""` to a `NOT NULL` int | Check int assignments and forms posting empty ints |
+| 26 | `composer.json` requires PHP 8.1+ | No: the framework already needed 8.1 (it uses an `enum`) | None, unless Composer runs on PHP 8.0 |
+| 27 | Failed writes (`PrepareAndExecute()`, model `Insert()`/`Update()`/`Delete()`) throw with mysqli reporting off (they printed `got error! ` and returned `null`); `QueryMulti($q, false)`/`ImportFile($f, false)` keep going after a failed statement with PHP 8.1+'s default reporting | Only with reporting off, or code checking `if (!$obj->Insert())` | Catch `MagratheaDBException` instead of checking the return value |
+| 28 | DB errors are always `MagratheaDBException` (code = MySQL errno, mysqli's exception as `getPrevious()`), answered by the API with HTTP 500, carrying the statement's values | Yes, for code catching `mysqli_sql_exception` | Catch `MagratheaDBException` |
+| 29 | Model writes bind int/boolean fields (and int PKs in `Update()`/`Delete()`) as integers; they were strings | Only for int PKs above `PHP_INT_MAX` | Declare those fields as `"string"` |
+| 30 | One shared connection per request instead of one per query | Yes, for long-running CLI workers | Call `Database::Instance()->Disconnect()` at the start of each job |
+| 31 | `QueryMulti()` returns SELECT rows (they were always empty) | No | None |
+| 32 | `db_port` from the config is now used (it was ignored) | Only if `db_port` is wrong | Check `db_port` or remove it |
+| 33 | The timezone key is `timezone`; `time_zone` (old samples) was always ignored, and still is | No, until you rename it | Rename `time_zone` → `timezone`: that turns on item 34 too |
+| 34 | With `timezone` set, MySQL's session `time_zone` is synced to PHP's (`db_sync_timezone`, default on) | **Yes**, if MySQL runs in another zone: `TIMESTAMP` values read back shifted, `NOW()` changes | Run the timezone checks; `db_sync_timezone = false` to opt out |
+| 35 | Autoloader: with two files of the same name in the code folders, the one whose `namespace` matches is loaded (was the first one); DEV warns | Only with duplicate class names, and then it loads different code | Check duplicates; rename them |
+| 36 | A missing class no longer throws `MagratheaException` from the autoloader; PHP's `Error: Class not found` instead | Only for code catching `MagratheaException` around `new X()` / `class_exists()` | Catch `\Error`, or check `class_exists()` first |
+| 37 | `MagratheaModelControl::ShowAll()` works with namespaced models (it failed with `Class not found`) and escapes values; deprecated (removed in 3.0) | No | None (stop calling it) |
+| 38 | `MagratheaPHP::LoadVendor()` is deprecated (removed in 3.0); it also finds the autoloader in a standalone checkout; `TestsManager` no longer calls it | No | None (stop calling it) |
+| 39 | New `decimal` field type for SQL `DECIMAL` (exact, kept as a string); the generator detects `DECIMAL` → `decimal`, `DOUBLE` → `float` | No, until a field is re-typed | Re-type `float` fields on `DECIMAL` columns, checking API consumers on strict models |
+| 40 | The admin's object form has a "Strict types" select; new objects generate with `$strictTypes = true` | No (objects created before 2.4.0 are unchanged) | None |
+| 41 | Code generator's `mvc` structure: CRUD admin, API and Base `GetControl()` fixed; `SetObject()` takes an optional control | No (they never worked under `mvc`) | Regenerate `mvc` Base models; fix hand-made `mvc` CRUD admins |
+| 42 | Admin features run `Initialize()` before the default `featureId` is set; `AdminCrudObject` subclasses run it once (it ran twice) | Rarely: a feature reading an unset `featureId` in `Initialize()` | Set `featureId` before reading it |
 
 ## Composer constraint
 
-2.4.0 requires **PHP 8.1+** (item 18): upgrade PHP first, or Composer won't install it.
+2.4.0's `composer.json` requires **PHP 8.1+** (item 26). The framework already needed it, so this only
+matters if Composer runs on an older PHP.
 
 | Current constraint in `composer.json` | What happens |
 |---------------------------------------|--------------|
@@ -76,9 +73,9 @@ New projects require `^2.4`.
 ## Changes with no impact
 
 Nothing to check or do for these:
-- **15** `created_at`/`updated_at` handling: unchanged, now documented (the DB default on insert, PHP's `now()` on update).
-- **25** `MagratheaModelControl::ShowAll()`: works with namespaced models (it failed with `Class not found`) and escapes its output; deprecated, removed in 3.0, so stop calling it if you do.
-- `MagratheaPHP::LoadVendor()`: deprecated, removed in 3.0. It never did anything useful (the class can't
+- **22** `created_at`/`updated_at` handling: unchanged, now documented (the DB default on insert, PHP's `now()` on update).
+- **37** `MagratheaModelControl::ShowAll()`: works with namespaced models (it failed with `Class not found`) and escapes its output; deprecated, removed in 3.0, so stop calling it if you do.
+- **38** `MagratheaPHP::LoadVendor()`: deprecated, removed in 3.0. It never did anything useful (the class can't
   be loaded before `vendor/autoload.php` is required), so delete the call from your entry files
   (`grep -rn "LoadVendor" --include='*.php' . | grep -v vendor/`). It now also works in a standalone
   checkout of the framework (it failed with a fatal error there), and `Tests\TestsManager` no longer calls it.
@@ -86,7 +83,7 @@ Nothing to check or do for these:
   instead of `"../vendor/autoload.php"` (relative to the current folder, so it failed when run from anywhere
   else). An existing file isn't rewritten; if yours has the old line and works, nothing to do, or edit it to the
   `__DIR__` form.
-- **28-31** documentation only (`skills.MD`, the docs site, this file).
+- Documentation only (`skills.MD`, the docs site, this file).
 - Admin links that pointed to pages that don't exist now reach their features: the Structure page's "Cache"
   link, and `AdminMenu::GetItem("app-conf")` / `GetItem("tools-file-editor")` (new `AdminMenu::FeatureItem()`).
 
@@ -220,7 +217,7 @@ available".
 
 ---
 
-## 5b. `Query::Clean()` is safe now, and deprecated
+## 6. `Query::Clean()` is safe now, and deprecated
 
 **Applies if:** the project calls `Query::Clean()`:
 
@@ -242,7 +239,7 @@ string: it didn't prevent SQL injection. It now calls `Database::Instance()->Esc
 
 ---
 
-## 5c. The admin Cache feature stays inside the cache folder
+## 7. The admin Cache feature stays inside the cache folder
 
 **Applies if:** custom code or scripts call the Cache feature's actions directly
 (`magrathea_feature=AdminFeatureCache`), e.g. to purge the cache after a deploy:
@@ -264,7 +261,7 @@ HTML-escaped when shown.
 
 ---
 
-## 5d. The admin Tests page stays inside the registered test folders
+## 8. The admin Tests page stays inside the registered test folders
 
 **Applies if:** code calls `TestsManager`'s run or listing methods itself, or registers test folders:
 
@@ -287,7 +284,7 @@ register `/` or the project root: everything under a registered folder can be ru
 
 ---
 
-## 5e. Admin pages and actions can't include other files
+## 9. Admin pages and actions can't include other files
 
 **Applies if:** the project links to admin URLs with `magrathea_page=` or `magrathea_subpage=` built by hand,
 or added its own files to the framework's `views/pages/` or `views/actions/`:
@@ -309,7 +306,7 @@ showed an empty page with a PHP warning, and now shows the 404. Custom admin pag
 
 ---
 
-## 6. New `Database::Transaction(callable $fn)`
+## 10. New `Database::Transaction(callable $fn)`
 
 **Applies if:** never required. Worth adopting where the project wraps several writes that must succeed
 or fail together (look for `QueryTransaction(` or sequences of `Save()`/`Insert()` that should be atomic).
@@ -324,7 +321,7 @@ keep DDL out of it (MySQL commits DDL implicitly).
 
 ---
 
-## 7. `QueryTransaction()` rolls back on failure
+## 11. `QueryTransaction()` rolls back on failure
 
 **Applies if:** the project calls `QueryTransaction()`:
 
@@ -338,7 +335,7 @@ grep -rn "QueryTransaction" --include='*.php' . | grep -v vendor/
   *last* statement's, and left the connection with autocommit off.
 - Failures: with mysqli reporting off, it returns `false`, as before; with PHP 8.1+'s default
   reporting, it throws after the rollback, now as `MagratheaDBException` instead of mysqli's
-  `mysqli_sql_exception` (see 18b).
+  `mysqli_sql_exception` (see item 28).
 - Success returns `true` instead of `null`.
 
 **What to do:** nothing. Only code that compared the result with `null` (`=== null`) notices the new
@@ -346,7 +343,7 @@ grep -rn "QueryTransaction" --include='*.php' . | grep -v vendor/
 
 ---
 
-## 8. Cache files are written atomically
+## 12. Cache files are written atomically
 
 **Applies if:** the project uses the response cache, or calls `SaveFile()` directly:
 
@@ -366,7 +363,7 @@ admin (`RemoveAllCache()`) removes them.
 
 ---
 
-## 9. `Cache()` logs only in DEV
+## 13. `Cache()` logs only in DEV
 
 **Applies if:** something (a script, a log alert, a person) reads "adding cache for" lines from the
 Logger's files:
@@ -383,7 +380,7 @@ logs only when `MagratheaPHP::Instance()->IsDev()` is true (`Dev()`; `Debug()` d
 
 ---
 
-## Raw-mode API calls bypass the response cache
+## 14. Raw-mode API calls bypass the response cache
 
 **Applies if:** the project calls the API in raw mode (usually tests or CLI tools) on actions that
 call `$this->Cache(...)`:
@@ -404,7 +401,7 @@ possible; make real HTTP requests for that.
 
 ---
 
-## `CacheClear()` doesn't change the current cache key
+## 15. `CacheClear()` doesn't change the current cache key
 
 **Applies if:** an action calls `Cache()` and then `CacheClear()`:
 
@@ -421,7 +418,7 @@ files saved under the wrong name can be cleared from the admin's Cache feature.
 
 ---
 
-## 10. API errors are sent with real HTTP statuses
+## 16. API errors are sent with real HTTP statuses
 
 **This is the most visible change in 2.4.0.** There is no switch to keep the old behavior.
 
@@ -454,7 +451,7 @@ else → 500):
 | `ReturnError(..., $status)` | `$status` | `$status` (unchanged) |
 | `ReturnFail($exception)` | 200 | from the code (500 for 0) |
 | `ReturnFail($array)` | 200 | 200 (unchanged) |
-| `MagratheaApiException` | from the code | from the code (unchanged, except item 12) |
+| `MagratheaApiException` | from the code | from the code (unchanged, except item 19) |
 
 Response bodies are the same, except that an exception with code 0 now carries its message (it was
 encoded as `{}`).
@@ -500,7 +497,9 @@ encoded as `{}`).
 - Monitoring/alerting on 5xx rates: expect more 5xx, since server errors used to be 200.
 - The admin needs nothing: its `callApi()` helper still resolves API errors with the error body.
 
-### `MagratheaApiException::SetStatus()` is honored
+---
+
+## 17. `MagratheaApiException::SetStatus()` is honored
 
 **Applies if:**
 
@@ -519,7 +518,7 @@ read `$ex->status` expecting 500/200 gets `null` unless `SetStatus()` was called
 
 ---
 
-## 11. PHP `\Error`s in API actions become a JSON 500
+## 18. PHP `\Error`s in API actions become a JSON 500
 
 **Applies if:** always (no action needed).
 
@@ -535,7 +534,7 @@ log, so check there.
 
 ---
 
-## 12. Codes outside the status scheme give HTTP 500
+## 19. Codes outside the status scheme give HTTP 500
 
 **Applies if:** the project throws exceptions or calls `ReturnError()` with codes that don't map to a
 4xx/5xx status (e.g. `2001`, `3000`, `7000`, or 3-digit codes below 400):
@@ -553,7 +552,7 @@ explicit `ReturnError()` `$status` instead.
 
 ---
 
-## 13. `BaseAuthorization()` takes a `MagratheaApiAuth`
+## 20. `BaseAuthorization()` takes a `MagratheaApiAuth`
 
 **Applies if:** the project calls `BaseAuthorization()`:
 
@@ -593,7 +592,7 @@ worked.
 
 ---
 
-## 14. DEV and DEBUG API responses carry debug items in `_debug`
+## 21. DEV and DEBUG API responses carry debug items in `_debug`
 
 **Applies if:** the project runs its API with `->Dev()` or `->Debug()` (or `Debugger::DEV`/`Debugger::DEBUG`)
 anywhere: local machines, staging. Production (`->Prod()`) is unaffected.
@@ -634,7 +633,7 @@ before the call, and the end-of-request box is no longer printed after a JSON re
 
 ---
 
-## 16. `Update()` writes the fields that changed
+## 23. `Update()` writes the fields that changed
 
 **Applies if:** the project updates models with `Save()`/`Update()`. It needs action only where
 `LoadObjectFromTableRow()` is fed something that isn't a DB row:
@@ -674,7 +673,7 @@ and `Set()`/`Assign()` alike), plus `updated_at`. In 2.3.5, one `Set()` made `Up
 
 ---
 
-## A model object in a field is saved as its id
+## 24. A model object in a field is saved as its id
 
 **Applies if:** code assigns a model object to a field (`$article->author_id = $author;`) and saves.
 There's no reliable grep; look at FK assignments near `Save()`/`Insert()`/`Update()`.
@@ -688,7 +687,7 @@ text. Now the id is written, and a related model without an id is inserted first
 
 ---
 
-## 17. `Update()` can set int and boolean columns to NULL
+## 25. `Update()` can set int and boolean columns to NULL
 
 **Applies if:** code sets an int/boolean field to `null` on a loaded object and saves, or saves
 form/API input where an int field can be empty (`""`), e.g. the admin CRUD (int fields are text inputs):
@@ -701,7 +700,7 @@ grep -rnE -- "->Assign\(" --include='*.php' . | grep -v vendor/
 **What changed:** `Update()` skipped every `null` int/boolean field, so a nullable FK could never be
 cleared; `""` was bound as is (MySQL strict mode: `Incorrect integer value` error; otherwise `0`).
 Now, for int/boolean fields:
-- on a loaded object (see item 16), `null` is written as SQL `NULL`;
+- on a loaded object (see item 23), `null` is written as SQL `NULL`;
 - `""` is written as SQL `NULL` on any object;
 - other values go through `intval()` (they were sent raw for `int` fields): `"7"` → `7`, `"1.5"` → `1`
   (MySQL rounded it to `2`), `"abc"` → `0` (strict mode raised an error).
@@ -717,13 +716,25 @@ Now, for int/boolean fields:
 
 ---
 
-## 18. Failed writes always throw; PHP 8.1+ required
+## 26. `composer.json` requires PHP 8.1+
 
-**Applies if:** the server runs PHP 8.0, the project turns mysqli error reporting off, or code checks the
-return value of a write instead of catching:
+**Applies if:** Composer runs on PHP 8.0 or older (`php -v`, on the machine that runs `composer`).
+
+**What changed:** `composer.json` now has `"php": ">=8.1"`. The framework already needed PHP 8.1:
+2.3.x declares an `enum` (`Magrathea2\DB\QueryType`), which is a fatal error on PHP 8.0 as soon as the
+query builder loads. The constraint only makes Composer say so up front.
+
+**What to do:** nothing if the project runs today. If Composer itself runs on an older PHP than the
+server (a CI image, a deploy box), upgrade it there, or Composer won't install 2.4.0.
+
+---
+
+## 27. Failed writes always throw
+
+**Applies if:** the project turns mysqli error reporting off, or code checks the return value of a write
+instead of catching:
 
 ```bash
-php -v
 grep -rn "mysqli_report" --include='*.php' . | grep -v vendor/
 grep -rnE "if *\( *!.*->(Insert|InsertWithPk|Update|Save|Delete|PrepareAndExecute)\(|(Insert|Update|Save|Delete|PrepareAndExecute)\(.*\) *[!=]==? *(null|false)" --include='*.php' . | grep -v vendor/
 ```
@@ -732,16 +743,13 @@ grep -rnE "if *\( *!.*->(Insert|InsertWithPk|Update|Save|Delete|PrepareAndExecut
 - `Database::PrepareAndExecute()`, and so the model's `Insert()`, `InsertWithPk()`, `Update()`,
   `Save()` and `Delete()`, throws `MagratheaDBException` on any failed execute. With mysqli error
   reporting off, 2.3.5 printed `got error! ` (into the page, or before an API's JSON) and returned
-  `null`: `Insert()` set the PK to `null`, `Update()` marked the object as saved, the API answered
-  success, and a `Transaction()` committed whatever had run. With PHP 8.1+'s default reporting
-  (exceptions on), nothing changes: it already threw.
+  `null`: `Insert()` set the PK to `null`, `Update()` returned `null`, and the API answered success.
+  With PHP 8.1+'s default reporting (exceptions on), nothing changes: it already threw.
 - `QueryMulti($queries, false)` (and `ImportFile($file, false)`) records a failing statement and runs
   the next ones with PHP 8.1+'s default reporting too; before, the first failure threw. A lost
   connection still throws.
-- `composer.json` requires `"php": ">=8.1"`.
 
 **What to do:**
-- **PHP 8.0:** upgrade PHP before upgrading the framework; Composer won't install 2.4.0 otherwise.
 - **Code that checks a write's return value** (`if (!$obj->Insert())`, `=== null`): it never sees a
   failure anymore, the exception goes up. Replace it with a `try`/`catch (MagratheaDBException $ex)`
   where the failure is expected (e.g. a duplicate key), or let it reach the API, which answers 500.
@@ -751,7 +759,7 @@ grep -rnE "if *\( *!.*->(Insert|InsertWithPk|Update|Save|Delete|PrepareAndExecut
 
 ---
 
-## 18b. DB errors are always `MagratheaDBException`, with MySQL's errno as code
+## 28. DB errors are always `MagratheaDBException`, with MySQL's errno as code
 
 **Applies if:** code catches `mysqli_sql_exception`, or reads a DB exception's code:
 
@@ -781,7 +789,7 @@ grep -rn "catch *(.*MagratheaDBException" --include='*.php' . | grep -v vendor/
 
 ---
 
-## 19. Model writes bind int fields as integers
+## 29. Model writes bind int fields as integers
 
 **Applies if:** the project has a `BIGINT UNSIGNED` int field (usually a PK) with values above
 `9223372036854775807` (`PHP_INT_MAX`). Every other project: nothing to do.
@@ -800,7 +808,7 @@ field as `"string"`, or write those rows with the query builder.
 
 ---
 
-## 20. One database connection per request
+## 30. One database connection per request
 
 **Applies if:** always, but it needs action only in long-running CLI scripts (workers, daemons, queue
 consumers) and in code that relied on `CloseConnectionThanks()` actually closing:
@@ -846,7 +854,7 @@ every query, including every escaped value in the query builder.
 
 ---
 
-## `QueryMulti()` returns SELECT rows
+## 31. `QueryMulti()` returns SELECT rows
 
 **Applies if:** the project calls `QueryMulti()`/`ImportFile()`, or `Query()` with more than one statement:
 
@@ -860,7 +868,7 @@ grep -rn "QueryMulti\|ImportFile" --include='*.php' . | grep -v vendor/
 
 ---
 
-## `db_port` is no longer ignored
+## 32. `db_port` is no longer ignored
 
 **Applies if:** the config has `db_port`:
 
@@ -879,7 +887,7 @@ silently ignored now makes the connection fail.
 
 ---
 
-## 21. The timezone key is `timezone`
+## 33. The timezone key is `timezone`
 
 **Applies if:** the config has `time_zone` (the old sample's spelling), or no timezone key at all:
 
@@ -896,15 +904,15 @@ Server page and the Bootstrap wizard's config step show a timezone check that fl
 **What to do:**
 - Rename `time_zone` → `timezone` in each environment section, and delete the `[general]` copy.
 - **Renaming turns on two things at once:** PHP's `now()`/`date()` move to that zone (they were on
-  php.ini's default), and the MySQL timezone sync of item 22 starts. Read item 22 before renaming
+  php.ini's default), and the MySQL timezone sync of item 34 starts. Read item 34 before renaming
   in production.
 - If you'd rather keep everything as it runs today, leave `time_zone` as is (or delete it): no change.
 
 ---
 
-## 22. MySQL's session timezone is synced to PHP's
+## 34. MySQL's session timezone is synced to PHP's
 
-**Applies if:** the config has `timezone` (after item 21's rename, or already) **and** the MySQL
+**Applies if:** the config has `timezone` (after item 33's rename, or already) **and** the MySQL
 server runs in a different zone. Check it on the server, before upgrading:
 
 ```sql
@@ -916,7 +924,8 @@ with your `timezone`). Same time: nothing to do. Different: read on.
 
 **What changed:** each new connection runs `SET time_zone = '<PHP's timezone>'`, so `NOW()`,
 `CURRENT_TIMESTAMP`, column defaults, `ON UPDATE CURRENT_TIMESTAMP` and triggers use PHP's zone. It's
-on by default when `timezone` is set; `db_sync_timezone = false` in the same section turns it off. If
+on by default when `timezone` is set; `db_sync_timezone = false` (or `0`, `off`, `no`, quoted or not) in
+the same section turns it off. If
 MySQL's timezone tables aren't loaded (error 1298), the current offset (e.g. `-03:00`) is used, which
 doesn't follow DST. MySQL scheduled events and other clients (mysql CLI, BI tools) aren't affected.
 
@@ -951,7 +960,7 @@ When the zones differ, after the upgrade:
 
 ---
 
-## 23. Autoloader picks the file whose namespace matches
+## 35. Autoloader picks the file whose namespace matches
 
 **Applies if:** two code folders have a file with the same name. List the candidates (run from the
 project root):
@@ -976,7 +985,7 @@ unique: that removes the DEV warning and the extra file reads.
 
 ---
 
-## 24. A missing class isn't a `MagratheaException` anymore
+## 36. A missing class isn't a `MagratheaException` anymore
 
 **Applies if:** the project calls `->AppNamespace(...)` (otherwise the autoloader never threw) **and**
 catches `MagratheaException` around code that may use a missing class:
@@ -998,7 +1007,7 @@ catch `\Error` either.
 
 ---
 
-## 26. New `decimal` field type
+## 39. New `decimal` field type
 
 **Applies if:** a model declares `"float"` for a column that is `DECIMAL` in the database. List the
 `float` fields, then the database's `DECIMAL` columns, and compare:
@@ -1032,7 +1041,7 @@ writes. The admin's object generator now detects `DECIMAL` columns as `decimal` 
 
 ---
 
-## 27. The code generator makes new objects strict
+## 40. The code generator makes new objects strict
 
 **Applies if:** you create or regenerate objects in the admin ("Objects" → object form → generate code).
 
@@ -1047,7 +1056,7 @@ must match the JSON of older endpoints), pick `false` before generating.
 
 ---
 
-## 27b. The code generator's `mvc` structure works
+## 41. The code generator's `mvc` structure works
 
 **Applies if:** the admin's "Generate Code" page is set to "Model-View-Control" (`code_structure = mvc`
 in the admin's app config), or a CRUD admin class's model and control live in different namespaces.
@@ -1069,38 +1078,50 @@ can now pass it: `$this->SetObject(new Article(), new \App\Controls\ArticleContr
 
 ---
 
-## 27c. `AdminCrudObject::Initialize()` runs once
+## 42. Admin features: `Initialize()` runs first, and once
 
-**Applies if:** an admin CRUD class's `Initialize()` does more than `SetObject()`:
+**Applies if:** an admin CRUD class's `Initialize()` does more than `SetObject()`, or any admin feature's
+`Initialize()` reads `$this->featureId` (directly, or through `GetSubpageUrl()` and other URL helpers):
 
 ```sh
 grep -rln "extends .*AdminCrudObject" --include='*.php' . | grep -v vendor/ | xargs -r grep -n -A8 "function Initialize"
+grep -rlE "extends .*(AdminFeature|AdminCrudObject)\b" --include='*.php' . | grep -v vendor/ | xargs -r grep -n "featureId"
 ```
 
-**What changed:** `AdminCrudObject`'s constructor called `Initialize()` and then `AdminFeature`'s
-constructor called it again. Now it runs once. Feature ids (`CRUD<Model>`) don't change.
+**What changed:**
+- `AdminFeature`'s constructor ran `Initialize()` after setting the default `featureId` (the class's
+  short name, used when the class declares `$featureId` empty or without a value). Now `Initialize()`
+  runs first and the default is set after it, so a feature can set its own id in `Initialize()`
+  (`AdminCrudObject::SetObject()` does).
+- `AdminCrudObject`'s constructor called `Initialize()` and then `AdminFeature`'s constructor called it
+  again. Now it runs once. Feature ids (`CRUD<Model>`) don't change.
 
-**What to do:** nothing, unless an `Initialize()` counted on the second run (e.g. it toggled a flag
-or appended to an array and the result depended on both runs).
+**What to do:**
+- A feature that declares `public string $featureId;` (no value) or `= ""` and reads it in
+  `Initialize()`: it now gets `""`, or PHP's "must not be accessed before initialization" error. Give
+  `$featureId` a value in the class, or set it in `Initialize()` before reading it. Features that declare
+  `$featureId = "Something"`, or don't declare it, aren't affected.
+- An `AdminCrudObject` subclass whose `Initialize()` counted on the second run (e.g. it toggled a flag
+  or appended to an array and the result depended on both runs): make it work in one run.
 
 ---
 
 ## Verify after upgrading
 
-- [ ] The server runs PHP 8.1 or later (item 18).
+- [ ] The server and the machine running Composer have PHP 8.1 or later (item 26).
 - [ ] If the project uses the Bootstrap wizard: `bootstrap_unlocked = true` is in `[dev]` (item 1),
       and **not** in `[production]`.
 - [ ] Admin menu: "Tools → File Editor" is gone unless you opted in with `LoadFileEditor()` (item 5).
 - [ ] `db_port`, if present in the config, is the database's real port (it's used now).
 - [ ] API clients handle errors in the HTTP client's error path (axios `catch`, jQuery `.fail`), and
-      show the error message from the body (item 10). Try an unknown route: it must answer 404.
-- [ ] CLI workers that loop call `Database::Instance()->Disconnect()` at the start of each job (item 20).
-- [ ] No `catch (\mysqli_sql_exception ...)` is left around framework calls (item 18b).
-- [ ] The config uses `timezone`, not `time_zone`, in each environment section (item 21). If you just
-      renamed it, PHP's timezone and the MySQL sync both switched on (item 22).
-- [ ] The admin's Server page "Timezone check" shows PHP and MySQL **in sync**, and no warnings (items 21, 22).
+      show the error message from the body (item 16). Try an unknown route: it must answer 404.
+- [ ] CLI workers that loop call `Database::Instance()->Disconnect()` at the start of each job (item 30).
+- [ ] No `catch (\mysqli_sql_exception ...)` is left around framework calls (item 28).
+- [ ] The config uses `timezone`, not `time_zone`, in each environment section (item 33). If you just
+      renamed it, PHP's timezone and the MySQL sync both switched on (item 34).
+- [ ] The admin's Server page "Timezone check" shows PHP and MySQL **in sync**, and no warnings (items 33, 34).
 - [ ] If MySQL was on a different zone: `TIMESTAMP` columns and `NOW()`-based queries show the times you
-      expect, or `db_sync_timezone = false` is set (item 22).
-- [ ] In DEV, no "has more than one file in the code folders" debug item appears (item 23).
+      expect, or `db_sync_timezone = false` is set (item 34).
+- [ ] In DEV, no "has more than one file in the code folders" debug item appears (item 35).
 - [ ] No model declares `"float"` for a `DECIMAL` column, or the ones that do were left on purpose
-      (item 26).
+      (item 39).

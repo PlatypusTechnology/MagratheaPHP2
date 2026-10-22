@@ -23,7 +23,8 @@ Both go in the **environment** section (`[dev]`, `[production]`...):
 
 - `timezone`: PHP's timezone, set by `MagratheaPHP::Load()`. Not `time_zone`: that key was in older
   samples and was never read.
-- `db_sync_timezone`: on when absent. `false`, `off`, `no`, `0` or an empty value turn it off. With no
+- `db_sync_timezone`: on when absent. `false`, `off`, `no`, `0` or an empty value, quoted or not, turn
+  it off; any other value keeps it on. With no
   `timezone`, the sync is off whatever this says.
 
 How the sync itself works (the `SET time_zone`, the offset fallback, what it doesn't cover) is on the
