@@ -90,8 +90,18 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 		]);
 		die;
 	}
+	/**
+	 * Answers 405 (JSON error) and stops, unless it's a POST: admin CSRF tokens are checked on POST only,
+	 * so a GET link (an `<img src>`) can't save or delete
+	 */
+	protected function RefuseIfNotPost(): void {
+		if(@$_SERVER["REQUEST_METHOD"] === "POST") return;
+		http_response_code(405);
+		$this->ReturnError("this action requires a POST request");
+	}
 	public function ShowObjectNotFound($id) {
-		$errorMsg = "Can't find a ".$this->objectName." with ID [".$id."]";
+		// the id comes from the query string
+		$errorMsg = "Can't find a ".$this->objectName." with ID [".htmlspecialchars(is_scalar($id) ? (string)$id : "")."]";
 		return AdminElements::Instance()->ErrorCard($errorMsg);
 	}
 
@@ -261,7 +271,8 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 	 * Saves the object
 	 */
 	public function Save() {
-		$id = $_POST["id"];
+		$this->RefuseIfNotPost();
+		$id = @$_POST["id"];
 		$o = new $this->fullObjectName($id);
 		$o = $o->Assign($_POST);
 		try {
@@ -280,7 +291,8 @@ class AdminCrudObject extends AdminFeature implements iAdminFeature {
 	 * Deletes the object
 	 */
 	public function Delete() {
-		$id = $_POST["id"];
+		$this->RefuseIfNotPost();
+		$id = @$_POST["id"];
 		$o = new $this->fullObjectName($id);
 		try {
 			$success = $o->Delete();

@@ -56,7 +56,7 @@ We're gonna add all of this to a `Database` section, where itwill also be possib
 
 > **Settled (2026-10-23)** (plan-3.0 items 12–21):
 > - **Query editor:** a structured form that builds a real `Query` object and shows its PHP chain and
->   SQL, with no `eval`. The 2.4.0 security update removes the old `eval()` Query Tester.
+>   SQL, with no `eval`.
 > - **Dumps:** `mysqldump`/`mysql` through `proc_open()`, with a streaming PHP fallback for hosts
 >   without exec.
 > - **Checks page:** lists timestamp-schema problems, each with the ALTER that fixes it, and model ↔
@@ -148,6 +148,5 @@ We're also gonna elaborate a migration plan, that will work from versions `2.3.*
 The migration plan will be directed to the Agents, who will apply the migration by themselves. The sensitive points of the migrations should be highlighted and the agents will take care of them.
 
 > **Done (2026-10-23):** `future-plans/plan-3.0.md` and the agent-facing draft
-> `future-plans/migrate-3.0.md`. Prerequisite: the 2.4.0 security update
-> (`future-plans/2.4.0-security-update.md`) merged into `version/3.0`.
+> `future-plans/migrate-3.0.md`. Both start from the current code on `version/3.0`.
 

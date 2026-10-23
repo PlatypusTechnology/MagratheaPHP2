@@ -16,7 +16,7 @@ $viewFile = $objControl->GetObjectFilePath();
 			<?=$viewFile?>
 		</div>
 		<div class="card-body">
-		<? include(__DIR__."/../actions/file-view.php"); ?>
+		<?php include(__DIR__."/../actions/file-view.php"); ?>
 		</div>
 	</div>
 

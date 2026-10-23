@@ -6,15 +6,15 @@
 	<div class="card-body">
 		<div class="row">
 			<div class="col-4">
-				<b>User #<?=$user->id?></b><br/><?=$user->email?>
+				<b>User #<?=$user->id?></b><br/><?=htmlspecialchars((string)$user->email)?>
 			</div>
 			<div class="col-4">
 				<b><?=$log->action?></b><br/>
 				at (<?=$log->created_at?>)<br/><br/>
-				<b>Victim:</b><br/><?=$log->victim?>
+				<b>Victim:</b><br/><?=htmlspecialchars((string)$log->victim)?>
 			</div>
 			<div class="col-4">
-				<?
+				<?php
 				\Magrathea2\Admin\AdminElements::Instance()->
 					Textarea(
 						"data_log".$log->id,

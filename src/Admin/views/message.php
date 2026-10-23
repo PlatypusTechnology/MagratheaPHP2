@@ -11,7 +11,7 @@ $elements = AdminElements::Instance();
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-	<?
+	<?php
 		$cssStyleFiles = ["login"];
 		include("sections/meta.php");
 	?>
@@ -28,7 +28,7 @@ $elements = AdminElements::Instance();
 				<div class="card">
 					<div class="card-header center card-header-login">
 						<div class="card-logo">
-							<?
+							<?php
 								Magrathea2\Admin\AdminManager::Instance()->PrintLogo(200);
 							?>
 						</div>
@@ -46,7 +46,7 @@ $elements = AdminElements::Instance();
 					<div class="card-body">
 						<div class="row">
 							<div class="col-4 offset-8">
-								<?
+								<?php
 								$logoutLink = \Magrathea2\Admin\AdminUrls::Instance()->GetLogoutUrl();
 								$elements->Button("Logout", "window.location.href='".$logoutLink."'", ["btn-danger", "w-100"]);
 								?>

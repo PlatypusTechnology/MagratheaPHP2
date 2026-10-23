@@ -22,8 +22,9 @@ $fileJs = htmlspecialchars(json_encode($file));
 		<div class="row">
 			<div class="col-sm-12">
 				<?php
+				// Textarea() escapes the value, not the id or the label
 				AdminElements::Instance()
-					->Textarea($textId, $fileHtml, htmlspecialchars($content), "cache-txt");
+					->Textarea($textId, $fileHtml, $content, "cache-txt");
 				?>
 			</div>
 		</div>

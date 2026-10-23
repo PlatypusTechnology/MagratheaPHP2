@@ -70,7 +70,11 @@ class Start extends Singleton {
 		try { 
 			$feature = AdminManager::Instance()->GetFeature($featureName);
 			if (!$feature) {
-				AdminElements::Instance()->ErrorCard("Feature [".$featureName."] not available!");
+				AdminElements::Instance()->ErrorCard("Feature [".htmlspecialchars(is_string($featureName) ? $featureName : "")."] not available!");
+			} else if (!$feature->IsDispatchable($action)) {
+				// only the feature's own actions (see AdminFeature::IsDispatchable())
+				http_response_code(404);
+				echo "action not found";
 			} else if (!$feature->HasPermission($action)) {
 				AdminManager::Instance()->PermissionDenied();
 			} else {

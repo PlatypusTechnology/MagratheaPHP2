@@ -6,7 +6,7 @@
 
 <div class="container">
 	
-	<? include(__DIR__."/../actions/object-list.php"); ?>
+	<?php include(__DIR__."/../actions/object-list.php"); ?>
 	
 	<div id="obj-responses"></div>
 

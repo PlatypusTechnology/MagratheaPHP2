@@ -259,6 +259,154 @@ folders, non-strings are rejected; `index.php` has no concatenated `include`). D
 **Impact on a 2.3.5 project.** None for the admin UI. A link to a page/action name that isn't a framework file
 gets 404 (it was an empty page with a PHP warning).
 
+> Items 5f–5j were found on 2026-10-23, after the final report, and fixed before the release (plan:
+> `future-plans/2.4.0-security-update.md`; 5j came out of 5i's caller audit). Line numbers refer to `f61e482`.
+
+### 5f. The Query Tester `eval()`s posted code
+- [x] done
+
+**Error.** `views/actions/query-creator.php:38-64` appended `$_POST["q"]` to a PHP string and `eval()`'d it. Its
+page ("Magrathea Query Tester [WIP]") was in the default Database menu (`AdminMenu` item `mag-query`): any
+logged-in admin, or any script running in an admin's browser (5i, 5j), ran PHP on the server.
+
+**Solution.** Removed `views/pages/query-creator.php`, `views/actions/query-creator.php` and
+`views/javascript/query.js` (only the Query Tester used it; `db-query.php` has its own `switchRs()`), and the
+`mag-query` item from `AdminMenu::Initialize()`/`GetDatabaseSection()`. `AdminMenu::Add()` ignores `null`, alone
+or inside an array of items, so a custom `BuildMenu()` with `GetItem("mag-query")` renders nothing there.
+Tests: `adminMenuTest.php` (no `mag-query` in the Database section, `GetItem()` is `null`, `Add(null)` adds
+nothing, `GetViewFile("pages"|"actions", "query-creator")` is `null`).
+
+**Impact on a 2.3.5 project.** The page is gone (it was WIP); its links get "Page not found".
+
+### 5g. Backups: shell injection, password exposure, path traversal
+- [x] done
+
+**Error.** `DatabaseApi::CreateBackupFile()` passed the posted `filename` into `AdminDatabase::GetCommand()`'s
+`mysqldump --password=… > <folder>/<filename>`, run with `system()` (shell injection; password visible in `ps`
+and returned to the browser as `command`). `views/actions/backup-file.php` joined `$_REQUEST["filename"]` to the
+backups folder unchecked (`../` read any file).
+
+**Solution.** New `AdminDatabase::ValidateBackupFileName($name)` (`.sql` appended; `^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$`,
+no `..`; else `MagratheaException("invalid file name")`; untyped like `GetViewFile()`'s `$name`, so a non-string
+throws the same exception instead of a `TypeError`). `DoBackup()` validates, refuses an existing file, checks
+`proc_open()`, writes a `[client]` defaults file (`tempnam()`, `chmod 0600`, deleted in `finally`; empty values are
+left out, backslashes doubled, `"`/`'` quoting, both quotes or a line break throw), runs
+`["mysqldump", "--defaults-extra-file=…", "--opt", "--result-file=…", <db>]` through the new protected
+`RunProcess()` (`["code", "stdout", "stderr"]`; stderr is read first, fine for a command writing to a file),
+deletes the partial file and throws with stderr on a non-zero exit, and returns `["file", "size"]`. `GetCommand()`
+and the private `NormalizeFilename()` are removed. `CreateBackupFile()` answers `success`/`file`/`size`;
+`backups.php` drops `#command-used` and escapes the file name and API error message before `showToast()` (which
+uses `.html()`). `backup-file.php` reads `$_POST` only, validates, resolves with `AdminFiles::ResolveInFolder()`
+(5h), shows an error card otherwise. `backups-list.php` builds the `onclick` with `htmlspecialchars(json_encode())`.
+Tests: `adminBackupsTest.php` (rejected names, `.sql` appended, existing file refused, argument array without the
+password, defaults file content/`0600`/deleted after success and failure, partial file removed, quoting, the real
+`RunProcess()` passes shell metacharacters through untouched, API response without `command`).
+
+**Impact on a 2.3.5 project.** None, unless code calls `GetCommand()`, uses other characters in backup names, or
+overwrites a backup. PHP needs `proc_open()` instead of `system()`.
+
+### 5h. `file-view` reads any file, and the log tail isn't escaped
+- [x] done
+
+**Error.** `views/actions/file-view.php` read `$_POST["file"]` when no including view set `$viewFile`; the logs
+page posted absolute paths. The tail mode printed the file unescaped. `getLastLines()` was a global function.
+
+**Solution.** `file-view.php` renders only an includer-set `$viewFile` (tail length from `$viewLines`, not
+`$_POST`); without it, 404 "action not found" (it `return`s, `index.php` dies after the action). The tail is
+`htmlspecialchars()`'d, `getLastLines()` is a closure. Also (Paulo, 2026-10-23): its `die`s became `return`s,
+since `die` made "included twice" impossible and cut short `objects-config` and `demo-scripts` (no closing HTML,
+no admin JS). New `views/actions/log-view.php`: `AdminFiles::ResolveInFolder()` inside
+`Logger::Instance()->GetLogPath()` (what the logs page lists: `logs_path`, or `<magRoot>/logs`; Paulo,
+2026-10-23), `lines` cast and clamped to 1–10000. `logs.php` posts basenames for view and tail (the tail input
+shows `GetLogFile()`), escapes the list and path. New `Admin\AdminFiles::ResolveInFolder($folder, $name): ?string`
+(plain name, no `..`/`\`/NUL, `realpath()` a regular file inside `realpath($folder)`). Tests: `adminFilesTest.php`
+(traversal, absolute path, missing file, directory, symlink out rejected; a log resolves; direct `file-view` → 404
+and nothing read; full view and tail escaped; two tails in one request; `lines` clamped). On `f61e482`, the 404
+test prints the posted file and the old `die` kills PHPUnit.
+
+**Impact on a 2.3.5 project.** None, unless custom admin code posts to `file-view`.
+
+### 5i. The admin renders app data as HTML (stored XSS)
+- [x] done
+
+**Error.** `views/elements/table.php` echoed every cell raw; the form templates printed `$value` raw. Any text an
+app user can store ran as script in the admin, with the admin's session and CSRF token.
+
+**Solution.**
+- `table.php`: scalars `htmlspecialchars((string)$v, ENT_QUOTES)`, `null` empty, arrays/objects escaped JSON;
+  callable columns and callable row values raw; headers unchanged. A cell no longer reuses the previous cell's
+  value when a row is neither an array nor a model.
+- `form-input.php`, `form-textarea.php`, `form-select.php` (values and labels, `Ref()` included), `form-date.php`
+  and `form-switch.php` (both unused: nothing includes them; escaped anyway, Paulo 2026-10-23), `form-checkbox.php`:
+  the value escaped. `elements/form.php`: `hidden` values, and `empty` values unless the value was a callable.
+- Also escaped: `query-run-card.php` (query, error, `print_r()`; it also called `Table()` with the exception of a
+  failed SELECT: TypeError), `UserLogs/detail.php` (email, victim), `User/edit.php` and `AppConfig/form.php`
+  headers, `CrudObject/form.php`'s `Ref()` header, `AppConfig/list.php`'s key/value callables (Paulo, 2026-10-23:
+  all applications of the rule to callers the plan didn't list), Bootstrap `run-query.php` (`getMessage()`, it
+  called the nonexistent `getMsg()`) and `show-tables.php` (names, types, defaults; backtick-quoted table names).
+- Caller audit: HTML-as-value moved to callables in `structure.php` (`action`), `Cache/details.php` (the config
+  links) and `object-relation-edit.php` (`relation-desc`/`relation-field`, data escaped inside); pre-escaping
+  removed in `Cache/files.php` (`_file`) and `Cache/edit.php` (the textarea value; the label is still escaped, labels
+  aren't). `backups-list.php`, `logs.php`, `demo-form.php`, `object-create.php`, `object-detail.php`,
+  `CrudObject/list.php`, `User/index.php`, `UserLogs/latest.php`, `config-form.php`, `generate-code.php`,
+  `ApiExplorer`, `FileEditor` needed nothing (their callables return HTML built from ids or developer data) beyond
+  5j's changes. Config form values with `"` (e.g. a DB password) no longer break the field.
+- Short open tags: the CLI has `short_open_tag=Off`, so `<?` templates can't render in tests. Paulo (2026-10-23):
+  convert the touched templates to `<?php`: `table.php`, the `form-*.php` templates, `form-button.php`, `alert.php`,
+  `query-run-card.php` and the 5j views that are rendered in tests.
+
+Tests: `adminEscapingTest.php` (array and model rows; callables raw; `null`/int/array; every form element with
+`"><script>`; `AdminForm` hidden/empty/callable; `query-run-card`). All fail on `f61e482`.
+
+**Impact on a 2.3.5 project.** CRUD lists and forms need nothing. Custom admin pages passing HTML as values show it
+as text (move it to a callable); pre-escaped values show entities. Migration item 46.
+
+### 5j. Admin actions print query-string parameters unescaped (reflected XSS)
+- [x] done
+
+**Error** (found during 5i's audit; Paulo, 2026-10-23: fix now). `object-detail`, `object-create`, `object-edit` and
+`code-create` put `$_GET["onclose"]` straight into an `onclick`, and with `code-gen-view` and `object-relation-edit`
+printed `object`/`table` raw (HTML and JS-string contexts). Also raw: the CRUD feature's `id` (inside a `<script>`,
+and `ShowObjectNotFound()`), the Config page's `env`, "Feature not available [$feature]" in `views/index.php`. GET
+has no CSRF check: a link opened by a logged-in admin ran script in the admin (and, until 5f, PHP).
+
+**Solution.** New `AdminElements::JsCallback($fn, string $args = ""): string` (`fn(args);` only for
+`^[A-Za-z_$][A-Za-z0-9_$]*$`, else `""`). The parameters are escaped (`htmlspecialchars()`, and
+`htmlspecialchars(json_encode())` in `onclick`s; the CRUD `id` uses `json_encode()` with the `JSON_HEX_*` flags
+inside the `<script>`). Non-string/empty `object`/`table` get an error; `object-detail` answers "object not found"
+for an unknown object. `AdminDatabase::GetTableColumns()` backtick-quotes the table. `code-create` read the
+undefined `$data["errors"]` (TypeError in `implode()`); it reads `$creationData["errors"]`. Tests:
+`adminEscapingTest.php` (`JsCallback()`, `object-detail` and the `object-edit` chain against the test objects file).
+
+**Impact on a 2.3.5 project.** None, unless links pass code as `onclose`. Migration item 47.
+
+### 5k. Feature dispatch calls any public method over GET
+- [x] done
+
+**Error** (found during 5j; Paulo, 2026-10-23: fix). `views/index.php` (`magrathea_feature_subpage`),
+`Start::CheckFeature()` (`magrathea_feature_action`) and `AdminFeature::GetPage()` called any public method named
+by the query string; `HasPermission()` defaults to `true` and GET has no CSRF check. `AdminCrudObject::Save()`
+on a GET built an empty model (`$_POST["id"]` undefined, `Assign([])`) and saved it; `Delete()` ran with `null`;
+AppConfig `Import()` hit `ImportData(null)` (TypeError). `?magrathea_feature_subpage=GetPage` made `GetPage()` call
+itself forever. `CheckFeature()` also printed the feature name unescaped (missed in 5j).
+
+**Solution.** New `AdminFeature::IsDispatchable($method): bool` (string `^[A-Za-z]\w*$`; public, non-static, no
+required parameters; not a method `AdminFeature` declares, overridden or not, except `GetPage`/`Index`; PHP method
+names are case-insensitive, so are these checks). The three dispatch points check it first; else 404 (an alert in
+the layout and in `GetPage()`, "action not found" in `CheckFeature()`). `GetPage()` treats `GetPage` (any case) as
+`Index()`. New protected `AdminCrudObject::RefuseIfNotPost()` (405 + `ReturnError()`) in `Save()`/`Delete()`;
+`AdminFeatureAppConfig::Import()` answers 405 (alert) on GET; `AppConfigControl::ImportData()` escapes its progress
+lines. Cache `Save`/`Remove` and `ChangePassword` were left as they are: they act only on posted data. Tests:
+`adminFeatureDispatchTest.php` (`IsDispatchable()` for actions/plumbing/magic/required-parameter/protected/static/
+non-string; CRUD and AppConfig actions still dispatchable; `GetPage` with `GetPage`/`getpage`/empty → `Index()`
+once each; `SetClassPath` → 404 and nothing changed; CRUD `Save`/`Delete` 405 on GET with no write, and writing on
+POST; `Import` 405 on GET). Not covered: the `views/index.php` and `CheckFeature()` call sites themselves (the
+layout needs a logged-in admin; `CheckFeature()` dies), checked by reading.
+
+**Impact on a 2.3.5 project.** None for the built-in UI. Custom feature actions with required parameters or named
+like an `AdminFeature` method aren't reachable from the URL; GET callers of CRUD `Save`/`Delete`/`Import` get 405.
+Migration item 48.
+
 ---
 
 ## Group B — Improvements
@@ -1081,6 +1229,21 @@ basename fallback without `SetObject()`).
 with an empty `featureId` that reads it inside `Initialize()` now sees it empty (the fallback comes after);
 no built-in feature does.
 
+### 27d. The framework's views need `short_open_tag`
+- [x] done (2026-10-23, Paulo: fix in 2.4.0; found during 5i)
+
+**Error.** 52 files in `src/` (116 tags) opened PHP with `<?`: the admin's layout (`views/index.php`), login,
+setup, menu, pages, actions and features, Bootstrap steps, `Errors/views/view-exception.php`. With
+`short_open_tag = Off` (`php.ini-production`/`-development`, and this CLI) they print their code as text.
+
+**Solution.** Every `<?` not followed by `php`, `=` or `xml` became `<?php` (a space added where none followed),
+with one `perl` substitution; every hit was checked to be in HTML context first (none inside a PHP string). `php -l`
+on all 52. 5i's templates and the 5j views were converted the same way earlier. Test: `shortOpenTagTest.php`
+(no `src/` PHP file has a short open tag).
+
+**Impact on a 2.3.5 project.** None: the framework works with `short_open_tag` on or off. Migration: "Changes with
+no impact".
+
 ### 28. `skills.MD` doesn't match the code
 - [x] done
 
@@ -1242,6 +1405,37 @@ and the fake connection from `CreateConnection()`):
   tested; the rendered pages aren't).
 - `onclick` escaping inside `<?` short-tag views (5c, 5d): checked by rendering by hand, not by tests.
 - The pcntl-based concurrent read test for atomic cache writes (8) is skipped where `pcntl` is missing (it ran here).
+
+### Addendum (2026-10-23): security items 5f–5k, item 27d
+
+**Baseline** at `f61e482`: 369 tests, 1343 assertions, 3 deprecations (the 363/1337 above plus the 6 timezone
+data-provider rows `f61e482` added). **After 5f–5j:** 394 tests, 1489 assertions. **After 5k and 27d:** **400 tests,
+1546 assertions, 3 deprecations, all passing** (the same `firebase/php-jwt` deprecations). New test files:
+`adminBackupsTest.php`, `adminFilesTest.php`, `adminEscapingTest.php`, `adminFeatureDispatchTest.php`,
+`shortOpenTagTest.php`; `adminMenuTest.php` extended. The new tests were run against `f61e482` in a scratch worktree:
+all fail there (the `file-view` one prints the posted file and the old `die` ends PHPUnit).
+
+**Files:** `src/Admin/` (new `AdminFiles.php`, `views/actions/log-view.php`; removed the three Query Tester files),
+`src/Bootstrap/views/actions/` (2), 27d's 52 short-tag files, docs (`admin/admin.md`, `admin/admin-features.md`,
+`migrations/migrate-2.4.0.md` items 43–48 and a "no impact" line), `src/changelog.md` (6 `**security fix:**` lines,
+1 `**fix:**`). `skills.MD` is unchanged (§13/§14 don't cover
+custom admin tables/forms, backups or logs), so `SKILL.md` wasn't touched (still byte-identical, `cmp`). `php -l`
+on every touched file, with and without `short_open_tag`; `Table()` and every form element rendered by hand with a
+`"><script>` row.
+
+**Not covered by tests** (no `mysqli`, no `mysqldump`, no browser here):
+- A real `mysqldump` run with the defaults file, and a password with quotes and backslashes against a real server.
+- The admin pages in a browser: Backups (create, list, view), Logs (view, tail, delete), Structure, Cache details,
+  object relation forms, the CRUD list/form, and the reflected-XSS links of 5j.
+- `code-create`, `code-gen-view`, `object-create` and the Config page (they need the code-generation config or a
+  DB); checked with `php -l` and by reading.
+
+**DocMap:** `Admin/AdminFiles.php` was added to the `admin` page's `src` list (Paulo, 2026-10-23).
+`AdminElements` and `AdminDatabase` (where `JsCallback()`/`ValidateBackupFileName()` live) have no DocMap entry at all.
+**Open:** `AdminFeatureCache::GetPostedCacheFile()` duplicates `AdminFiles::ResolveInFolder()`'s checks (left as is).
+After 27d, every admin page should be eyeballed once in a browser with `short_open_tag = Off` (only the views
+rendered by the tests were seen working).
+Once committed, `version/2.4.0` is to be merged into `version/3.0` (Paulo).
 
 **Open, not part of 2.4.0:** `firebase/php-jwt` is locked at v6.10.1 while `composer.json` allows `^6.10||^7.0`;
 whether a newer release drops the PHP 8.4 deprecations wasn't checked (consumers resolve their own version

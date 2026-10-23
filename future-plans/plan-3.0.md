@@ -1,9 +1,7 @@
 # Plan: MagratheaPHP2 3.0
 
-Target version: **3.0.0**. Base: branch `version/3.0`, `src/version` = `2.4.0`.
-Line numbers refer to the source as of commit `35c1539` (`version/2.4.0` + the 3.0 blueprint).
-Files changed by the 2.4.0 security update (`AdminMenu.php`, `AdminDatabase.php`, the backups and
-logs views, `views/elements/*`) will have shifted after that merge.
+Target version: **3.0.0**. Base: branch `version/3.0` as it is now (`src/version` = `2.4.0`). This
+plan starts from the current code; line numbers refer to it (2026-10-23).
 
 - Blueprint: `future-plans/magrathea-3.0.md`. Its *Settled (2026-10-23)* notes record the
   scope-level decisions.
@@ -12,15 +10,21 @@ logs views, `views/elements/*`) will have shifted after that merge.
 
 ---
 
-## Prerequisite
+## Starting point
 
-The 2.4.0 security update (`future-plans/2.4.0-security-update.md`, items 5f–5i) is applied on
-`version/2.4.0` and merged into `version/3.0`. Several 3.0 items build on it:
-- 5g's process runner and file-name validation are reused by the dumps (15);
-- 5h's folder-restricted reader is reused by the Dumps page (19);
-- 5i's escaping of `Table()` and the form elements is relied on by every new admin page.
-
-**Don't start 3.0 before that merge.**
+What the current code already provides, and the 3.0 items that build on it:
+- `AdminDatabase::ValidateBackupFileName()`, the process runner `RunProcess()` and the `[client]`
+  defaults file (`GetDefaultsFileContent()`): `mysqldump` runs through `proc_open()` with an
+  argument array, no shell, no password on the command line. Moved into `DB\Dump` (15).
+- `Admin\AdminFiles::ResolveInFolder($folder, $name)`: a plain file name resolved inside a folder,
+  or `null`. Used by the logs and backups views; the Dumps page reuses it (19).
+- `AdminElements::Table()` and the form elements escape every value; callable columns and callable
+  row values are trusted HTML. Every new admin page relies on it (16–21).
+- `AdminFeature::IsDispatchable()`: only a feature's own public, non-static methods with no required
+  parameters are reachable from the URL. Actions that write answer 405 on anything but POST
+  (`AdminCrudObject::RefuseIfNotPost()`). New admin actions follow the same rule.
+- No PHP file in `src/` opens with a short tag (`shortOpenTagTest.php`). New files use `<?php`,
+  including `bin/magrathea` and the skeleton's files, which that test doesn't scan.
 
 ## Goal
 
@@ -43,7 +47,6 @@ In 3.0, agents write the application code; the framework stops generating it. Fo
 
 | Topic | Decision | By | Why | Items |
 |---|---|---|---|---|
-| Security holes found in the study | Fixed in 2.4.0 (`2.4.0-security-update.md`), not in 3.0 | Paulo | 2.4.0 isn't released, and 2.3.4 has them too | Prerequisite |
 | Code generator and File Editor | Removed | Blueprint | Agents write the code | 1, 2 |
 | Models | One class per model and per control for new code. Existing Base-split code keeps working | Paulo | The Base layer only protected code from the generator, which is gone. Details in item 4 | 4 |
 | Agent access | Services (arrays) + CLI (`vendor/bin/magrathea`) | Paulo | Agents work in a shell, not a browser | 12–15, 24–26 |
@@ -75,8 +78,8 @@ In 3.0, agents write the application code; the framework stops generating it. Fo
    1. change the code;
    2. add/adjust tests in `src/Tests/`;
    3. run the full suite (`php phpunit.phar --bootstrap src/Tests/phpUnitBootstrap.php src/Tests`).
-      **Record the baseline before any change**: the 2.4.0 final count (363 tests, 1337 assertions,
-      3 deprecations) plus the security update's tests;
+      **Record the baseline before any change**: on 2026-10-23 it was 400 tests, 1546 assertions,
+      3 deprecations (all from `firebase/php-jwt`, not framework code);
    4. update the narrative docs in `docs/mds/` (signatures are automatic);
    5. update `skills.MD` if it covers the area, then copy it byte-for-byte to
       `/home/paulo/.claude/skills/magrathea-php2/SKILL.md` (item 27 rewrites it; until then, keep
@@ -92,7 +95,7 @@ In 3.0, agents write the application code; the framework stops generating it. Fo
 4. Environment limits: the local PHP CLI has **no `mysqli`**, no MySQL, no `mysqldump`. DB behavior
    is tested through `DatabaseSimulate`, recording `Database` subclasses (`Database::MockClass()`,
    as `modelTimestampsTest.php` does), the fake connection from `CreateConnection()`, and an
-   overridable process runner (5g). The CLI is tested in-process (`Console::Run()`). Anything that
+   overridable process runner (`RunProcess()`). The CLI is tested in-process (`Console::Run()`). Anything that
    can't be covered this way goes in the final report.
 5. If the code contradicts this plan, stop and report it instead of improvising.
 
@@ -118,18 +121,23 @@ generator are a whole subsystem driven by `magrathea_objects.conf`:
   `tables-list.php` (only `objects-create.php:16` includes it);
 - JS: `views/javascript/object-creation.js`, `code-creation.js`;
 - menu:
-  - `AdminMenu::GetObjectSection()` (`AdminMenu.php:113-124`) and its items `objects-create`,
+  - `AdminMenu::GetObjectSection()` (`AdminMenu.php:114-125`) and its items `objects-create`,
     `objects-conf`, `objects`, `objects-edit`, `code-gen` (`:282-286`);
-  - `GetDatabaseSection()` also lists `objects-create` (`:104`);
+  - `GetDatabaseSection()` also lists `objects-create` (`:106`);
   - `Admin::AddMagratheaMenu()` adds the section (`Admin.php:264`);
 - Bootstrap: `src/Bootstrap/views/steps/code-generate.php` (not in the step switch: dead) and
   `db-load-magrathea-objects.php` ("Create tables from models", included by `db-run.php`);
 - `Install::SetBasicConfigs()` writes `code_path`, `code_structure`, `code_namespace`
   (`Install.php:97-99`), read only by `CodeCreator::Load()` (`CodeCreator.php:37-44`);
 - `magrathea_getTypesArr()` (`_Functions.php:70-73`, no callers; replaced in item 5);
+- `AdminElements::JsCallback()` (`AdminElements.php:138`). Its only callers are `object-detail.php`,
+  `object-create.php`, `object-edit.php` and `code-create.php`, all deleted here;
 - tests `codeCreatorTest.php`, `objectManagerTest.php`, and the fixture
   `test-dump/magrathea-object-test.conf`. The suite rewrites its timestamp on every run; that
   churn ends here;
+- in `adminEscapingTest.php`: the `ObjectManager` setup in `setUp()` (`:5, 34-36`, run for every
+  test in the class), `testJsCallback()`, `testObjectDetailGetParams()` and
+  `testObjectEditGetParams()` (`:142-178`). The `Table()`, form and `query-run-card` tests stay;
 - dead `use Magrathea2\Admin\ObjectManager;` lines in `views/pages/htaccess.php:4` and
   `caddy.php:4`.
 
@@ -146,8 +154,8 @@ generator are a whole subsystem driven by `magrathea_objects.conf`:
 - Grep `src/`, `docs/`, `skills.MD`, `docs/data/examples.php` for `CodeCreator|CodeManager|ObjectManager|magrathea_objects|objects-|code-gen|GetObjectSection`
   and clean every hit.
 - Docs:
-  - `admin/admin.md` loses its "Objects and the code generator" and "Code structure" subsections
-    (2.4.0 items 27/27b);
+  - `admin/admin.md` loses its "Objects and the code generator" and "Code structure" subsections;
+  - `admin/admin-features.md:294` loses its `JsCallback()` paragraph;
   - `database/orm-model.md:138` and `core/config.md:229` lose their mentions.
 
 **Impact on a 2.3/2.4 project.**
@@ -157,13 +165,15 @@ generator are a whole subsystem driven by `magrathea_objects.conf`:
   They also tell agents not to edit the file, so the migration removes them.
 - The `_magrathea_config` rows `code_path`, `code_structure`, `code_namespace` are dead.
 - Calls to the removed classes, `GetObjectSection()`, or `GetItem()` with the removed keys break.
-  `GetItem()` returns `null`, which `AdminMenu::Add()` ignores since 2.4.0 5f.
+  `GetItem()` returns `null`, which `AdminMenu::Add()` ignores.
+- Custom admin code calling `AdminElements::JsCallback()` breaks: build the `onclick` itself, with
+  data through `htmlspecialchars(json_encode($x))`.
 
 ### 2. The File Editor
 - [ ] done
 
-**Error.** 3.0 doesn't edit files from the browser (blueprint). 2.4.0 already made it opt-in (item
-5). It consists of:
+**Error.** 3.0 doesn't edit files from the browser (blueprint). It's already opt-in
+(`Admin::LoadFileEditor()`). It consists of:
 - `src/Admin/Features/FileEditor/` (`AdminFeatureFileEditor.php`, `editor.php`, `index.php`,
   `scripts.js`, `styles.css`);
 - `Admin::LoadFileEditor()` (`Admin.php:164-171`);
@@ -225,7 +235,7 @@ repeat it, or it breaks in ways that don't explain themselves:
 - **The constructor**: `__construct($id = 0) { $this->MagratheaStart(); … $this->GetById($id); }`
   (`CodeCreator.php:234-243`). Without it, `new Model(5)` silently loads nothing.
 - **`GetControl()`**: there's no default. `AdminCrudObject::GetField()`
-  (`Features/CrudObject/AdminCrudObject.php:158-161`) calls it for every belongs_to field, so a
+  (`Features/CrudObject/AdminCrudObject.php:168-171`) calls it for every belongs_to field, so a
   model without it is a fatal error in the CRUD form.
 
 **Why one class.** It's the convention for new code, and the "convince me" case:
@@ -233,7 +243,7 @@ repeat it, or it breaks in ways that don't explain themselves:
   deletes the generator;
 - it caused bugs that existed only because there were two control classes:
   - the Base `GetControl()` returns the **ControlBase**, so the CRUD skipped the app's
-    `<Model>Control` overrides (2.4.0 item 27b);
+    `<Model>Control` overrides;
   - generated has_many relations call `ControlBase::GetWhere()` (`CodeCreator.php:184`);
 - it costs 4 files, 2 namespaces and 2 autoload folders per table (`AddFeature()`,
   `MagratheaPHP.php:106-115`), and the autoloader probes every folder for every class;
@@ -327,8 +337,8 @@ and `GetListPage()` (`:213-264`) read another table than `GetById()` does.
 - [ ] done
 
 **Error.** With `$strictTypes = false` (`MagratheaModel.php:45`), every `int`/`boolean`/`float`
-field comes back as a string. Code and tests written by agents assume native types. 2.4.0 made
-`true` the recommendation for new models but kept the old default (2.4.0 item 27).
+field comes back as a string. Code and tests written by agents assume native types. The docs
+recommend `true` for new models, but the default is still `false`.
 
 **Solution.**
 - `protected $strictTypes = true;`.
@@ -383,7 +393,7 @@ That's wrong whenever MySQL's clock, zone (`db_sync_timezone = false`) or defaul
 - Code that assigned a timestamp before `Insert()` used to store `now()`; now it stores what it
   assigned.
 - `$obj->created_at` right after `Insert()` is the DB's value, equal to PHP's when the zones are
-  synced (2.4.0).
+  synced (`db_sync_timezone`).
 - Each insert costs one more query. Bulk imports should use `Query::Insert()`.
 
 ### 9. `Update()`: the DB owns `updated_at`
@@ -394,7 +404,7 @@ That's wrong whenever MySQL's clock, zone (`db_sync_timezone = false`) or defaul
   `now()` (`:429-430`). So there are two clocks (inserts use MySQL's), and
   `ON UPDATE CURRENT_TIMESTAMP` and `BEFORE UPDATE` triggers are always overridden.
 - An unchanged loaded object still runs an `UPDATE` that sets only `updated_at`.
-- With 2.4.0's partial updates (item 16), dropping `updated_at` would leave an empty `SET`, which
+- With partial updates (`Update()` writes only the changed fields), dropping `updated_at` would leave an empty `SET`, which
   is a SQL error.
 
 **Solution.**
@@ -454,8 +464,8 @@ nothing can bump `updated_at` on purpose ("last seen", "touch the parent").
   - `updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`;
   - `last_login DATETIME NULL`.
 
-  That's for new installs. `DATETIME` has no 2038 limit and no session-zone conversion, and since
-  2.4.0 `CURRENT_TIMESTAMP` is evaluated in PHP's zone. Existing `TIMESTAMP` columns aren't
+  That's for new installs. `DATETIME` has no 2038 limit and no session-zone conversion, and the
+  session zone is synced to PHP's, so `CURRENT_TIMESTAMP` is evaluated in PHP's zone. Existing `TIMESTAMP` columns aren't
   converted: both types work.
 - Document the table contract (`orm-model.md`, `skills.MD`): every table a model maps has these two
   columns (`TIMESTAMP` works too).
@@ -477,7 +487,7 @@ Every class returns plain arrays. Findings use `TimezoneCheck`'s shape and level
 - [ ] done
 
 **Error.** The admin's table helpers are thin: `AdminDatabase::GetTables()` and `GetTableColumns()`
-(`AdminDatabase.php:42-58, 102-118`, with `SHOW columns FROM <unquoted table>`). The Bootstrap
+(`AdminDatabase.php:44-60, 104-120`). The Bootstrap
 `show-tables` action is a third copy. An agent can't get the schema as data.
 
 **Solution.** New `Magrathea2\DB\Schema`. It's read-only and takes an optional `Database` (default
@@ -518,7 +528,7 @@ not saved).
   - a column missing in `$dbValues`: INFO;
   - `$dbPk` isn't the primary key: WARNING;
   - an unknown type (item 5): ERROR;
-  - `float` on a `DECIMAL` column: WARNING (it rounds with strict types, 2.4.0 item 26);
+  - `float` on a `DECIMAL` column: WARNING (it rounds with strict types);
   - other mismatches (by `Schema::MagratheaType()`): WARNING;
   - `created_at`/`updated_at` missing from the table: ERROR (every SELECT from the model fails).
 - `CheckTimestamps($table)`:
@@ -540,8 +550,8 @@ not saved).
 
 **Error.** The blueprint's "structure verifications and configuration verifications" are scattered
 or missing:
-- the Bootstrap `Structurate()`/`ValidateStructure()` echo HTML (`Bootstrap/Start.php:141-200`);
-- the admin's Structure page checks folders inline (`views/pages/structure.php:26-75`);
+- the Bootstrap `Structurate()`/`ValidateStructure()` echo HTML (`Bootstrap/Start.php:171-200`);
+- the admin's Structure page checks folders inline (`views/pages/structure.php:25-78`);
 - `TimezoneCheck::Run()` is separate.
 
 **Solution.** New `Magrathea2\ProjectCheck::Run(bool $withDatabase = true): array`:
@@ -564,7 +574,7 @@ The wizard (item 23), the admin's Checks page (item 20) and `magrathea check` (i
 - [ ] done
 
 **Error.**
-- Backups shell out to `mysqldump` (fixed in 2.4.0 5g), and there's no import.
+- Backups are export-only: `AdminDatabase::DoBackup()` runs `mysqldump`, and there's no import.
 - `Database::ImportFile()` (`DB/Database.php:763-770`) → `QueryMulti()` splits on `";\n"`
   (`:703`). A value containing `;\n` breaks a statement, `DELIMITER` blocks (triggers, procedures)
   break, and the whole file plus every result is held in memory.
@@ -572,16 +582,17 @@ The wizard (item 23), the admin's Checks page (item 20) and `magrathea check` (i
 
 **Solution.** New `Magrathea2\DB\Dump`:
 - `Export($file, $options)` / `Import($file, $options)`, with files in `backups_path`. Names go
-  through the 5g validation, moved here from `AdminDatabase`.
+  through `ValidateBackupFileName()`, moved here from `AdminDatabase` together with
+  `GetDefaultFileName()`.
 - **Binary driver** (default when `proc_open()` exists and `mysqldump`/`mysql` answer `--version`):
-  - uses 5g's runner and temp defaults file (also moved here);
+  - uses `AdminDatabase`'s `RunProcess()` and `GetDefaultsFileContent()` (also moved here);
   - export: `--single-transaction --routines --triggers --default-character-set=utf8mb4
     --result-file=…`;
   - import: `mysql <db>` with the file as stdin (a `proc_open` file descriptor).
 - **PHP driver** (fallback, or `driver => "php"`):
   - export: writes a header (`SET NAMES utf8mb4`, `SET time_zone = '+00:00'`, `SET
     FOREIGN_KEY_CHECKS = 0`). Its own session uses `+00:00` too, so `TIMESTAMP` values round-trip
-    exactly despite 2.4.0's session-zone sync;
+    exactly despite the session-zone sync;
   - per table: `SHOW CREATE TABLE`, then rows streamed with an unbuffered query as multi-row
     `INSERT`s (`Escape()`, `NULL`, `0x…` for binary columns);
   - views and triggers are exported; routines are reported as unsupported;
@@ -593,6 +604,10 @@ The wizard (item 23), the admin's Checks page (item 20) and `magrathea check` (i
   install SQL keeps working.
 - `AdminDatabase::DoBackup()` is removed. The Dumps page (item 19) uses `Dump`.
 - Tests:
+  - `adminBackupsTest.php` (its `FakeBackupAdminDatabase` overrides `RunProcess()`) is rewritten
+    against `Dump`: names, existing file refused, the argument array without the password, the
+    defaults file's content/`0600`/deletion, the partial file removed, `RunProcess()` without a
+    shell;
   - splitter cases: quotes, escapes, comments, `DELIMITER`, conditional comments, CRLF, a statement
     across a chunk boundary;
   - the binary driver's command arrays (runner override);
@@ -607,8 +622,8 @@ splits strings correctly now, so statements that used to break at a `;\n` inside
 
 ## Group E — The admin "Database" section
 
-All pages escape through 2.4.0 5i's `Table()`/forms. Table and column names are checked against
-`Schema` before use.
+All pages render data through `Table()` and the form elements, which escape values (callable
+columns are trusted HTML). Table and column names are checked against `Schema` before use.
 
 ### 16. Explorer
 - [ ] done
@@ -629,7 +644,7 @@ All pages escape through 2.4.0 5i's `Table()`/forms. Table and column names are 
 - [ ] done
 
 **Solution.**
-- `views/pages/db-query.php` and `query-run-card.php` stay (escaped since 2.4.0 5i).
+- `views/pages/db-query.php` and `query-run-card.php` stay (already escaped).
 - Rendering is capped at 1000 rows, with a notice.
 - Non-SELECT statements ask for confirmation in the UI.
 - The table list (`tables-view.php`) uses `Schema::Tables()`.
@@ -638,7 +653,7 @@ All pages escape through 2.4.0 5i's `Table()`/forms. Table and column names are 
 - [ ] done
 
 **Error.** The blueprint wants "a query editor that will create queries based on Magrathea's Query
-service". 2.4.0 removed the `eval()` Query Tester (5f).
+service". The admin has no query builder today: only raw SQL on the Queries page.
 
 **Solution.** New page plus `Admin\QueryEditor::Build(array $spec): array`.
 - The form:
@@ -671,13 +686,15 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
 - One page:
   - list files in `backups_path`: name, size, date;
   - **Export**: file name, optional tables; shows the driver used;
-  - **Download**: streamed with `Content-Disposition`, name validated;
+  - **Download**: streamed with `Content-Disposition`, name validated and resolved with
+    `AdminFiles::ResolveInFolder()` (as are view and delete);
   - **Upload** `.sql`: saved under a validated name, never run on upload;
   - **Import**: POST + CSRF + a confirmation naming the file and the database;
   - **Delete**: POST.
 - Replaces `views/pages/backups.php`, `views/actions/backups-list.php`, `backup-file.php` and
-  `Admin/Api/DatabaseApi.php` (2.4.0 5g versions), using `Dump` (item 15).
-- `AdminDatabase` keeps `GetBackupFolder()` and the admin SQL file helpers, nothing else.
+  `Admin/Api/DatabaseApi.php`, using `Dump` (item 15).
+- `AdminDatabase` keeps `Initialize()`, `LoadBackupFolder()`, `GetBackupFolder()` and the admin SQL
+  file helpers (`GetSQLFile()`, `GetSQLFileContents()`), nothing else.
 - Tests: the upload, download and delete name checks; import and export go through a fake `Dump`.
 
 ### 20. Checks
@@ -715,7 +732,7 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
 - Today the wizard needs a config just to decide whether it's unlocked (`Start::IsUnlocked()`,
   `Bootstrap/Start.php:69-76`).
 - `PreLoad()` (`:265-268`) copies the sample, which arrives as `dev` +
-  `bootstrap_unlocked = true`. That's 2.4.0's accepted gap: with no config, the wizard is open to
+  `bootstrap_unlocked = true`. That's a known gap: with no config, the wizard is open to
   anyone.
 - The blueprint wants a WordPress-style wizard for a new project with no `magrathea.conf`. That's
   exactly WordPress's takeover scenario on a deployed server.
@@ -734,7 +751,7 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
 - **Modes:**
   - **setup**: no config file. The token is required;
   - **maintenance**: the config exists. It needs `bootstrap_unlocked = true` in the active
-    environment (the 2.4.0 rule) **and** the token.
+    environment (as today) **and** the token.
 
   Anything else gets the locked page (403).
 - **Token** (`configs/.setup-token`):
@@ -758,7 +775,7 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
     - every request compares that hash with the file, so deleting or replacing the file revokes
       the session;
   - the finish step (item 23) deletes the file.
-- Wizard POSTs use `AdminCsrf` (`GetToken()`/`Validate()`). `Start::ACTIONS` (the 2.4.0 whitelist)
+- Wizard POSTs use `AdminCsrf` (`GetToken()`/`Validate()`). `Start::ACTIONS` (the action whitelist)
   stays, and every action requires a verified session.
 - `PreLoad()` and `CreateDefaultConfigFile()` (`:231-252`) are removed: the config is written only
   by item 23's form, after the token.
@@ -776,7 +793,7 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
 **Impact.**
 - Projects with a 2.x wizard entry file (`Bootstrap\Start::Instance()->…->Load()`, with or without
   `PreLoad()`) replace it with the entry above, or delete it.
-- 2.4.0 users of the wizard now also need the token.
+- Projects that use the wizard now also need the token.
 
 ### 23. Steps
 - [ ] done
@@ -807,7 +824,7 @@ service". 2.4.0 removed the `eval()` Query Tester (5f).
 5. **Admin**:
    - `Install::InstallDatabase()` when `_magrathea_config` is missing;
    - the first super admin (email + password of 12+ characters) when `CanCreateFirstUser()` allows
-     it (`Admin/Start.php:170-176`).
+     it (`Admin/Start.php:174-180`).
 
    The admin entry file is part of the skeleton (item 27), not written here.
 6. **Checks**: `ProjectCheck::Run()` with the schema's timestamp and drift findings and their fix

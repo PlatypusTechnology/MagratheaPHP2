@@ -52,6 +52,12 @@ whether it applies to your project (**Applies if**), what changed, and what to d
 | 40 | The admin's object form has a "Strict types" select; new objects generate with `$strictTypes = true` | No (objects created before 2.4.0 are unchanged) | None |
 | 41 | Code generator's `mvc` structure: CRUD admin, API and Base `GetControl()` fixed; `SetObject()` takes an optional control | No (they never worked under `mvc`) | Regenerate `mvc` Base models; fix hand-made `mvc` CRUD admins |
 | 42 | Admin features run `Initialize()` before the default `featureId` is set; `AdminCrudObject` subclasses run it once (it ran twice) | Rarely: a feature reading an unset `featureId` in `Initialize()` | Set `featureId` before reading it |
+| 43 | The admin's Query Tester ("Magrathea Query", it ran posted code with `eval()`) is removed | Only for links to it or a custom menu with `GetItem("mag-query")` | Remove them; use the Queries page |
+| 44 | Admin backups: plain `.sql` names only, no overwriting, `mysqldump` without a shell or the password on the command line; `AdminDatabase::GetCommand()` removed | Only for code calling `GetCommand()`/`DoBackup()` or names with other characters | Check `proc_open()` is enabled; stop calling `GetCommand()` |
+| 45 | `file-view` only shows files chosen by the admin's own views; logs are read by name through `log-view`; the tail is escaped | Only for custom code posting to `file-view` | Use your own action, or `log-view` for logs |
+| 46 | The admin escapes values in `Table()` and the form elements; callable columns stay raw HTML | **Yes**, for custom admin pages passing HTML as values (it shows as text) or pre-escaping them (entities show) | Move HTML into callable columns; stop pre-escaping |
+| 47 | Admin actions escape their query-string parameters; `onclose` must be a plain JS function name | No | None, unless custom links pass code as `onclose` |
+| 48 | Admin feature URLs only call the feature's own actions; CRUD `Save`/`Delete` and App Config `Import` are POST only | Only for custom features with actions named like `AdminFeature` methods or needing arguments, and GET callers of those writes | Rename/adapt those actions; POST the writes; make your own writing actions refuse GET |
 
 ## Composer constraint
 
@@ -86,6 +92,9 @@ Nothing to check or do for these:
 - Documentation only (`skills.MD`, the docs site, this file).
 - Admin links that pointed to pages that don't exist now reach their features: the Structure page's "Cache"
   link, and `AdminMenu::GetItem("app-conf")` / `GetItem("tools-file-editor")` (new `AdminMenu::FeatureItem()`).
+- The framework's views (the admin, the Bootstrap wizard, the error page) open PHP with `<?php` instead of the
+  short `<?`, so they work with `short_open_tag = Off` (the setting in PHP's recommended `php.ini` files, where
+  the admin printed its code as text). Your own files aren't affected; nothing to do.
 
 ---
 
@@ -1106,6 +1115,184 @@ grep -rlE "extends .*(AdminFeature|AdminCrudObject)\b" --include='*.php' . | gre
 
 ---
 
+## 43. The admin's Query Tester is gone
+
+**Applies if:** the project links to the Query Tester or adds its menu item:
+
+```bash
+grep -rnE "query-creator|mag-query" --include='*.php' --include='*.js' . | grep -v vendor/
+```
+
+**What changed:** the "Magrathea Query Tester [WIP]" page (Database → "Magrathea Query",
+`?magrathea_page=query-creator`) appended the posted text to PHP code and ran it with `eval()`, so any logged-in
+admin, or any script running in an admin's browser (see 46), ran PHP on the server. The page, its action and
+its script are removed, and so is the `mag-query` menu item. `AdminMenu::GetItem("mag-query")` returns `null`,
+and `AdminMenu::Add()` now ignores `null` (alone or inside an array of items).
+
+**What to do:** nothing for the default menu. A link to `?magrathea_page=query-creator` now gets "Page not
+found": remove it. A custom `BuildMenu()` that adds `GetItem("mag-query")` shows nothing there: remove the
+call. To run SQL from the admin, use the Queries page (Database → Queries).
+
+---
+
+## 44. Admin backups: validated names, no shell, no password on the command line
+
+**Applies if:** code calls `AdminDatabase`'s backup methods, or backups are made with names other than letters,
+digits, `.`, `_` and `-`:
+
+```bash
+grep -rnE "GetCommand\(|DoBackup\(|CreateBackupFile" --include='*.php' --include='*.js' . | grep -v vendor/
+php -r 'var_dump(function_exists("proc_open"));'   # on the server, with the web server's PHP config
+```
+
+**What changed:**
+- The posted file name was put into a `mysqldump … > <folder>/<name>` command run with `system()`, so any
+  logged-in admin could run shell commands through it. The name must now be a plain file name:
+  `AdminDatabase::ValidateBackupFileName()` appends `.sql` when it's missing and accepts only
+  `^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$` without `..`; anything else throws `MagratheaException("invalid file
+  name")`.
+- An existing file is refused (`"file already exists"`); `>` used to overwrite it silently.
+- `DoBackup()` runs `mysqldump` through `proc_open()` with an argument array, no shell. The credentials go in a
+  temporary `[client]` defaults file (`--defaults-extra-file`, `0600`, deleted afterwards): the password was on
+  the command line (visible to other server users in `ps`) and was sent back to the browser in the API's
+  `command`. A failed dump deletes the partial file and throws with mysqldump's error. A DB user or password
+  that contains both `"` and `'`, or a line break, throws (it can't be written to the defaults file).
+- `DoBackup()` returns `["file" => <name>, "size" => <bytes>]` (it returned `system()`'s result and exit code).
+  `AdminDatabase::GetCommand()` is removed: it can only be built with the password in it. The `CreateBackupFile`
+  admin API answers `["success" => true, "file" => …, "size" => …]`, without `command` or `destination`.
+- Viewing a backup (`backup-file`) reads `$_POST["filename"]` only, and only a `.sql` file that exists in the
+  backups folder: `../` read any file.
+
+**What to do:**
+- Code calling `GetCommand()`: remove it. Code reading `DoBackup()`'s `rs`/`code` or the API's `command`/
+  `destination`: read `file`/`size`.
+- The web server's PHP needs `proc_open()` (it needed `system()` before; hosts that disable one usually disable
+  both). Without it, the backup fails with a clear `MagratheaException`.
+- To replace a backup, delete the old file first, or use another name.
+
+---
+
+## 45. `file-view` and the logs page only read their own files
+
+**Applies if:** custom admin code posts to the `file-view` action, or includes it:
+
+```bash
+grep -rn "file-view" --include='*.php' --include='*.js' . | grep -v vendor/
+```
+
+**What changed:** `file-view` read the file whose path was posted in `file` when the including view hadn't set
+one, and the logs page posted absolute paths to it, so any logged-in admin read any file the web server can
+read. Now `file-view` only renders the `$viewFile` set by the view that includes it (and the optional
+`$viewLines` for a tail); called directly (`?magrathea_subpage=file-view`) it answers 404 "action not found".
+The logs page uses the new `log-view` action, which takes a file name inside the logs folder (not a path) and
+`lines` clamped to 1–10000. The tail is HTML-escaped (log lines carry request data, so viewing a log could run
+script in the admin), and the view can be included more than once in a request (it declared a global function,
+and it ended the request with `die`, which also cut short the pages that include it).
+
+**What to do:** nothing, unless custom admin code posts to `file-view`: write your own action that sets
+`$viewFile` to a fixed path and includes `file-view.php`, or post a log file name to `log-view`.
+
+---
+
+## 46. The admin escapes table and form values
+
+**Applies if:** the project's own admin code (custom features, custom pages, overridden `Columns()`/
+`GetEditColumn()`/`Fields()` in CRUD features) calls `Table()` or the form elements:
+
+```bash
+grep -rn "Table(\|->Input(\|->Textarea(\|->Select(" --include='*.php' . | grep -v vendor/
+```
+
+then, in those calls, look for HTML passed as a **value** (a link, a button, a badge, `<b>`), and for values
+escaped before being passed (`htmlspecialchars(`, `htmlentities(`).
+
+**What changed:** `AdminElements::Table()` printed every value as HTML, and so did the form elements' values
+(`Input()`, `Textarea()`, `Select()`, `Checkbox()`, and so `AdminForm` and every CRUD list and form). Any text an
+app user can store (a name, a title, a comment) ran as script in the admin of whoever looked at it, with the
+admin's session and CSRF token: one admin click away from running SQL through the Queries page, and PHP through
+the Query Tester (43). Now:
+- `Table()` escapes scalar values (from array rows and models); `null` prints empty; arrays and objects print as
+  escaped JSON. **A callable column (`"key" => function($row) {…}`) and a callable row value are printed as
+  they return**: that's where HTML goes, with the data inside escaped by you. Column titles are unchanged.
+- The form elements escape the `value` attribute, the textarea's content, select option values and labels
+  (`Ref()` included) and checkbox values. `AdminForm` also escapes `hidden` values and `empty` fields' values,
+  unless the value is a callable. Labels, ids, classes, placeholders and attributes are printed as given.
+
+**What to do:**
+- HTML passed as a value now shows as text. Move it into a callable:
+
+  ```php
+  // before: "action" => "<a href='".$url."'>Edit</a>" in each row
+  $elements->Table($rows, [
+      "name" => "Name",
+      ["title" => "Edit", "key" => function($row) use ($url) {
+          return "<a href='".$url."'>".htmlspecialchars($row["name"])."</a>";
+      }],
+  ]);
+  // or, per row: "action" => fn() => "<a href='".$url."'>Edit</a>"
+  ```
+
+- A value escaped before being passed now shows the entities (`&amp;lt;b&amp;gt;`): pass the raw value.
+- A callable column that returns data you didn't build (a field value, a user's name) as is: it was already
+  unsafe; escape it inside the callable.
+- CRUD features with the default `Columns()`/`Fields()`: nothing, they're just safe now.
+
+---
+
+## 47. Admin actions escape their query-string parameters
+
+**Applies if:** the project links to the admin's object or code-generation actions with its own `onclose`
+callback:
+
+```bash
+grep -rn "onclose=" --include='*.php' --include='*.js' . | grep -v vendor/
+```
+
+**What changed:** several admin actions printed query-string parameters as HTML or into `onclick`
+handlers: `object`, `table` and `onclose` in `object-detail`, `object-create`, `object-edit` (and its relation
+views), `code-create` and `code-gen-view`; `id` in a CRUD feature's page and its "can't find" error; `env` on the
+Config page; the feature name in "Feature not available". GET requests have no CSRF check, so a link sent to a
+logged-in admin (`…&onclose=alert(document.cookie)//`) ran script in the admin. Now those values are escaped,
+`onclose` is used only when it's a plain JS function name (`AdminElements::JsCallback()`), `object-detail`
+answers "object not found" for an unknown object, and the table name is backtick-quoted in `SHOW COLUMNS`.
+
+**What to do:** nothing, unless a link passes something other than a function name as `onclose` (e.g.
+`onclose=myFn('x')`): pass the function name only; it's called with the card element, or with the object name
+for `code-create`.
+
+---
+
+## 48. Admin feature URLs only call the feature's own actions
+
+**Applies if:** the project has its own admin features (classes extending `AdminFeature` or `AdminCrudObject`),
+or calls a CRUD feature's `Save`/`Delete` or App Config's `Import` without a POST:
+
+```bash
+grep -rlE "extends .*(AdminFeature|AdminCrudObject)\b" --include='*.php' . | grep -v vendor/
+grep -rnE "magrathea_feature_(subpage|action)=|callFeature\(" --include='*.php' --include='*.js' . | grep -v vendor/
+```
+
+**What changed:**
+- `?magrathea_feature=X&magrathea_feature_subpage=<method>` and `&magrathea_feature_action=<method>` called any
+  public method of the feature, setters included, and GET has no CSRF check. Now only an action is called:
+  `AdminFeature::IsDispatchable()` accepts a public, non-static method of the feature with no required
+  parameters, named `^[A-Za-z]\w*$`, that isn't one of `AdminFeature`'s own methods (overridden or not), except
+  `GetPage` and `Index`. Anything else answers 404. `magrathea_feature_subpage=GetPage` shows the index page (it
+  made `GetPage()` call itself until PHP ran out of memory).
+- `AdminCrudObject::Save()`/`Delete()` answer 405 (a JSON error) unless it's a POST: a GET link built an empty
+  object and saved it. App Config's `Import()` answers 405 too, and escapes the imported keys and values it
+  prints.
+
+**What to do:**
+- In your features, an action that has required parameters, or has the name of an `AdminFeature` method
+  (`AddJs`, `AddCSS`, `SetClassPath`, `HasPermission`, `GetSubpageUrl`, `IsFeatureActive`, `GetMenuItem`,
+  `Initialize`), can't be called from the URL any more: rename it, or give its parameters defaults.
+- Your own actions that change data: refuse anything but POST (see "Feature Routing" in the Admin Features
+  docs), and call them with `callFeature(feature, action, "POST", data)`.
+- A script calling CRUD `Save`/`Delete` or `Import` with GET: send a POST with the admin CSRF token.
+
+---
+
 ## Verify after upgrading
 
 - [ ] The server and the machine running Composer have PHP 8.1 or later (item 26).
@@ -1125,3 +1312,6 @@ grep -rlE "extends .*(AdminFeature|AdminCrudObject)\b" --include='*.php' . | gre
 - [ ] In DEV, no "has more than one file in the code folders" debug item appears (item 35).
 - [ ] No model declares `"float"` for a `DECIMAL` column, or the ones that do were left on purpose
       (item 39).
+- [ ] Admin → Database → Backups creates a backup, and the page shows no command (item 44).
+- [ ] Custom admin pages and CRUD features show their links and buttons as links, not as HTML text, and no
+      `&amp;` entities (item 46).

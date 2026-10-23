@@ -9,6 +9,10 @@ $rel_types = [
 	"has_and_belongs_to_many" => "has and belongs to many", 
 ];
 
+// $objectName comes from the including view (object-edit.php, from GET): escaped
+$relObjectHtml = htmlspecialchars((string)($objectName ?? ""));
+$relObjectJs = htmlspecialchars(json_encode((string)($objectName ?? "")));
+
 $objects = ObjectManager::Instance()->GetObjectList();
 $objects = array_combine(array_map('strtolower', $objects), $objects);
 
@@ -54,7 +58,7 @@ $formData = [
 		"size" => "col-6",
 		"class" => "btn-danger w-100",
 		"name" => "Cancel",
-		"key" => "toggleAddRelation('".$objectName."', false);",
+		"key" => "toggleAddRelation(".$relObjectJs.", false);",
 	],
 	[
 		"type" => "button",
@@ -66,7 +70,7 @@ $formData = [
 ];
 $form = new AdminForm();
 $form
-	->SetName("form-relations-".$objectName)
+	->SetName("form-relations-".$relObjectHtml)
 	->Build($formData, [ "this_object" => $objectName ]);
 
 ?>
@@ -74,12 +78,12 @@ $form
 <div class="card">
 	<div class="card-header">
 		Add Relation
-		<div class="card-close" aria-label="Close" onclick="toggleAddRelation('<?=$objectName?>', false);">&times;</div>
+		<div class="card-close" aria-label="Close" onclick="toggleAddRelation(<?=$relObjectJs?>, false);">&times;</div>
 	</div>
 	<div class="card-body">
-		<?
+		<?php
 			$form->Print();
 		?>
-		<div class="row" id="relation-<?=$objectName?>-response"></div>
+		<div class="row" id="relation-<?=$relObjectHtml?>-response"></div>
 	</div>
 </div>

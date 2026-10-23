@@ -1,26 +1,31 @@
 <?php
 
-if(isset($viewFile)) {
-	$file = $viewFile;
-} else {
-	$file = @$_POST["file"];
+// renders only $viewFile (and the optional $viewLines, for a tail), set by the script that includes this view:
+// called directly (?magrathea_subpage=file-view), it's not found, like an unknown action
+if(!isset($viewFile)) {
+	http_response_code(404);
+	echo "action not found";
+	return;
 }
+$file = $viewFile;
 
 if(!file_exists($file)) {
-	$msg = "file [".$file."] does not exist";
+	$msg = "file [".htmlspecialchars($file)."] does not exist";
 	\Magrathea2\Admin\AdminElements::Instance()->Alert($msg, "danger");
-	die;
+	return;
 }
 
 echo '<pre class="code file-pre">';
-$lines = @$_POST["lines"];
+$lines = $viewLines ?? null;
 if(empty($lines)) {
 	$content = file_get_contents($file);
 	echo htmlentities($content);
-	die;
+	echo '</pre>';
+	return;
 }
 
-function getLastLines($filename, $lines) {
+// a closure, not a function: this view can be included more than once in a request
+$getLastLines = function($filename, $lines) {
 	$fp = fopen($filename, 'r');
 	$linecount = 0;
 	$pos = -1;
@@ -38,7 +43,8 @@ function getLastLines($filename, $lines) {
 	}
 	fclose($fp);
 	return $text;
-}
-echo getLastLines($file, $lines);
+};
+// log lines carry request data (URIs, user agents, posted values)
+echo htmlspecialchars($getLastLines($file, $lines));
 
 echo '</pre>';

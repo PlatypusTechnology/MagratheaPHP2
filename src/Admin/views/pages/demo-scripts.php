@@ -18,7 +18,7 @@ $pageTitle = "Admin Scripts";
 		<div class="card-body">
 			<div class="row">
 				<div class="col-12">
-					<?
+					<?php
 					$viewFile = __DIR__."/../javascript/scripts.js";
 					include(__DIR__."/../actions/file-view.php");
 					?>

@@ -80,6 +80,13 @@ class AdminFeature {
 	 */
 	public function GetPage() {
 		$action = @$_GET["magrathea_feature_subpage"];
+		// "GetPage" itself (method names are case-insensitive) would call this method again, forever
+		if(is_string($action) && strtolower($action) === "getpage") $action = null;
+		if($action && !$this->IsDispatchable($action)) {
+			http_response_code(404);
+			AdminElements::Instance()->Alert("Page not found", "danger");
+			return;
+		}
 		if(!$this->HasPermission($action)) {
 			AdminManager::Instance()->PermissionDenied();
 		}
@@ -88,6 +95,25 @@ class AdminFeature {
 		} else {
 			$this->Index();
 		}
+	}
+
+	/**
+	 * Can this method be called from the URL (`magrathea_feature_subpage`, `magrathea_feature_action`)?
+	 * Only a public, non-static method of the feature with no required parameters, named `^[A-Za-z]\w*$`,
+	 * and not one of AdminFeature's own methods (overridden or not), except `GetPage` and `Index`.
+	 * GET requests have no CSRF check: an action that changes data must also refuse anything but POST.
+	 * @param 	mixed 	$method		method name, from the query string
+	 * @return 	bool
+	 */
+	public function IsDispatchable($method): bool {
+		if(!is_string($method) || !preg_match('/^[A-Za-z]\w*$/', $method)) return false;
+		if(!method_exists($this, $method)) return false;
+		$reflection = new \ReflectionMethod($this, $method);
+		if(!$reflection->isPublic() || $reflection->isStatic() || $reflection->getNumberOfRequiredParameters() > 0) {
+			return false;
+		}
+		if(in_array(strtolower($method), ["getpage", "index"], true)) return true;
+		return !method_exists(AdminFeature::class, $method);
 	}
 
 	public function Index() {

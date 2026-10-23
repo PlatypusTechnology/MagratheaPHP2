@@ -27,7 +27,7 @@ $newUserUrl = $featureClass->GetSubpageUrl(null, [ "id" => "new" ]);
 			All Users
 		</div>
 		<div class="card-body">
-			<?
+			<?php
 			$elements->Table(
 				$rs,
 				[
@@ -67,6 +67,6 @@ $newUserUrl = $featureClass->GetSubpageUrl(null, [ "id" => "new" ]);
 		</div>
 	</div>
 
-<?
+<?php
 	include(__DIR__."/edit.php");
 

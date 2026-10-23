@@ -22,7 +22,7 @@ $feature->GetEndpoints();
 		<div class="card-body">
 			<div class="row">
 				<div class="col-12 mb-2 right">
-					<?
+					<?php
 					$elements->Button("clear", "clearDebugAPI()", ["btn-danger", "no-margin"]);
 					?>
 				</div>

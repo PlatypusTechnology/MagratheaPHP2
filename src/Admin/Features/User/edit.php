@@ -17,7 +17,7 @@ if(@$_GET["id"]) {
 	?>
 <div class="card card-form">
 	<div class="card-header">
-		Editing <b><?=$user->email?></b>
+		Editing <b><?=htmlspecialchars((string)$user->email)?></b>
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">

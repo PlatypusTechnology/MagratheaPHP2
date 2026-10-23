@@ -17,12 +17,12 @@ $elements->Header($pageTitle);
 		<div class="card-body">
 			<div class="row">
 				<div class="col-3 offset-6">
-					<?
+					<?php
 					$elements->Button("Show Sample", "viewHtaccessSample()", ["btn-primary", "w-100"]);
 					?>
 				</div>
 				<div class="col-3">
-					<?
+					<?php
 					$elements->Button("Show App .htaccess", "viewHtaccessMyFile()", ["btn-success", "w-100"]);
 					?>
 				</div>

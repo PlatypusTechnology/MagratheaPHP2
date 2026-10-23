@@ -26,7 +26,7 @@ $exportStr = str_replace('\n', "\n", $exportStr);
 				<div class="form-group">
 					<label>Export String</label>
 					<pre class="light grow" id="exportStr"><?=$exportStr?></pre>
-					<?
+					<?php
 					AdminElements::Instance()->Button("Copy", "copyExport()", ["btn-primary", "no-margin"]);
 					?>
 				</div>

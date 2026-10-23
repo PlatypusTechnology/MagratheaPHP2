@@ -41,8 +41,8 @@ try {
 	</div>
 	<div class="card-body">
 		<div class="row border-bottom pb-1 mb-2">
-			<div class="col-12"><pre class="code-light"><?=$query?></pre></div>
-			<?
+			<div class="col-12"><pre class="code-light"><?=htmlspecialchars($query)?></pre></div>
+			<?php
 			$switchAction = ["onchange" => "switchRs(this);"];
 			if($queryType === QueryType::Select) {
 				echo '<div class="raw-switch">';
@@ -53,16 +53,17 @@ try {
 		</div>
 		<div class="row">
 			<div class="col-12 rs-raw">
-				<?
+				<?php
+				// the query, its results and the error come from the database: escaped
 				if($error) {
-					echo $rs->getMessage()."<br/><br/>";
+					echo htmlspecialchars($rs->getMessage())."<br/><br/>";
 				}
 				?>
-				<pre class="pre-raw"><?print_r($rs)?></pre>
+				<pre class="pre-raw"><?=htmlspecialchars(print_r($rs, true))?></pre>
 			</div>
 			<div class="col-12 rs-table table-scroll" style="display: none;">
-				<?
-				if($queryType === QueryType::Select) {
+				<?php
+				if($queryType === QueryType::Select && !$error) {
 					$adminElements->Table($rs);
 				}
 				?>

@@ -8,7 +8,7 @@ $adminElements = AdminElements::Instance();
 
 $logger = Logger::Instance();
 $logPath = $logger->GetLogPath();
-$activeFile = $logger->GetFullLogFile();
+$activeFile = $logger->GetLogFile();
 
 $pageTitle = "Logs";
 $adminElements->Header($pageTitle);
@@ -53,7 +53,7 @@ foreach ($dirData as $d) {
 			<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 		</div>
 		<div class="card-body">
-			<?
+			<?php
 			$adminElements->Table($info, null, "table-bordered hide-header");
 			?>
 		</div>
@@ -61,7 +61,7 @@ foreach ($dirData as $d) {
 
 	<div class="card">
 		<div class="card-header">
-			<?=$logPath?>
+			<?=htmlspecialchars($logPath)?>
 			<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 		</div>
 		<div class="card-body">
@@ -69,9 +69,10 @@ foreach ($dirData as $d) {
 				<div class="col-2">
 					<ul class="list-group list-group-flush bg-light border-end">
 					<?php
+						// log-view takes a file name inside the logs folder, not a path
 						foreach($files as $f) {
-							$click = "viewFile('".$logPath."/".$f."');";
-							echo '<li class="list-group-item pointer" onclick="'.$click.'">'.$f.'</li>';
+							$click = "viewFile(".htmlspecialchars(json_encode($f)).");";
+							echo '<li class="list-group-item pointer" onclick="'.$click.'">'.htmlspecialchars($f).'</li>';
 						}
 					?>
 					</ul>
@@ -96,16 +97,16 @@ foreach ($dirData as $d) {
 		<div class="card-body">
 			<div class="row">
 				<div class="col-6">
-					<? $adminElements->Input("disabled", "tail-file", "Current Log File", $activeFile, "w-100"); ?>
+					<?php $adminElements->Input("disabled", "tail-file", "Current Log File", $activeFile, "w-100"); ?>
 				</div>
 				<div class="col-2">
-					<? $adminElements->Input("text", "tail-lines", "Lines", 20, "w-100"); ?>
+					<?php $adminElements->Input("text", "tail-lines", "Lines", 20, "w-100"); ?>
 				</div>
 				<div class="col-2">
-					<? $adminElements->Input("number", "tail-rate", "Refresh Rate (s)", 30, "w-100"); ?>
+					<?php $adminElements->Input("number", "tail-rate", "Refresh Rate (s)", 30, "w-100"); ?>
 				</div>
 				<div class="col-2">
-					<?
+					<?php
 					$argsTailStart = ["id" => "tail-start", "styles" => ""];
 					$adminElements->Button("Tail! &#x23F5", "start()", "btn-success w-100", null, false, $argsTailStart);
 					$argsTailStop = ["id" => "tail-stop", "styles" => "display: none;"];
@@ -123,9 +124,9 @@ foreach ($dirData as $d) {
 
 <script type="text/javascript">
 var currentFile = null;
-function viewFile(fileAddress) {
-	currentFile = fileAddress;
-	callAction("file-view", "POST", { file: fileAddress })
+function viewFile(file) {
+	currentFile = file;
+	callAction("log-view", "POST", { file })
 		.then( rs => {
 			showOn('#file-view', rs);
 			$("#btn-delete-log").show();
@@ -135,7 +136,7 @@ function tailRun() {
 	console.info("tail running");
 	let file = $("#tail-file").val();
 	let lines = $("#tail-lines").val();
-	callAction("file-view", "POST", { file, lines })
+	callAction("log-view", "POST", { file, lines })
 		.then( rs => showOn('#file-tail', rs) );
 }
 var tailInterval = null;

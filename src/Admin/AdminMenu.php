@@ -50,13 +50,15 @@ class AdminMenu {
 
 	/**
 	 * add an item or array of items to the menu
-	 * @param array|string	$items	items to be added
+	 * `null` (e.g. `GetItem()` of an unknown key) adds nothing, alone or inside an array of items
+	 * @param array|string|null	$items	items to be added
 	 * @return AdminMenu		itself
 	 */
 	public function Add($items): AdminMenu {
+		if($items === null) return $this;
 		if(is_string($items)) return $this->Add($this->CreateTitle($items));
-		if(is_array(@$items[0])) {
-			$this->menu = array_merge($this->menu, $items);
+		if(is_array($items) && array_key_exists(0, $items) && (is_array($items[0]) || $items[0] === null)) {
+			$this->menu = array_merge($this->menu, array_values(array_filter($items, fn($i) => $i !== null)));
 		} else {
 			array_push($this->menu, $items);
 		}
@@ -101,8 +103,7 @@ class AdminMenu {
 			$this->GetItem("connect"),
 			$this->GetItem("query"),
 			$this->GetItem("backups"),
-			$this->GetItem("objects-create"),
-			$this->GetItem("mag-query")
+			$this->GetItem("objects-create")
 		);
 		return $rs;
 	}
@@ -278,7 +279,6 @@ class AdminMenu {
 			"query" => $this->SimpleItem("Queries", "db-query"),
 			"connect" => $this->SimpleItem("Connect", "db-connect"),
 			"backups" => $this->SimpleItem("Backups", "backups"),
-			"mag-query" => $this->SimpleItem("Magrathea Query", "query-creator"),
 			"objects-create" => $this->SimpleItem("Create Objects", "objects-create"),
 			"objects-conf" => $this->SimpleItem("Objects Config", "objects-config"),
 			"objects" => $this->SimpleItem("View Objects", "objects-view"),

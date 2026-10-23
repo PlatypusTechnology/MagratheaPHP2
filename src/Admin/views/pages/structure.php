@@ -37,6 +37,7 @@ function checkPathIsOk($p) {
 	}
 }
 
+// Table() escapes values: the links ("action") and the checks are callables
 $table = [
 	[
 		"name" => "Magrathea Root",
@@ -46,25 +47,25 @@ $table = [
 	[
 		"name" => "Config Path",
 		"value" => Config::Instance()->GetFilePath(),
-		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("config")."'>View</a>",
+		"action" => fn() => "<a href='".AdminUrls::Instance()->GetPageUrl("config")."'>View</a>",
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[
 		"name" => "Log Path",
 		"value" => Logger::Instance()->GetLogPath(),
-		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("logs")."'>View</a>",
+		"action" => fn() => "<a href='".AdminUrls::Instance()->GetPageUrl("logs")."'>View</a>",
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[
 		"name" => "Database backups",
 		"value" => AdminDatabase::Instance()->GetBackupFolder(),
-		"action" => "<a href='".AdminUrls::Instance()->GetPageUrl("backups")."'>Backups</a>",
+		"action" => fn() => "<a href='".AdminUrls::Instance()->GetPageUrl("backups")."'>Backups</a>",
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[
 		"name" => "Cache",
 		"value" => MagratheaCache::Instance()->GetCachePath(),
-		"action" => $cacheLink,
+		"action" => fn() => $cacheLink,
 		"check" => function($r) { return checkPathIsOk($r["value"]); }
 	],
 	[
@@ -83,7 +84,7 @@ $table = [
 			Structure
 		</div>
 		<div class="card-body">
-			<?
+			<?php
 			AdminElements::Instance()->Table($table,
 				[ 
 					"name" => "Name",

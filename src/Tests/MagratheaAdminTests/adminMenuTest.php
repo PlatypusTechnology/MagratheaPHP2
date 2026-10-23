@@ -67,4 +67,30 @@ class adminMenuTest extends \PHPUnit\Framework\TestCase {
 		$this->assertGreaterThan(0, $found);
 	}
 
+	function testQueryTesterIsGone() {
+		TestsHelper::Print("testing the Query Tester (eval of posted code) is gone from the menu and the views...");
+		$menu = new AdminMenu();
+		$this->assertNull($menu->GetItem("mag-query"));
+		$links = array_column(array_filter($menu->GetDatabaseSection()), "link");
+		foreach($links as $link) {
+			$this->assertNotSame("query-creator", $this->PageFromLink($link));
+		}
+		$this->assertCount(4, $links);
+		$start = MenuTestAdminStart::Instance();
+		$this->assertNull($start->GetViewFile("pages", "query-creator"));
+		$this->assertNull($start->GetViewFile("actions", "query-creator"));
+		$this->assertFileDoesNotExist(__DIR__."/../../Admin/views/javascript/query.js");
+	}
+
+	function testAddIgnoresNull() {
+		TestsHelper::Print("testing AdminMenu::Add() ignores null items...");
+		$menu = new AdminMenu();
+		$menu->Add(null)->Add($menu->GetItem("mag-query"));
+		$this->assertSame([], $menu->GetMenu());
+		$menu->Add([$menu->GetItem("mag-query"), $menu->GetItem("logs"), null]);
+		$this->assertSame([$menu->GetItem("logs")], $menu->GetMenu());
+		$menu->Add($menu->GetItem("tests"));
+		$this->assertSame([$menu->GetItem("logs"), $menu->GetItem("tests")], $menu->GetMenu());
+	}
+
 }

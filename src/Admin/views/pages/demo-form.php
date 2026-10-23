@@ -141,13 +141,13 @@ $adminElements = AdminElements::Instance();
 		<div class="card-body">
 			<div class="row">
 				<div class="col-12 mt-2">
-					<?
+					<?php
 					$adminElements->Button("&darr;", "toggleCol(this, '.code-simple-table')", ["btn-action", "btn-primary"]);
 					?>
 					<b>View Code</b>
 				</div>
 				<div class="col-12 code-simple-table" style="display: none;">
-					<?
+					<?php
 						$tableRows = [
 							[
 								"name" => "Tony Stark",
@@ -189,16 +189,16 @@ $adminElements = AdminElements::Instance();
 						]
 					?>
 					Table Rows:
-					<pre class="code code-light">$formData = <? p_r($tableRows); ?></pre>
+					<pre class="code code-light">$formData = <?php p_r($tableRows); ?></pre>
 					Table Cols:
-					<pre class="code code-light">$formData = <? p_r($tableCols); ?></pre>
+					<pre class="code code-light">$formData = <?php p_r($tableCols); ?></pre>
 					Code:
 					<pre class="code">
 AdminElements::Instance->Table($tableRows, $tableCols, [ "some-extra-class", "border", "mt-4" ]);
 					</pre>
 				</div>
 				<div class="col-12">
-					<?
+					<?php
 						$adminElements->Table(
 							$tableRows,
 							$tableCols,
@@ -219,13 +219,13 @@ AdminElements::Instance->Table($tableRows, $tableCols, [ "some-extra-class", "bo
 		<div class="card-body">
 			<div class="row">
 				<div class="col-12 mt-2">
-					<?
+					<?php
 					$adminElements->Button("&darr;", "toggleCol(this, '.code-complex-table')", ["btn-action", "btn-primary"]);
 					?>
 					<b>View Code</b>
 				</div>
 				<div class="col-12 code-complex-table" style="display: none;">
-					<?
+					<?php
 						$countries = array(
 							array(
 								'name' => 'Russia',
@@ -288,16 +288,16 @@ AdminElements::Instance->Table($tableRows, $tableCols, [ "some-extra-class", "bo
 						]
 					?>
 					Table Rows:
-					<pre class="code code-light">$formData = <? p_r($countries); ?></pre>
+					<pre class="code code-light">$formData = <?php p_r($countries); ?></pre>
 					Table Cols:
-					<pre class="code code-light">$formData = <? p_r($countriesCols); ?></pre>
+					<pre class="code code-light">$formData = <?php p_r($countriesCols); ?></pre>
 					Code:
 					<pre class="code">
 AdminElements::Instance->Table($countries, $countriesCols, [ "mt-2" ]);
 					</pre>
 				</div>
 				<div class="col-12">
-					<?
+					<?php
 						$adminElements->Table($countries, $countriesCols, [ "mt-2" ]);
 					?>
 				</div>
@@ -360,9 +360,9 @@ AdminElements::Instance->Table($countries, $countriesCols, [ "mt-2" ]);
 			<div class="row">
 				<div class="col-6 code-form-data">
 					Form Data:
-					<pre class="code code-light">$formData = <? p_r($formData); ?></pre>
+					<pre class="code code-light">$formData = <?php p_r($formData); ?></pre>
 					Form Values:
-					<pre class="code code-light">$formValues = <? p_r($formValues); ?></pre>
+					<pre class="code code-light">$formValues = <?php p_r($formValues); ?></pre>
 					Code:
 					<pre class="code">
 $admin = new AdminForm();
@@ -371,7 +371,7 @@ $admin->Build($formData, $formValues);
 $admin->Print();</pre>
 				</div>
 				<div class="col-6">
-					<?
+					<?php
 						$admin->Print();
 					?>
 				</div>

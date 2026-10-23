@@ -13,10 +13,10 @@
 		<br/><br/>
 	</div>
 	<div class="col-12">
-		<? include(__DIR__."/db-query.php"); ?>
+		<?php include(__DIR__."/db-query.php"); ?>
 	</div>
 	<div class="col-12"><hr/></div>
 	<div class="col-12">
-	<? include(__DIR__."/db-load-magrathea-objects.php"); ?>
+	<?php include(__DIR__."/db-load-magrathea-objects.php"); ?>
 	</div>
 </div>

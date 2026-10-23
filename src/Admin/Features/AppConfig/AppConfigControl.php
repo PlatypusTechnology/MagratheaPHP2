@@ -172,7 +172,7 @@ class AppConfigControl extends MagratheaModelControl {
 		foreach($data as $config) {
 			if(empty($config)) continue;
 			$row = $this->ParseLine($config);
-			if($echoProgress) echo "updating: <b>".$row["key"]."</b> = ".$row["value"]."<br/>";
+			if($echoProgress) echo "updating: <b>".htmlspecialchars((string)$row["key"])."</b> = ".htmlspecialchars((string)$row["value"])."<br/>";
 			$this->Save($row["key"], $row["value"], true, $row["system"]);
 		}
 		AdminManager::Instance()->Log("Importing Config Data", "config", $dataStr);

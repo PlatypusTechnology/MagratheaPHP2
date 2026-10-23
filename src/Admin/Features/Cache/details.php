@@ -17,16 +17,17 @@ try {
 	ErrorManager::Instance()->DisplayException($ex);
 }
 
+// Table() escapes values: the links are callables
 $cacheDetails = array(
 	[
 		"Path",
 		$cachePath,
-		'from <a href="'.$configUrl.'">config file</a>'
+		fn() => 'from <a href="'.$configUrl.'">config file</a>'
 	],
 	[
 		"no_cache",
 		$cacheActive,
-		'[no_cache] from <a href="'.$configUrl.'">config</a> (default: false)'
+		fn() => '[no_cache] from <a href="'.$configUrl.'">config</a> (default: false)'
 	]
 );
 
@@ -41,7 +42,7 @@ $cacheDetails = array(
 		<div class="row">
 			<div class="col-12">
 				set [<b>no_cache</b>] as "true" to turn it off <br/>
-				<?
+				<?php
 				$elements->Table($cacheDetails, null, ["hide-header"]);
 				?>
 			</div>

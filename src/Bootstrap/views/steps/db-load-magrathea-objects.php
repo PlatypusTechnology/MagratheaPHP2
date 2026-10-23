@@ -9,12 +9,12 @@ use function Magrathea2\p_r;
 	<h5>Loading Magrathea Objects</h5>
 	<span><?=$confFile?></span>
 	<br/>
-	<?
+	<?php
 
 	if(!$confFile || !$manager->DoesObjectFileExists()) {
 		?>
 		<span class="error">no magrathea_objects.conf file</span>
-		<?
+		<?php
 		return;
 	}
 
@@ -28,7 +28,7 @@ use function Magrathea2\p_r;
 	?>
 	<span>Magrathea Objects:</span>
 	<br/><br/>
-	<?
+	<?php
 	foreach($config as $object => $data) {
 		$columns = "";
 		if($object === "relations") continue;
@@ -38,7 +38,7 @@ use function Magrathea2\p_r;
 			<div class="col-12">
 				<b><?=$object?></b> (table: <i><?=$table?></i>)
 			</div>
-			<?
+			<?php
 			$fields = $manager->GetPublicProperties($data);
 			foreach($fields as $field) {
 				?>
@@ -48,11 +48,11 @@ use function Magrathea2\p_r;
 				<div class="col-6">
 					<?=$field["type"]?>
 				</div>
-				<?
+				<?php
 			}
 			?>
 			<div class="col-12">
-				<?
+				<?php
 					$query = $manager->GenerateQueryForObject($object);
 				?>
 				<br/>
@@ -63,5 +63,5 @@ use function Magrathea2\p_r;
 			</div>
 		</div>
 		<hr/>
-		<?
+		<?php
 	}

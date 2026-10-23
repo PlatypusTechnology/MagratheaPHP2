@@ -8,8 +8,9 @@ if(empty($objectName)) {
 	$objectName = @$_GET["object"];
 }
 
-if(empty($objectName)) {
+if(empty($objectName) || !is_string($objectName)) {
 	AdminElements::Instance()->Alert("Incorrect object", "danger");
+	return;
 }
 
 $relations = ObjectManager::Instance()->GetRelationsByObject($objectName);
@@ -75,14 +76,15 @@ foreach($relations as $relation) {
 			"size" => "col-3",
 		],
 	];
-	$description = str_replace('_', ' ', $relation["rel_type"])." &raquo; ";
-	$description .= "<pre class='inline'>".$relation["rel_object"]."</pre>";
-	$field = "using <pre class='inline'>".$relation["rel_field"]."</pre>";
+	// HTML for the "empty" fields: callables (form values are escaped)
+	$description = htmlspecialchars(str_replace('_', ' ', $relation["rel_type"]))." &raquo; ";
+	$description .= "<pre class='inline'>".htmlspecialchars($relation["rel_object"])."</pre>";
+	$field = "using <pre class='inline'>".htmlspecialchars($relation["rel_field"])."</pre>";
 	$formValues = [
 		"object-name" => $objectName,
 		"relation-name" => $relation["rel_name"],
-		"relation-desc" => $description,
-		"relation-field" => $field,
+		"relation-desc" => fn() => $description,
+		"relation-field" => fn() => $field,
 		"relation-property" => $relation["rel_property"],
 		"relation-method" => $relation["rel_method"]."()",
 		"relation-lazy" => $relation["rel_lazyload"],
@@ -95,9 +97,9 @@ foreach($relations as $relation) {
 ?>
 
 <div class="card">
-	<div class="card-header">Relations for <?=$objectName?></div>
+	<div class="card-header">Relations for <?=htmlspecialchars($objectName)?></div>
 	<div class="card-body">
-		<?
+		<?php
 		foreach($relationForms as $rForm) { 
 			echo '<div class="row relation-form">';
 			$rForm->Print();

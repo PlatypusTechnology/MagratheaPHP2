@@ -3,39 +3,42 @@
 use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\ObjectManager;
 
-$objectName = $_GET["object"];
+$objectName = @$_GET["object"];
 
 $adminElements = AdminElements::Instance();
+if(!is_string($objectName) || $objectName === "") {
+	$adminElements->ErrorCard("invalid object");
+	return;
+}
 $data = ObjectManager::Instance()->GetObjectData($objectName);
 
-$closeFn = @$_GET["onclose"];
-if($closeFn) {
-	$closeFn = $closeFn."(this);";
-}
+// GET parameters are links an admin can be sent: escaped, and onclose only as a JS function name
+$objectHtml = htmlspecialchars($objectName);
+$objectJs = htmlspecialchars(json_encode($objectName));
+$closeFn = $adminElements->JsCallback(@$_GET["onclose"], "this");
 
 ?>
 
-<div class="card" id="editCard-<?=$objectName?>">
+<div class="card" id="editCard-<?=$objectHtml?>">
 	<div class="card-header">
-		Edit <b><?=ucfirst($objectName)?></b>
+		Edit <b><?=htmlspecialchars(ucfirst($objectName))?></b>
 		<div class="card-close" aria-label="Close" onclick="closeCard(this); <?=$closeFn?>">&times;</div>
 	</div>
 	<div class="card-body">
 		<div class="row">
-			<div class="col-sm-12 col-md-6" id="object-view-<?=$objectName?>">
-				<?
-				$adminElements->Button("View Object Details", "viewObject('".$objectName."')", ["btn-primary", "w-100"], null, false, ["id" => "btn-view-".$objectName]);
+			<div class="col-sm-12 col-md-6" id="object-view-<?=$objectHtml?>">
+				<?php
+				$adminElements->Button("View Object Details", "viewObject(".$objectJs.")", ["btn-primary", "w-100"], null, false, ["id" => "btn-view-".$objectHtml]);
 				?>
 			</div>
 			<div class="col-sm-12 col-md-6 mt-xs-4">
-				<? include(__DIR__."/object-relations.php"); ?>
+				<?php include(__DIR__."/object-relations.php"); ?>
 			</div>
 			<div class="col-4 offset-8">
-				<?
-				$adminElements->Button("Delete Object", "deleteObject('".$objectName."')", ["btn-danger", "w-100"], null);
+				<?php
+				$adminElements->Button("Delete Object", "deleteObject(".$objectJs.")", ["btn-danger", "w-100"], null);
 				?>
 			</div>
 		</div>
 	</div>
 </div>
-

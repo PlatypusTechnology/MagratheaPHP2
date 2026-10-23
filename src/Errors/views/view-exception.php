@@ -30,11 +30,11 @@
 					<div class="col-sm-12">
 						<?=$errorMessage?>
 					</div>
-					<? if(@$ex) { ?>
+					<?php if(@$ex) { ?>
 					<div class="col-sm-12">
 						<pre class="log-response" style="max-height: 500px;"><?php print_r($ex); ?></pre>
 					</div>
-					<? } ?>
+					<?php } ?>
 				</div>
 			</div>
 			<hr/>

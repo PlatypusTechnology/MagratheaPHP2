@@ -22,7 +22,7 @@ $featureId = $featureClass->featureId;
 		<div class="card-body config-form">
 			<div class="row">
 				<div class="col-12" id="app-config-list">
-					<?
+					<?php
 					include(__DIR__."/list.php");
 					?>
 				</div>
@@ -32,13 +32,13 @@ $featureId = $featureClass->featureId;
 
 	<div class="row">
 		<div class="col-6">
-		<?
+		<?php
 			$migrationUrl = $featureClass->GetSubpageUrl("Migration");
 			AdminElements::Instance()->Button("Import/Export", "window.location.href='".$migrationUrl."'", ["btn-primary"]);
 			?>
 		</div>
 		<div class="col-6 right">
-			<?
+			<?php
 			$newConfigUrl = $featureClass->GetSubpageUrl(null, ["id" => "new"]);
 			AdminElements::Instance()->Button("Add Row", "window.location.href='".$newConfigUrl."'", ["btn-success"]);
 			?>
@@ -47,7 +47,7 @@ $featureId = $featureClass->featureId;
 
 	<div class="row mt-2">
 		<div class="col-12">
-			<?
+			<?php
 			include(__DIR__."/form.php");
 			?>
 		</div>
@@ -55,7 +55,7 @@ $featureId = $featureClass->featureId;
 
 	<div class="row mt-2">
 		<div class="col-12">
-			<?
+			<?php
 			include(__DIR__."/example.php");
 			?>
 		</div>

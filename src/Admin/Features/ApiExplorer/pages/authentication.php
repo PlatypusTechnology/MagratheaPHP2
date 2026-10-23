@@ -39,7 +39,7 @@ $form->Build($formData, null);
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">
-	<?
+	<?php
 		$form->Print();
 	?>
 	</div>

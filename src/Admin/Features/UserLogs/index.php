@@ -8,18 +8,18 @@ $elements->Header("User Logs");
 
 ?>
 <style>
-<?
+<?php
 	include("style.css");
 ?>
 </style>
 
 <div class="container">
-	<? include("latest.php"); ?>
+	<?php include("latest.php"); ?>
 	<div id="log-rs"></div>
 </div>
 
 <script type="text/javascript">
-<?
+<?php
 	include("scripts.js");
 ?>
 </script>
