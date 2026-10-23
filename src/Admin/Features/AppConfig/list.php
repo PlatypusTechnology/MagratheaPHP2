@@ -23,17 +23,18 @@ if($hideSystem) {
 	]);
 }
 
-array_push($tableData, 
+// callable columns are printed as HTML: escape the data inside them
+array_push($tableData,
 	[
 		"title" => "Key",
 		"key" => function($c) {
-			return $c->GetKey();
+			return htmlspecialchars((string)$c->GetKey());
 		}
 	],
 	[
 		"title" => "Value",
 		"key" => function($c) {
-			return $c->GetValue();
+			return htmlspecialchars((string)$c->GetValue());
 		}
 	],
 	[

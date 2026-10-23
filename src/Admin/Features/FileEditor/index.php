@@ -12,7 +12,7 @@ $file = @$_GET["file"];
 ?>
 
 <style>
-<?
+<?php
 	include("style.css");
 ?>
 </style>
@@ -33,7 +33,7 @@ $file = @$_GET["file"];
 			?>
 			</div>
 			<div class="inline right">
-			<?
+			<?php
 			$adminElements->Button("View file", "openFile()", ["btn-primary", "m-0"]);
 			?>
 			</div>
@@ -48,7 +48,7 @@ $file = @$_GET["file"];
 </div>
 
 <script type="text/javascript">
-<?
+<?php
 	include("scripts.js");
 ?>
 </script>

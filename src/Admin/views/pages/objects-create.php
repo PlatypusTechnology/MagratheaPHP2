@@ -13,7 +13,7 @@ AdminManager::Instance()->AddJs($jsFile);
 
 <div class="container">
 
-	<? include(__DIR__."/../actions/tables-list.php"); ?>
+	<?php include(__DIR__."/../actions/tables-list.php"); ?>
 	<div id="obj-responses"></div>
 
 </div>

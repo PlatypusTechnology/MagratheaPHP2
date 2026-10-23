@@ -8,17 +8,18 @@
 	MagratheaPHP::Instance()->Connect();
 	$magDb = Database::Instance();
 
+	// the query, its results and the error come from the database: escaped
 	$query = $_REQUEST["q"];
 	try {
 		$rs = $magDb->QueryAll($query);
 	} catch(Exception $ex) {
 		?>
 		<span class="error">ERROR:</span>
-		<span><?=$ex->getMsg()?></span>
+		<span><?=htmlspecialchars($ex->getMessage())?></span>
 		<br/>
 		<hr/>
+		<pre><?=htmlspecialchars(print_r($ex, true))?></pre>
 		<?php
-		print_r($ex);
 		return;
 	}
 
@@ -32,9 +33,9 @@
 	?>
 	<div class="col">
 		<div class="col-12">
-			<span class="query"><?=$query?></span>
+			<span class="query"><?=htmlspecialchars($query)?></span>
 		</div>
 		<div class="col-12">
-			<pre class="query-response"><? print_r($rs); ?></pre>
+			<pre class="query-response"><?=htmlspecialchars(print_r($rs, true))?></pre>
 		</div>
 	</div>

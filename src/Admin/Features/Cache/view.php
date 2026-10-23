@@ -24,14 +24,14 @@ $fileJs = htmlspecialchars(json_encode($file));
 	<div class="card-body">
 		<div class="row">
 			<div class="col-sm-6">
-				<?
+				<?php
 				$switchAction = ["onchange" => "switchCacheView(this);"];
 				$elements
 					->Checkbox(null, "View Pretty", true, true, [], true, $switchAction);
 				?>
 			</div>
 			<div class="col-sm-6 right">
-				<?
+				<?php
 				$elements
 					->Button("edit", "editCacheFile(".$fileJs.")", ["btn-success", "label-margin", "mt-0", "mb-1"]);
 				$elements

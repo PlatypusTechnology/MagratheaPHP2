@@ -12,7 +12,7 @@ $adminElements->Header("Change Password");
 
 <div class="container">
 
-<?
+<?php
 if(!empty(@$saved)) {
 	if($saved["success"]) {
 		$adminElements->Alert("Password successfully changed", "success", true);
@@ -30,7 +30,7 @@ $adminForm = new AdminForm();
 			<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 		</div>
 		<div class="card-body">
-			<?
+			<?php
 			$adminForm
 				->SetName("pwd-change")
 				->Build(

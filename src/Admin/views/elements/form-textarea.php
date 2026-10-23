@@ -1,6 +1,6 @@
 <div class="form-group">
-	<? if(!$hideLabel) { ?>
+	<?php if(!$hideLabel) { ?>
 	<label for="<?=$id?>"><?=$name?></label>
-	<? } ?>
-	<textarea name="<?=$id?>" id="<?=$id?>" placeholder="<?=$placeholder?>" class="form-control <?=$class?>"><?=$value?></textarea>
+	<?php } ?>
+	<textarea name="<?=$id?>" id="<?=$id?>" placeholder="<?=$placeholder?>" class="form-control <?=$class?>"><?=htmlspecialchars((string)$value, ENT_QUOTES)?></textarea>
 </div>

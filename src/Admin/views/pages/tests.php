@@ -37,7 +37,7 @@ $tests = $testManager->GetTests();
 	</div>
 
 
-	<?
+	<?php
 	$i=0;
 	foreach($tests as $test) {
 		$i++;
@@ -51,7 +51,7 @@ $tests = $testManager->GetTests();
 			<div class="card-body">
 				<div class="row">
 					<div class="col-4">
-						<? 
+						<?php 
 						foreach($test["folders"] as $folder) {
 							$filesContainer = "files-folder-".$i;
 							$folderName = $testManager::TestFolderPrint($folder);
@@ -60,7 +60,7 @@ $tests = $testManager->GetTests();
 							?>
 								<b><?=$folderName?></b>
 								<div id="<?=$filesContainer?>"></div>
-							<?
+							<?php
 							$adminElements->Button("Run ".$folderName, "callRunFolder('".$folder."', '#".$resultContainer."');", 'btn-primary w-100');
 						}
 						?>
@@ -71,7 +71,7 @@ $tests = $testManager->GetTests();
 				</div>
 			</div>
 		</div>
-		<?	
+		<?php	
 	}
 	?>
 

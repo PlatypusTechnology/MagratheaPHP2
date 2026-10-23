@@ -1,13 +1,13 @@
 <div class="form-group">
-	<?
+	<?php
 
 use function Magrathea2\isMagratheaModel;
 
  if($name !== false) { ?>
 	<label for="<?=$id?>"><?=$name?></label>
-	<? } ?>
+	<?php } ?>
 	<select name="<?=$id?>" id="<?=$id?>" class="form-select <?=$class?>" <?=$atts?>>
-		<?
+		<?php
 		if($placeholder) {
 			echo '<option value="" selected disabled hidden>'.$placeholder.'</option>';
 		}
@@ -21,8 +21,8 @@ use function Magrathea2\isMagratheaModel;
 			}
 			$selected = ($id == $value ? "selected" : "");
 			?>
-			<option value="<?=$id?>" <?=$selected?>><?=$name?></option>
-			<?
+			<option value="<?=htmlspecialchars((string)$id, ENT_QUOTES)?>" <?=$selected?>><?=htmlspecialchars((string)$name, ENT_QUOTES)?></option>
+			<?php
 		}
 		?>
 	</select>

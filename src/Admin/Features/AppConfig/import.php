@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Magrathea2\Admin\AdminElements;
 
@@ -11,12 +11,12 @@ use Magrathea2\Admin\AdminElements;
 	<div class="card-body config-form">
 		<div class="row">
 			<div class="col-12" id="app-config-list">
-				<?
+				<?php
 				AdminElements::Instance()->Textarea("config-import", "Import String");
 				?>
 			</div>
 			<div class="col-12 right mt-3">
-				<?
+				<?php
 				AdminElements::Instance()->Button("Import", "importAppConfig()", ["btn-success", "no-margin"]);
 				?>
 			</div>

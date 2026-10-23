@@ -22,11 +22,11 @@ $tableData = [];
 foreach ($files as $file) {
 	$date = date("Y-m-d h:i:s",filemtime($path.$file));
 	$size = MagratheaHelper::FormatSize(filesize($path.$file));
-	// file names can come from route params (Cache("article", $id)): escape them
+	// file names can come from route params (Cache("article", $id)): escape them (Table() escapes the values)
 	$fileJs = htmlspecialchars(json_encode($file));
 	array_push($tableData,
 	[
-		"_file" => htmlspecialchars($file),
+		"_file" => $file,
 		"_size" => $size,
 		"_date" => $date,
 		"_actions" => function($row) use ($fileJs) {
@@ -52,7 +52,7 @@ $titles = [
 	<div class="card-body">
 		<div class="row">
 			<div class="col-12 right">
-				<?
+				<?php
 					AdminElements::Instance()->Button("reload", "reloadFiles()", ["btn-primary", "label-margin", "mt-0", "mb-1", "mx-4"]);
 					AdminElements::Instance()->Button("clear cache", "clearCache()", ["btn-danger", "label-margin", "mt-0", "mb-1"]);
 				?>
@@ -60,7 +60,7 @@ $titles = [
 		</div>
 		<div class="row cache-table">
 			<div class="col-12">
-				<?
+				<?php
 					AdminElements::Instance()->Table(
 						$tableData,
 						$titles,

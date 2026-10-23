@@ -32,7 +32,7 @@ if(!file_exists($file)) {
 	</div>
 	<div class="card-body">
 		<pre class="code file-pre">
-<?
+<?php
 $lines = @$_POST["lines"];
 if(empty($lines)) {
 	echo htmlentities(file_get_contents($file));

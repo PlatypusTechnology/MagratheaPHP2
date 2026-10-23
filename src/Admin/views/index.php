@@ -24,7 +24,7 @@ if($page && !$pageFile) http_response_code(404);
 <!DOCTYPE html>
 <html lang="en-uk">
 	<head>
-	<?
+	<?php
 		$cssStyleFiles = ["side-menu", "forms", "cards", "tables", "toast", "pre"];
 		include("sections/meta.php");
 	?>
@@ -62,7 +62,7 @@ if($page && !$pageFile) http_response_code(404);
 							$f = AdminManager::Instance()->GetFeature($feature);
 							if(!$f) {
 								AdminElements::Instance()->Alert(
-									"Feature not available [".$feature."]",
+									"Feature not available [".htmlspecialchars(is_string($feature) ? $feature : "")."]",
 									"danger",
 									true
 								);
@@ -72,10 +72,16 @@ if($page && !$pageFile) http_response_code(404);
 								// $f->Initialize();
 								$subpage = @$_GET["magrathea_feature_subpage"];
 								if(!$subpage) $subpage = "GetPage";
-								if($subpage !== "GetPage" && !$f->HasPermission($subpage)) {
-									AdminManager::Instance()->PermissionDenied();
+								// only the feature's own actions (see AdminFeature::IsDispatchable())
+								if(!$f->IsDispatchable($subpage)) {
+									http_response_code(404);
+									AdminElements::Instance()->Alert("Page not found", "danger", true);
+								} else {
+									if(strtolower($subpage) !== "getpage" && !$f->HasPermission($subpage)) {
+										AdminManager::Instance()->PermissionDenied();
+									}
+									$f->$subpage();
 								}
-								$f->$subpage();
 								$gotSomething = true;
 							}
 						}

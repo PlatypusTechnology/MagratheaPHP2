@@ -15,7 +15,7 @@ $latest = $control->GetLatest();
 		Latest Logs
 	</div>
 	<div class="card-body">
-		<?
+		<?php
 		$adminElements->Table($latest,
 		[
 			"user_id" => "User ID",

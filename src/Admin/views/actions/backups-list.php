@@ -38,10 +38,10 @@ $files = getSqlFilesInFolder($folder);
 	<div class="card-body">
 		<div class="row">
 			<div class="col-12">
-				<b>Checking</b> <?=$folder?>
+				<b>Checking</b> <?=htmlspecialchars($folder)?>
 			</div>
 		</div>
-		<?
+		<?php
 			AdminElements::Instance()->Table($files, [
 				[
 					"title" => "File",
@@ -58,8 +58,9 @@ $files = getSqlFilesInFolder($folder);
 				[
 					"title" => "...",
 					"key" => function($f) {
-						$html = "<a href='javascript:viewBackupFile(\"".$f["filename"]."\")'>view</a>";
-						return $html;
+						// onclick argument: JSON for JS, then escaped for the HTML attribute
+						$fileJs = htmlspecialchars(json_encode($f["filename"]));
+						return '<a href="#" onclick="viewBackupFile('.$fileJs.'); return false;">view</a>';
 					}
 				],
 			]);

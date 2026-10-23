@@ -45,7 +45,7 @@ if(@$_GET["id"]) {
 	?>
 <div class="card card-form">
 	<div class="card-header">
-		Editing <b><?=$c->key?></b>
+		Editing <b><?=htmlspecialchars((string)$c->key)?></b>
 		<div class="card-close" aria-label="Close" onclick="closeCard(this);">&times;</div>
 	</div>
 	<div class="card-body">

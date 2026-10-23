@@ -41,7 +41,7 @@ if(count($_POST) > 0) {
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-	<?
+	<?php
 		$pageTitle = $admin->GetTitle()." - Login";
 		$cssStyleFiles = ["login"];
 		include("sections/meta.php");
@@ -57,12 +57,12 @@ if(count($_POST) > 0) {
 		<div id="wrapper" class="container setup-wrapper">
 			<!-- Page content wrapper-->
 			<div id="page-content-wrapper">
-				<?
+				<?php
 				if ( isset($loginErrorMsg) ) {
 					echo '<div class="error">'.$loginErrorMsg.'</div>';
 				}
 				?>
-				<? include("pages/setup/login-form.php"); ?>
+				<?php include("pages/setup/login-form.php"); ?>
 			</div>
 		</div>
 	</body>

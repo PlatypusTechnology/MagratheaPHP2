@@ -17,7 +17,7 @@ $adminElements->Header("Run Query");
 		<div class="card-body">
 			<div class="row">
 				<div class="col-12">
-					<?
+					<?php
 					$adminElements->Checkbox(
 						"all-tables", "Show All Tables", 
 						true, false, [], true,
@@ -32,7 +32,7 @@ $adminElements->Header("Run Query");
 						<textarea class="form-control" id="query"></textarea>
 					</div>
 					<div class="right">
-					<?
+					<?php
 					$goClick = "RunQuery();";
 					$adminElements->Button("Execute", $goClick, ["btn-success"]);
 					?>

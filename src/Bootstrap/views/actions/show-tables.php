@@ -15,7 +15,7 @@
 	$rs = $magDb->QueryAll($query);
 
 function getColumnsOf($table) {
-	$query = "SHOW COLUMNS FROM ".$table;
+	$query = "SHOW COLUMNS FROM `".str_replace("`", "``", $table)."`";
 	$rs = Database::Instance()->QueryAll($query);
 	return $rs;
 }
@@ -28,14 +28,15 @@ echo "<br/><br/>";
 foreach($rs as $table) { 
 	$t = array_pop($table);
 	$c = getColumnsOf($t);
-	echo "<h5>".$t."</h5>";
+	// names, types and defaults come from the database: escaped
+	echo "<h5>".htmlspecialchars($t)."</h5>";
 	echo "<table class='table table-striped'>";
 	foreach($c as $row) {
 		echo "<tr>";
-		echo "<td>".$row["field"]."</td>";
-		echo "<td>".$row["type"]."</td>";
+		echo "<td>".htmlspecialchars($row["field"])."</td>";
+		echo "<td>".htmlspecialchars($row["type"])."</td>";
 		echo "<td>".($row["null"] == "NO" ? "" : "nullable")."</td>";
-		echo "<td>".(empty($row["default"]) ? "" : "default: ".$row["default"] )."</td>";
+		echo "<td>".(empty($row["default"]) ? "" : "default: ".htmlspecialchars($row["default"]) )."</td>";
 		echo "</tr>";
 	}
 	echo "</table>";

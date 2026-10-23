@@ -45,7 +45,7 @@ function getItem($item) {
 
 <div class="border-end bg-white side-menu">
 	<div class="sidebar-heading border-bottom bg-light">
-		<?$manager->PrintLogo(50)?>
+		<?php $manager->PrintLogo(50)?>
 		<h1><?=$manager->GetTitle()?></h1>
 		<div class="env-container">
 			<span class="env-title"><?=$env?></span>

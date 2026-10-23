@@ -178,6 +178,31 @@ sub-folders, a missing file) answers 404, "action not found" for an action and a
 page. Before 2.4.0 the name was concatenated into an `include`, so `../` reached any PHP file on the server.
 Your own pages belong in admin features (`?magrathea_feature=`), not in these folders.
 
+#### Backups, logs, and the removed Query Tester
+
+- **Backups** (Database → Backups) run `mysqldump` through `AdminDatabase::DoBackup($fileName)`. The name must be
+  a plain file name (`AdminDatabase::ValidateBackupFileName()`: `.sql` is appended when it's missing, then only
+  `^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$` without `..` is accepted; anything else throws
+  `MagratheaException("invalid file name")`), and an existing file is never overwritten (`"file already
+  exists"`). `mysqldump` runs through `proc_open()` with an argument array (no shell), and the database
+  credentials go in a temporary `[client]` defaults file (`0600`, deleted afterwards), never on the command line:
+  other server users can't read the password in `ps`, and the page never shows the command. A failed dump
+  removes the partial file and throws with mysqldump's error. The host's PHP needs `proc_open()`; a DB user or
+  password that contains both quote characters or a line break can't go in the defaults file and throws.
+  Viewing a backup accepts only a `.sql` file that exists in the backups folder. (Since 2.4.0. Before that, the
+  file name was put in a `system()` command, so any admin could run shell commands, the password was on the
+  command line and in the page, and `../` read any file.)
+- **Logs** (Debugging → Logs) are read through the `log-view` action, which takes a file name inside the logs
+  folder (`logs_path`, or `<magRoot>/logs`), not a path, and escapes the file and the tail. The generic
+  `file-view` action only shows a file chosen by the view that includes it; called directly, it answers 404.
+  (Before 2.4.0, `file-view` read any path posted to it, and the tail printed log lines, which carry request
+  data, as HTML.) Both checks go through `AdminFiles::ResolveInFolder($folder, $name)`: a plain name of an
+  existing file inside the folder, or `null`.
+- **The Query Tester** ("Magrathea Query", `?magrathea_page=query-creator`) was removed in 2.4.0: it ran posted
+  code with `eval()`. Its link now gets "Page not found", and `AdminMenu::GetItem("mag-query")` is `null`
+  (`AdminMenu::Add()` ignores `null`, so a custom menu that still adds it shows nothing there). Use the
+  Queries page (Database → Queries) to run SQL.
+
 ### Authentication
 
 #### `Auth(): bool`

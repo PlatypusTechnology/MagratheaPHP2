@@ -14,6 +14,8 @@ $elements = AdminElements::Instance();
 			echo '<div class="'.@$el["size"].'">';
 			$key = @$el["key"];
 			$name = @$el["name"];
+			// a callable value returns HTML built by the caller (printed raw by "empty"); any other value is data
+			$valueIsHtml = false;
 			if($values) {
 				if(!empty($key) && !is_callable($key)) {
 					if(is_array($values)) {
@@ -26,6 +28,7 @@ $elements = AdminElements::Instance();
 					if(!is_string($value) && is_callable($value)) {
 						try {
 							$value = $value($el);
+							$valueIsHtml = true;
 						} catch(\Exception $ex) {
 							$value = "invalid call";
 						}
@@ -42,7 +45,7 @@ $elements = AdminElements::Instance();
 					case "empty":
 					default:
 						$class = @$el['class'] ? $el['class'] : "";
-						echo '<div id="'.$key.'" class="'.$class.'">'.$value.'</div>';
+						echo '<div id="'.$key.'" class="'.$class.'">'.($valueIsHtml ? $value : htmlspecialchars((string)$value, ENT_QUOTES)).'</div>';
 						break;
 					case "text":
 					case "email":
@@ -52,7 +55,7 @@ $elements = AdminElements::Instance();
 						$elements->Input($type, $key, $name, $value, @$el['class'], @$el['outerClass'], @$el['placeholder'], @$el['attributes']);
 						break;
 					case "hidden":
-						echo '<input type="hidden" name="'.$key.'" id="'.$key.'" value="'.$value.'" />';
+						echo '<input type="hidden" name="'.$key.'" id="'.$key.'" value="'.htmlspecialchars((string)$value, ENT_QUOTES).'" />';
 						break;
 					case "textarea":
 						$elements->Textarea($key, $name, $value, @$el['class'], @$el['outerClass'], @$el['placeholder'], @$el['attributes']);

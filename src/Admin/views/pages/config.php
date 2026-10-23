@@ -118,7 +118,7 @@ if(@$_POST["magrathea-action"] && $_POST["magrathea-action"] == "config-save") {
 
 	<div class="card">
 		<div class="card-header">
-			<b><?=$activeEnv?></b> configuration:
+			<b><?=htmlspecialchars((string)$activeEnv)?></b> configuration:
 		</div>
 		<div class="card-body config-form">
 			<div class="row">

@@ -49,10 +49,9 @@ $form->Build($el, $val);
 			Backup Location
 		</div>
 		<div class="card-body">
-			<?
+			<?php
 				$form->Print();
 			?>
-			<div id="command-used" class="mt-2" style="display: none;"></div>
 		</div>
 	</div>
 
@@ -73,16 +72,12 @@ function createBackup() {
 	let data = getFormDataFromElement($("#bkp"));
 	callApi("Database", "CreateBackupFile", data)
 		.then(rs => {
-			if(!rs.success) { 
-				let error = "could not create backup file";
-				showToast(error, "Error on backup", true);
+			if(!rs.success) {
+				let error = (rs.data && rs.data.message) || "could not create backup file";
+				showToast($("<span>").text(error).html(), "Error on backup", true);
 			} else {
-				let data = rs.data;
-				let file = data.destination;
-				let command = data.command;
-				$("#command-used").html(command);
-				$("#command-used").show("slow");
-				showToast("file created: ["+file+"]", "Success!");
+				let file = rs.data.file;
+				showToast("file created: ["+$("<span>").text(file).html()+"]", "Success!");
 
 				loadList();
 			}

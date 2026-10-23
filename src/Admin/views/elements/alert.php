@@ -26,7 +26,7 @@
 	}
 ?>
 	<?=$alertMessage?>
-	<? if($showClose) { ?>
+	<?php if($showClose) { ?>
 	<button type="button" class="btn-close" onclick="closeAlert(this);" data-bs-dismiss="alert" aria-label="Close"></button>
-	<? } ?>
+	<?php } ?>
 </div>

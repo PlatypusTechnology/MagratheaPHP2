@@ -128,6 +128,18 @@ class AdminElements extends Singleton {
 		include($view);
 	}
 
+	/**
+	 * Builds a JS call (`fn(args);`) for an `onclick`, from a function name that came from the request
+	 * (e.g. `?onclose=closeViewCard`): only a plain JS function name is accepted, anything else gives `""`.
+	 * @param 	mixed 	$fn		function name
+	 * @param 	string 	$args	arguments, already escaped for the attribute
+	 * @return 	string	the call, or ""
+	 */
+	public function JsCallback($fn, string $args = ""): string {
+		if(!is_string($fn) || !preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $fn)) return "";
+		return $fn."(".$args.");";
+	}
+
 	private function GetAttributesStr($attr): string {
 		if(!$attr) return "";
 		$html = "";

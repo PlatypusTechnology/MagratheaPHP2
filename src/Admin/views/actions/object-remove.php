@@ -28,7 +28,7 @@ $rs .= "[".$objectName."] removed: [".$success."]";
 	</div>
 	<div class="card-body">
 		<div class="row"><div class="col-12">
-		<?
+		<?php
 		echo $rs;
 		if($success) {
 			AdminElements::Instance()->Alert($objectName." removed", "success");

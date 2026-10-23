@@ -1,7 +1,7 @@
 <div class="card">
 	<div class="card-header center card-header-login">
 		<div class="card-logo">
-			<?
+			<?php
 				Magrathea2\Admin\AdminManager::Instance()->PrintLogo(200);
 			?>
 		</div>

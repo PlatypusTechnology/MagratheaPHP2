@@ -59,7 +59,7 @@ class DocMap {
 				"title" => "Admin Panel",
 				"icon" => "admin",
 				"pages" => [
-					"admin" => ["title" => "Admin System Overview", "md" => "admin/admin.md", "src" => ["Admin/Admin.php", "Admin/AdminManager.php"]],
+					"admin" => ["title" => "Admin System Overview", "md" => "admin/admin.md", "src" => ["Admin/Admin.php", "Admin/AdminManager.php", "Admin/AdminFiles.php"]],
 					"admin-manager" => ["title" => "AdminManager", "md" => "admin/admin-manager.md", "src" => ["Admin/AdminManager.php"]],
 					"admin-features" => ["title" => "Admin Features", "md" => "admin/admin-features.md", "src" => ["Admin/AdminFeature.php"]],
 				],

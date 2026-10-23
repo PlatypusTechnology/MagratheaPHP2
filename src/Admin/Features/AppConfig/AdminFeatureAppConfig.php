@@ -2,6 +2,7 @@
 
 namespace Magrathea2\Admin\Features\AppConfig;
 
+use Magrathea2\Admin\AdminElements;
 use Magrathea2\Admin\AdminFeature;
 use Magrathea2\Admin\AdminManager;
 use Magrathea2\Admin\iAdminFeature;
@@ -50,7 +51,13 @@ class AdminFeatureAppConfig extends AdminFeature implements iAdminFeature {
 	}
 
 	public function Import() {
-		$postDataStr = @$_POST["data"];
+		// POST only: admin CSRF tokens are checked on POST, so a GET link can't import
+		if(@$_SERVER["REQUEST_METHOD"] !== "POST") {
+			http_response_code(405);
+			AdminElements::Instance()->Alert("Importing requires a POST request", "danger");
+			return;
+		}
+		$postDataStr = (string)@$_POST["data"];
 		$control = new AppConfigControl();
 		$control->ImportData($postDataStr, true);
 	}

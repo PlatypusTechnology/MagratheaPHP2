@@ -5,8 +5,10 @@ namespace Magrathea2\Admin;
 use Exception;
 use Magrathea2\Config;
 use Magrathea2\Exceptions\MagratheaConfigException;
+use Magrathea2\Exceptions\MagratheaException;
 use Magrathea2\Singleton;
 use Magrathea2\DB\Database;
+use Magrathea2\MagratheaHelper;
 use Magrathea2\MagratheaPHP;
 
 use function Magrathea2\now;
@@ -102,7 +104,7 @@ class AdminDatabase extends Singleton {
 	public function GetTableColumns($table): array {
 		$rs = [];
 		$magdb = Database::Instance();
-		$query = "SHOW columns FROM ".$table;
+		$query = "SHOW columns FROM `".str_replace("`", "``", $table)."`";
 		$columns = $magdb->QueryAll($query);
 		foreach($columns as $c) {
 			$field = [
@@ -134,38 +136,105 @@ class AdminDatabase extends Singleton {
 	}
 
 	/**
-	 * Normalize file's name (for ending with .sql)
-	 * @param string $filename		filename
-	 * @return string							filename fixed
+	 * Validates a backup file name: `.sql` is appended when it's missing, then it must be a plain name
+	 * (`^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$`, no `/`, `\` or `..`), so it can't leave the backups folder.
+	 * @param 	mixed 	$name		file name
+	 * @return 	string					file name, ending with `.sql`
+	 * @throws 	MagratheaException	invalid file name
 	 */
-	private function NormalizeFilename($filename): string {
-		if (!str_ends_with($filename, '.sql')) {
-			$filename .= '.sql';
+	public function ValidateBackupFileName($name): string {
+		if(!is_string($name)) throw new MagratheaException("invalid file name");
+		if(!str_ends_with($name, ".sql")) $name .= ".sql";
+		if(!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$/', $name) || str_contains($name, "..")) {
+			throw new MagratheaException("invalid file name");
 		}
-		return $filename;
+		return $name;
 	}
 
 	/**
-	 * Gets mysqldump command
-	 * @param string 	$fileName
-	 * @return string	command
+	 * Backup database: runs `mysqldump` into `<backups folder>/<file name>`, without a shell.
+	 * The credentials go in a temporary `[client]` defaults file (0600, deleted afterwards), never on the command line.
+	 * @param 	mixed 	$fileName		file name (see `ValidateBackupFileName()`)
+	 * @return 	array		["file" => file name, "size" => bytes]
+	 * @throws 	MagratheaException	invalid name, existing file, no `proc_open()`, or mysqldump failed
 	 */
-	public function GetCommand($fileName): string {
+	public function DoBackup($fileName): array {
+		$fileName = $this->ValidateBackupFileName($fileName);
+		$destination = MagratheaHelper::EnsureTrailingSlash($this->GetBackupFolder()).$fileName;
+		if(file_exists($destination)) throw new MagratheaException("file already exists");
+		if(!function_exists("proc_open")) {
+			throw new MagratheaException("proc_open() is not available (disable_functions): can't run mysqldump");
+		}
 		$config = Config::Instance();
-		$fileName = $this->NormalizeFilename($fileName);
-		return "mysqldump --opt --user=".$config->Get("db_user")." --password=".$config->Get("db_pass")." --host=".$config->Get("db_host")." ".$config->Get("db_name")." > ".$this->GetBackupFolder()."/".$fileName;
+		$defaultsFile = tempnam(sys_get_temp_dir(), "magrathea-dump-");
+		if($defaultsFile === false) throw new MagratheaException("could not create the mysqldump credentials file");
+		try {
+			chmod($defaultsFile, 0600);
+			file_put_contents($defaultsFile, $this->GetDefaultsFileContent([
+				"user" => $config->Get("db_user"),
+				"password" => $config->Get("db_pass"),
+				"host" => $config->Get("db_host"),
+				"port" => $config->Get("db_port"),
+			]));
+			// --defaults-extra-file must be the first option
+			$rs = $this->RunProcess([
+				"mysqldump",
+				"--defaults-extra-file=".$defaultsFile,
+				"--opt",
+				"--result-file=".$destination,
+				(string)$config->Get("db_name"),
+			]);
+			if($rs["code"] !== 0) {
+				if(file_exists($destination)) unlink($destination);
+				throw new MagratheaException("mysqldump failed (exit code ".$rs["code"]."): ".trim($rs["stderr"]));
+			}
+		} finally {
+			if(file_exists($defaultsFile)) unlink($defaultsFile);
+		}
+		clearstatcache(true, $destination);
+		return [ "file" => $fileName, "size" => filesize($destination) ];
 	}
 
 	/**
-	 * Backup database
-	 * @param string $fileName
-	 * 
+	 * Builds a MySQL option file's `[client]` section. Empty values are left out.
+	 * Backslashes are doubled and values are quoted with `"`, or with `'` when they contain a `"`.
+	 * @param 	array 	$values		[ option => value ]
+	 * @return 	string		file content
+	 * @throws 	MagratheaException	a value with both quote characters or a line break
 	 */
-	public function DoBackup($fileName) {
-		$command = $this->GetCommand($fileName);
-		$code = null;
-		$rs = system($command, $code);
-		return [ "rs" => $rs, "code" => $code ];
+	private function GetDefaultsFileContent(array $values): string {
+		$content = "[client]\n";
+		foreach($values as $option => $value) {
+			if($value === null || $value === "") continue;
+			$value = (string)$value;
+			if(str_contains($value, "\n") || str_contains($value, "\r")) {
+				throw new MagratheaException("the database ".$option." can't contain a line break for mysqldump");
+			}
+			$quote = str_contains($value, '"') ? "'" : '"';
+			if($quote === "'" && str_contains($value, "'")) {
+				throw new MagratheaException("the database ".$option." can't contain both quote characters for mysqldump");
+			}
+			$content .= $option."=".$quote.str_replace("\\", "\\\\", $value).$quote."\n";
+		}
+		return $content;
+	}
+
+	/**
+	 * Runs a command without a shell (`proc_open()` with an argument array).
+	 * stderr is read before stdout: for commands that write their output to a file (mysqldump's `--result-file`).
+	 * @param 	array 	$command		program and arguments
+	 * @return 	array		["code" => exit code, "stdout" => string, "stderr" => string]
+	 * @throws 	MagratheaException	the process couldn't start
+	 */
+	protected function RunProcess(array $command): array {
+		$pipes = [];
+		$process = proc_open($command, [1 => ["pipe", "w"], 2 => ["pipe", "w"]], $pipes);
+		if(!is_resource($process)) throw new MagratheaException("could not run ".$command[0]);
+		$stderr = stream_get_contents($pipes[2]);
+		$stdout = stream_get_contents($pipes[1]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		return [ "code" => proc_close($process), "stdout" => $stdout, "stderr" => $stderr ];
 	}
 
 }

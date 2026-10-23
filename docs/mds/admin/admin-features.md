@@ -131,7 +131,7 @@ There are no properties to choose columns or form fields: the list shows every f
 
 **Pages.** Everything is under the feature's URL, `?magrathea_feature=CRUDProduct` (the
 `featureId`); `magrathea_feature_subpage` selects `List`, `Form` (with `id`), `Save` or `Delete`
-(both POST, with `id`). `HasPermission($action)` receives that subpage name (`null` for the main
+(both POST, with `id`; since 2.4.0 a GET gets 405, it saved an empty object). `HasPermission($action)` receives that subpage name (`null` for the main
 page): override it to restrict, e.g. `return $action !== "Delete";`.
 
 ---
@@ -259,6 +259,41 @@ class ReportsFeature extends AdminFeature implements iAdminFeature {
 $this->AddFeature(new ReportsFeature());
 ```
 
+### Tables and form elements: values are data, callables are HTML
+
+Since 2.4.0, `AdminElements` treats what you pass as **values** as data and escapes it, so app data
+(anything a user of your app could have typed: names, titles, comments) can't run as script in the admin:
+
+- **`Table($rows, $cols)`:** every scalar value, from array rows and from models, is printed with
+  `htmlspecialchars(…, ENT_QUOTES)`; `null` prints empty; arrays and objects print as escaped JSON.
+  **A callable column (`"key" => function($row) {…}`) and a callable row value stay raw:** they return HTML
+  you build, so escape the data you put in it. Column titles are printed as given.
+- **`Input()`, `Textarea()`, `Select()`, `Checkbox()`** (and so `AdminForm`, the CRUD forms included) escape the
+  value: the `value` attribute, the textarea's content, a select's option values and labels (`Ref()` for
+  models), the checkbox's value. `AdminForm`'s `hidden` value and an `empty` field's value are escaped too,
+  unless the value is a callable (its return is printed as HTML). Ids, names/labels, classes, placeholders
+  and attributes are printed as given: they're yours, not data.
+
+```php
+AdminElements::Instance()->Table($products, [
+    "name" => "Name",                         // escaped
+    [
+        "title" => "&nbsp;",
+        "key" => function($p) {               // raw HTML: escape the data inside
+            return '<a href="#" onclick="edit('.htmlspecialchars(json_encode($p->id)).')">'
+                .htmlspecialchars($p->name).'</a>';
+        },
+    ],
+]);
+```
+
+So: don't pass HTML as a value (a link, a badge, a button): it shows as text. Move it into a callable. And
+don't escape values before passing them, or they show the entities (`&amp;lt;`).
+
+A function name taken from the query string (e.g. an `onclose` callback) goes through
+`AdminElements::JsCallback($fn, $args)`, which returns `"fn(args);"` only for a plain JS function name and `""`
+for anything else.
+
 ---
 
 ## Feature Routing
@@ -271,7 +306,22 @@ GET /admin.php?magrathea_feature=reports&magrathea_feature_subpage=x            
 GET /admin.php?magrathea_feature=reports&magrathea_feature_action=x             → Start::CheckFeature() → $this->x()
 ```
 
-The first two rows go through `views/index.php`, which defaults `magrathea_feature_subpage` to `GetPage` and calls that method on the feature instance; `GetPage()` itself then reads the same `magrathea_feature_subpage` param to decide between `Index()` and a named subpage. The third row is a separate, earlier dispatch point — `Start::CheckFeature()` runs before `views/index.php` is even included, and calls the method named by `magrathea_feature_action` directly. Both the explicit-subpage branch of `views/index.php` and `CheckFeature()` call `HasPermission()` before dispatching (see above); the default `GetPage()`-via-`Index()` path enforces it internally instead.
+The first two rows go through `views/index.php`, which defaults `magrathea_feature_subpage` to `GetPage` and calls that method on the feature instance; `GetPage()` itself then reads the same `magrathea_feature_subpage` param to decide between `Index()` and a named subpage (an empty subpage, or `GetPage` itself, is `Index()`). The third row is a separate, earlier dispatch point — `Start::CheckFeature()` runs before `views/index.php` is even included, and calls the method named by `magrathea_feature_action` directly. Both the explicit-subpage branch of `views/index.php` and `CheckFeature()` call `HasPermission()` before dispatching (see above); the default `GetPage()`-via-`Index()` path enforces it internally instead.
+
+**Which methods the URL can call** (since 2.4.0): all three dispatch points first check `AdminFeature::IsDispatchable($method)`. It accepts only a public, non-static method of the feature with no required parameters, named `^[A-Za-z]\w*$`, that isn't one of `AdminFeature`'s own methods (`AddJs`, `SetClassPath`, `HasPermission`, `GetMenuItem`, …, even when overridden), except `GetPage` and `Index`. Anything else answers 404 ("action not found" from `CheckFeature()`, a "Page not found" alert in the layout). Before 2.4.0, any public method could be called, setters included.
+
+**Actions that change data must refuse GET.** The admin checks its CSRF token on POST only, so a GET link (or an `<img src>` in something an admin opens) can call any dispatchable action. The built-in ones that write answer 405 unless it's a POST (CRUD `Save`/`Delete`, App Config `Import`, Cache `ClearCache`), or do nothing without posted data (Cache `Save`/`Remove`, the password change). Do the same in your own features:
+
+```php
+public function Archive() {
+    if(@$_SERVER["REQUEST_METHOD"] !== "POST") {
+        http_response_code(405);
+        AdminElements::Instance()->Alert("Archiving requires a POST request", "danger");
+        return;
+    }
+    // ... change data; call it with callFeature("reports", "Archive", "POST", {...})
+}
+```
 
 `AdminManager::Instance()->GetActiveFeature()` returns the feature instance matching `magrathea_feature` (by `$featureId`). `AdminFeature::IsFeatureActive()` compares against the same param to highlight the current item in the menu.
 

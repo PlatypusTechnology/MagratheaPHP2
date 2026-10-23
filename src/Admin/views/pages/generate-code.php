@@ -93,10 +93,10 @@ $structureForm
 			Generate Code
 		</div>
 		<div class="card-body">
-			<? $structureForm->Print(); ?>
+			<?php $structureForm->Print(); ?>
 		</div>
 	</div>
-	<?
+	<?php
 	if(!$data["success"]) {
 		echo "<br/><div class='message-container'>";
 		AdminElements::Instance()->Alert("Can't create code: ".implode('; ', $data["errors"]).".", "danger", false);
@@ -104,7 +104,7 @@ $structureForm
 	}
 	?>
 
-	<? include(__DIR__."/../actions/object-list.php"); ?>
+	<?php include(__DIR__."/../actions/object-list.php"); ?>
 	<div id="obj-responses"></div>
 </div>
 

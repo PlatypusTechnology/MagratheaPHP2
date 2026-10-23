@@ -44,12 +44,12 @@ $title = AdminManager::Instance()->GetTitle();
 						if(!$admin->CanCreateFirstUser()) {
 							?>
 							<div class="error">Admin is already set up. Reload for Login Page.</div>
-							<?
+							<?php
 							$showForm = false;
 						} else if(empty($user) || empty($pass)) {
 							?>
 							<div class="error">Email and password cannot be empty</div>
-							<?
+							<?php
 						} else {
 							$adminInstall = new Install();
 							$user = $adminInstall->CreateFirstUser($user, $pass);
