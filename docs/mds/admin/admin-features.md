@@ -219,7 +219,7 @@ use Magrathea2\Admin\Features\OpenApi\OpenApiAdmin;
 $this->AddFeature(new OpenApiAdmin("swagger.yaml"));
 ```
 
-If the `app_url` config key is set (`Config::Instance()->Get("app_url")`), the feature rewrites every Swagger "try it out" request's host/scheme to that base URL, keeping the request path — handy when the admin panel and the API are served from different hosts.
+If the `app_url` config key is set (`Config::Instance()->Get("app_url")`), the feature rewrites the scheme and host of every Swagger "try it out" request to `app_url`'s, keeping the request's own path and query (any path in `app_url` is ignored: the path comes from the spec's `servers` entry) — handy when the admin panel and the API are served from different hosts. The spec file itself is never rewritten: a relative `$fileUrl` is always loaded next to the admin page.
 
 ---
 

@@ -26,8 +26,14 @@ $swaggerBaseUrl = Config::Instance()->Get("app_url");
 	};
 
 	if (swaggerBaseUrl) {
+		var swaggerBase = new URL(swaggerBaseUrl, window.location.href);
 		swaggerOptions.requestInterceptor = function (req) {
-			req.url = swaggerBaseUrl.replace(/\/$/, "") + new URL(req.url, window.location.href).pathname;
+			// the spec file is served next to the admin page: never rewrite it
+			if (req.loadSpec) return req;
+			var target = new URL(req.url, window.location.href);
+			target.protocol = swaggerBase.protocol;
+			target.host = swaggerBase.host;
+			req.url = target.toString();
 			return req;
 		};
 	}
