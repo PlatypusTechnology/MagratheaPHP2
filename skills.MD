@@ -1,11 +1,13 @@
 ---
 name: magrathea-php2
-description: How to correctly generate code using the MagratheaPHP2 framework. Read before writing any PHP code for a project that uses this framework.
+description: How to correctly write code for projects on MagratheaPHP 2.x (package `platypustechnology/magratheaphp2`, namespace `Magrathea2`). Read before writing any PHP code for such a project. Projects on 3.x (`platypustechnology/magratheaphp`, namespace `Magrathea`) use the `magrathea-php` skill.
 ---
 
 # skills.MD — How to Use MagratheaPHP2 in a Project
 
 This file teaches an AI assistant how to correctly generate code using the MagratheaPHP2 framework. It is a practical, task-oriented cookbook. Read it before writing any PHP code for a project that uses this framework.
+
+**MagratheaPHP 3** is a separate package (`platypustechnology/magratheaphp`, namespace `Magrathea`) with its own cookbook, the `magrathea-php` skill. Nothing here applies to a 3.x project: check the project's `composer.json` first. Moving a project to 3.0: after requiring the package, follow `vendor/platypustechnology/magratheaphp/docs/mds/migrations/migrate-3.0.md`.
 
 **This cookbook targets MagratheaPHP2 `2.4.0`.** Several behaviors described here (HTTP error statuses, one DB connection per request, `Transaction()`, `decimal`, the Bootstrap lock, the File Editor opt-in) don't exist in earlier versions; check the project's installed version (`vendor/platypustechnology/magratheaphp2/src/version`) before relying on them.
 
