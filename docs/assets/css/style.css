@@ -95,6 +95,10 @@ code, pre { font-family: "SF Mono", Consolas, Menlo, monospace; }
 }
 .sidebar li a:hover { background: var(--paper-2); text-decoration: none; }
 .sidebar li a.active { background: var(--bronze); color: #fff; }
+.sidebar-promo { margin-bottom: 1.4rem !important; }
+.sidebar-promo li a { border: 1px solid var(--bronze); color: var(--bronze); font-weight: 600; }
+.sidebar-promo li a.active { color: #fff; }
+.ext-arrow { font-size: 0.85em; color: var(--text-dim); }
 .content { flex: 1; min-width: 0; padding: 2rem 2.5rem 5rem; }
 
 @media (max-width: 900px) {

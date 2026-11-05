@@ -1,4 +1,7 @@
 <nav class="sidebar">
+	<ul class="sidebar-promo">
+		<li><a href="<?= $baseUrl ?>/?p=v3" class="<?= $route === "v3" ? "active" : "" ?>">MagratheaPHP 3.0 is out</a></li>
+	</ul>
 	<?php foreach ($tree as $catKey => $cat): ?>
 		<h4><?= htmlspecialchars($cat["title"]) ?></h4>
 		<ul>
